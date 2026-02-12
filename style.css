@@ -1,0 +1,79 @@
+body {
+    background-color: #1a1a1a;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    overflow: hidden;
+}
+
+#app {
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    padding-top: 30px;
+}
+
+.user-info {
+    margin-bottom: 20px;
+}
+
+.balance {
+    font-size: 28px;
+    font-weight: bold;
+    color: #f39c12;
+    margin-top: 5px;
+}
+
+.roulette-container {
+    position: relative;
+    margin: 40px auto;
+    width: 220px;
+    height: 220px;
+}
+
+.wheel {
+    font-size: 120px;
+    width: 200px;
+    height: 200px;
+    line-height: 200px;
+    border: 8px solid #f39c12;
+    border-radius: 50%;
+    background: #2c3e50;
+    /* Плавное замедление вращения */
+    transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+    display: inline-block;
+}
+
+.pointer {
+    font-size: 40px;
+    color: #e74c3c;
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+button {
+    background: #f39c12;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button.secondary {
+    background: #34495e;
+    font-size: 16px;
+}
