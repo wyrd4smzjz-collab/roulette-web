@@ -25,25 +25,25 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+tg.expand(); 
 
-        // Берем имя пользователя из Телеграма
-        document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
+// Устанавливаем имя пользователя
+document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
 
-        function spinWheel() {
-            const wheel = document.getElementById('wheel');
-            // Генерируем случайное вращение от 360 до 3960 градусов
-            const randomDegree = Math.floor(Math.random() * 3600) + 360; 
-            wheel.style.transform = `rotate(${randomDegree}deg)`;
-            
-            // Сообщаем боту, что игрок нажал кнопку (чтобы бот списал баланс)
-            tg.sendData(JSON.stringify({action: "play_roulette"}));
-        }
+function spinWheel() {
+    const wheel = document.getElementById('wheel');
+    const randomDegree = Math.floor(Math.random() * 3600) + 360; 
+    wheel.style.transform = `rotate(${randomDegree}deg)`;
+    
+    // Отправляем простое слово "play", чтобы бот списал 10 звезд
+    tg.sendData("play");
+}
 
-        function deposit() {
-            // Сообщаем боту, что нужно выставить счет на оплату
-            tg.sendData(JSON.stringify({action: "deposit"}));
-        }
+function deposit() {
+    // Отправляем простое слово "deposit", чтобы бот выставил счет
+    tg.sendData("deposit");
+}
+
     </script>
 </body>
 </html>
