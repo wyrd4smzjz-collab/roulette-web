@@ -79,6 +79,7 @@
         
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
+        let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
 
         // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
@@ -105,34 +106,47 @@
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
         let currentAngle = 0;
 
-        // ✅ ЗАГРУЗКА БАЛАНСА ПРИ СТАРТЕ
+        // ✅ НОВАЯ ЛОГИКА: Приоритет URL > CloudStorage
         function loadBalance() {
-            if (tg.CloudStorage) {
-                tg.CloudStorage.getItem('balance', function(err, value) {
-                    if (!err && value) {
-                        stars = parseInt(value) || 0;
-                        console.log('Баланс загружен из CloudStorage:', stars);
-                    } else {
-                        stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
-                        console.log('Баланс загружен из URL:', stars);
-                    }
-                    update();
-                });
-            } else {
-                stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
-                console.log('CloudStorage недоступен, баланс из URL:', stars);
+            const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
+            
+            if (!isNaN(urlBalance)) {
+                // Если баланс пришел из URL (от бота) - используем его
+                stars = urlBalance;
+                console.log('✅ Баланс загружен из URL (от бота):', stars);
+                
+                // Сохраняем в CloudStorage для синхронизации
+                saveBalance();
                 update();
+            } else {
+                // Если URL не содержит баланс - загружаем из CloudStorage
+                if (tg.CloudStorage) {
+                    tg.CloudStorage.getItem(`balance_${userId}`, function(err, value) {
+                        if (!err && value) {
+                            stars = parseInt(value) || 0;
+                            console.log('📦 Баланс загружен из CloudStorage:', stars);
+                        } else {
+                            stars = 0;
+                            console.log('⚠️ Баланс не найден, установлен 0');
+                        }
+                        update();
+                    });
+                } else {
+                    stars = 0;
+                    console.log('⚠️ CloudStorage недоступен');
+                    update();
+                }
             }
         }
 
-        // ✅ СОХРАНЕНИЕ БАЛАНСА
+        // ✅ СОХРАНЕНИЕ С УНИКАЛЬНЫМ КЛЮЧОМ ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
         function saveBalance(callback) {
             if (tg.CloudStorage) {
-                tg.CloudStorage.setItem('balance', stars.toString(), function(err) {
+                tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
                     if (err) {
-                        console.error('Ошибка сохранения баланса:', err);
+                        console.error('❌ Ошибка сохранения баланса:', err);
                     } else {
-                        console.log('Баланс сохранен в CloudStorage:', stars);
+                        console.log('💾 Баланс сохранен в CloudStorage:', stars);
                     }
                     if (callback) callback();
                 });
@@ -264,14 +278,12 @@
         function doDep() { 
             playClick();
             
-            // НЕ добавляем звезды сразу - они добавятся после оплаты
-            saveBalance(function() {
-                tg.sendData(JSON.stringify({
-                    action: "deposit", 
-                    amount: depVal, 
-                    stars: stars
-                }));
-            });
+            // Отправляем запрос на пополнение боту
+            tg.sendData(JSON.stringify({
+                action: "deposit", 
+                amount: depVal, 
+                stars: stars
+            }));
         }
         
         function doWit() { 
@@ -297,6 +309,7 @@
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
 
+        // ✅ ЗАПУСК
         loadBalance();
         draw();
     </script>
