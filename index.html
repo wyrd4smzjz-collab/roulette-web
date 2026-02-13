@@ -6,34 +6,32 @@
     <title>Magic Spin</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: radial-gradient(circle, #1a0a2e 0%, #050505 100%); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        .header { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .bal-center { text-align: center; flex-grow: 1; }
-        .bal-val { font-weight: bold; font-size: 1.1em; text-shadow: 0 0 10px rgba(142, 68, 173, 0.8); }
-        .top-btn { padding: 6px 12px; border-radius: 8px; font-size: 0.7em; font-weight: bold; border: 1px solid #444; background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; }
-        .wheel-box { position: relative; margin-top: 15px; width: 280px; height: 280px; }
-        canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
-        .pointer { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #f1c40f; z-index: 5; }
-        .bet-control { display: flex; align-items: center; gap: 20px; margin-top: 20px; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; }
-        .bet-btn { background: #8e44ad; border: none; color: white; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 1.2em; }
-        .spin-main { margin-top: 15px; background: linear-gradient(135deg, #8e44ad, #6c3483); padding: 12px 50px; border-radius: 25px; font-weight: bold; font-size: 1.1em; border: none; color: white; box-shadow: 0 0 15px rgba(142, 68, 173, 0.4); cursor: pointer; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; }
-        .m-content { background: #111; padding: 25px; border-radius: 20px; width: 85%; border: 1px solid #8e44ad; text-align: center; }
+        body { background: radial-gradient(circle, #1a0a2e 0%, #050505 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .bal-val { font-weight: bold; font-size: 1.2em; text-shadow: 0 0 10px #8e44ad; }
+        .top-btn { padding: 8px 15px; border-radius: 10px; font-size: 0.8em; font-weight: bold; border: 1px solid #8e44ad; background: rgba(142,68,173,0.1); color: white; }
+        .wheel-box { position: relative; margin-top: 10px; width: 280px; height: 280px; }
+        canvas { width: 100%; height: 100%; }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; }
+        .bet-control { display: flex; align-items: center; gap: 20px; margin-top: 20px; background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 25px; border: 1px solid #333; }
+        .bet-btn { background: #8e44ad; border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-weight: bold; font-size: 1.2em; }
+        .spin-btn { margin-top: 20px; background: linear-gradient(135deg, #8e44ad, #6c3483); padding: 15px 60px; border-radius: 30px; font-weight: bold; font-size: 1.2em; border: none; color: white; box-shadow: 0 0 20px rgba(142,68,173,0.5); }
+        
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; }
+        .m-content { background: #111; padding: 30px; border-radius: 25px; width: 80%; border: 1px solid #8e44ad; text-align: center; }
         .tab-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { flex: 1; text-align: center; padding: 8px; border-bottom: 2px solid #333; color: #555; cursor: pointer; }
+        .tab { flex: 1; padding: 10px; border-bottom: 2px solid #333; color: #666; }
         .tab.active { color: #8e44ad; border-color: #8e44ad; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-        .err-text { color: #e74c3c; font-size: 0.8em; margin-top: 5px; display: none; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div style="width: 60px"></div>
-        <div class="bal-center">
+        <div style="flex:1">
             <div class="bal-val" style="color: gold;">✨ <span id="s_bal">0</span></div>
             <div class="bal-val" style="color: #0088cc;">💎 <span id="t_bal">0.00</span></div>
         </div>
-        <button class="top-btn" onclick="openM()">ДЕПОЗИТ</button>
+        <button class="top-btn" onclick="openM()">ДЕПОЗИТ / ВЫВОД</button>
     </div>
 
     <div class="wheel-box">
@@ -42,38 +40,36 @@
     </div>
 
     <div class="bet-control">
-        <button class="bet-btn" onclick="addBet(-20)">-</button>
-        <div style="text-align: center">
-            <div style="font-size: 0.6em; color: #888">СТАВКА</div>
-            <div style="font-weight: bold; color: gold; font-size: 1.2em;" id="curBet">5</div>
+        <button class="bet-btn" onclick="chBet(-20)">-</button>
+        <div style="text-align:center">
+            <div style="font-size:0.7em; color:#888">СТАВКА</div>
+            <div style="font-weight:bold; color:gold" id="curBet">5</div>
         </div>
-        <button class="bet-btn" onclick="addBet(20)">+</button>
+        <button class="bet-btn" onclick="chBet(20)">+</button>
     </div>
 
-    <button class="spin-main" onclick="spin()">КРУТИТЬ</button>
+    <button class="spin-btn" onclick="spin()">КРУТИТЬ</button>
 
     <div id="modal">
         <div class="m-content">
             <div class="tab-row">
-                <div class="tab active" id="t1" onclick="setTab('dep')">ДЕПОЗИТ</div>
-                <div class="tab" id="t2" onclick="setTab('out')">ВЫВОД</div>
+                <div class="tab active" id="t1" onclick="setT('dep')">ДЕПОЗИТ</div>
+                <div class="tab" id="t2" onclick="setT('out')">ВЫВОД</div>
             </div>
-            <div id="dep_ui">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                    <button class="bet-btn" onclick="modAmt(-100)">-</button>
-                    <span id="m_amt" style="font-size: 2em; font-weight: bold;">100</span>
-                    <button class="bet-btn" onclick="modAmt(100)">+</button>
+            <div id="d_ui">
+                <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+                    <button class="bet-btn" onclick="chM(-100)">-</button>
+                    <span id="m_amt" style="font-size:2em; font-weight:bold;">100</span>
+                    <button class="bet-btn" onclick="chM(100)">+</button>
                 </div>
-                <button class="spin-main" style="width:100%; margin-top:25px" onclick="doDep()">ПОПОЛНИТЬ</button>
+                <button class="spin-btn" style="width:100%" onclick="doD()">КУПИТЬ ⭐</button>
             </div>
-            <div id="out_ui" style="display:none">
-                <input type="number" id="o_amt" placeholder="Сумма вывода" oninput="checkOut()">
-                <div id="out_err" class="err-text">Недостаточно средств</div>
-                <div style="font-size: 0.7em; color: #666; margin-top: 5px;">Min: 500 ⭐ / 10 TON</div>
-                <input type="text" id="o_adr" placeholder="TON Адрес или номер">
-                <button class="spin-main" style="width:100%; margin-top:15px" onclick="doOut()">ОТПРАВИТЬ</button>
+            <div id="o_ui" style="display:none">
+                <input type="number" id="o_amt" placeholder="Сумма (min 500)">
+                <input type="text" id="o_adr" placeholder="Адрес TON">
+                <button class="spin-btn" style="width:100%" onclick="doO()">ВЫВЕСТИ</button>
             </div>
-            <button onclick="closeM()" style="background:none; border:none; color:#555; width:100%; margin-top:20px; cursor: pointer;">Закрыть</button>
+            <button onclick="closeM()" style="margin-top:20px; background:none; border:none; color:#555;">Закрыть</button>
         </div>
     </div>
 
@@ -95,69 +91,57 @@
 
         const prizes = [
             {t: "💀", c: "#1a1a1a", s: 0, ton: 0}, {t: "1 ⭐", c: "#f1c40f", s: 1, ton: 0},
-            {t: "FREE 🌀", c: "#3498db", s: 5, ton: 0}, {t: "10 ⭐", c: "#8e44ad", s: 10, ton: 0},
+            {t: "FREE", c: "#3498db", s: 5, ton: 0}, {t: "10 ⭐", c: "#8e44ad", s: 10, ton: 0},
             {t: "💀", c: "#1a1a1a", s: 0, ton: 0}, {t: "50 ⭐", c: "#27ae60", s: 50, ton: 0},
-            {t: "1000 ⭐", c: "#c0392b", s: 1000, ton: 0}, {t: "0.5 TON", c: "#2980b9", s: 0, ton: 0.5}
+            {t: "1000 ⭐", c: "#e74c3c", s: 1000, ton: 0}, {t: "0.5 TON", c: "#0088cc", s: 0, ton: 0.5}
         ];
 
-        function draw(a = 0) {
-            const arc = (Math.PI * 2) / 8;
-            ctx.clearRect(0,0,600,600);
-            prizes.forEach((p, i) => {
-                ctx.beginPath(); ctx.fillStyle = p.c; ctx.moveTo(300, 300);
-                ctx.arc(300, 300, 280, i*arc+a, (i+1)*arc+a); ctx.fill();
+        function draw(a=0) {
+            const arc = Math.PI/4; ctx.clearRect(0,0,600,600);
+            prizes.forEach((p,i)=>{
+                ctx.beginPath(); ctx.fillStyle=p.c; ctx.moveTo(300,300);
+                ctx.arc(300,300,280,i*arc+a,(i+1)*arc+a); ctx.fill();
                 ctx.save(); ctx.translate(300,300); ctx.rotate(i*arc+arc/2+a);
-                ctx.fillStyle="white"; ctx.font="bold 24px Arial"; ctx.fillText(p.t, 130, 10); ctx.restore();
+                ctx.fillStyle="white"; ctx.font="bold 25px Arial"; ctx.fillText(p.t,130,10); ctx.restore();
             });
         }
         draw();
 
-        function addBet(v) { if(!isSpinning) { bet = Math.max(5, bet + v); sync(); } }
-        function openM() { document.getElementById('modal').style.display = 'flex'; }
-        function closeM() { document.getElementById('modal').style.display = 'none'; }
-        function modAmt(v) { m_amt = Math.max(100, m_amt + v); sync(); }
-        
-        function setTab(t) {
+        function chBet(v) { bet = Math.max(5, bet+v); sync(); }
+        function chM(v) { m_amt = Math.max(100, m_amt+v); sync(); }
+        function openM() { document.getElementById('modal').style.display='flex'; }
+        function closeM() { document.getElementById('modal').style.display='none'; }
+        function setT(t) {
             mode = t;
-            document.getElementById('t1').className = t === 'dep' ? 'tab active' : 'tab';
-            document.getElementById('t2').className = t === 'out' ? 'tab active' : 'tab';
-            document.getElementById('dep_ui').style.display = t === 'dep' ? 'block' : 'none';
-            document.getElementById('out_ui').style.display = t === 'out' ? 'block' : 'none';
-        }
-
-        function checkOut() {
-            const val = parseFloat(document.getElementById('o_amt').value) || 0;
-            const isError = (val > stars && mode === 'out');
-            document.getElementById('o_amt').style.borderColor = isError ? '#e74c3c' : '#333';
-            document.getElementById('out_err').style.display = isError ? 'block' : 'none';
+            document.getElementById('t1').className = t==='dep'?'tab active':'tab';
+            document.getElementById('t2').className = t==='out'?'tab active':'tab';
+            document.getElementById('d_ui').style.display = t==='dep'?'block':'none';
+            document.getElementById('o_ui').style.display = t==='out'?'block':'none';
         }
 
         function spin() {
             if(isSpinning || stars < bet) return;
-            isSpinning = true; stars -= bet; sync();
-            let rot = Math.random()*360 + 3600, start = performance.now();
-            function frame(t) {
-                let p = (t-start)/4000; if(p>1) p=1;
-                let ease = 1-Math.pow(1-p,3); draw((rot*ease*Math.PI)/180);
-                if(p<1) requestAnimationFrame(frame);
+            isSpinning=true; stars-=bet; sync();
+            let rot = Math.random()*360+3600, start=performance.now();
+            function f(t){
+                let p=(t-start)/4000; if(p>1)p=1;
+                let e=1-Math.pow(1-p,3); draw((rot*e*Math.PI)/180);
+                if(p<1)requestAnimationFrame(f);
                 else {
-                    isSpinning = false;
-                    const idx = Math.floor((360-(rot%360)+270)%360 / 45);
-                    const w = prizes[idx]; stars += w.s; ton += w.ton; sync();
+                    isSpinning=false;
+                    const idx = Math.floor((360-(rot%360)+270)%360/45);
+                    const w = prizes[idx]; stars+=w.s; ton+=w.ton; sync();
                     tg.sendData(`spin_${bet}_${w.s}_${w.ton}`);
                 }
             }
-            requestAnimationFrame(frame);
+            requestAnimationFrame(f);
         }
 
-        function doDep() { tg.sendData(`dep_${m_amt}`); closeM(); }
-        
-        function doOut() {
-            const amt = document.getElementById('o_amt').value;
-            const adr = document.getElementById('o_adr').value || "Not set";
-            if(!amt) return;
-            tg.sendData(`out_stars_${amt}_${adr}`);
-            closeM();
+        function doD() { tg.sendData(`dep_${m_amt}`); tg.close(); }
+        function doO() { 
+            const a = document.getElementById('o_amt').value;
+            const ad = document.getElementById('o_adr').value;
+            tg.sendData(`out_stars_${a}_${ad}`); tg.close(); 
         }
     </script>
 </body>
