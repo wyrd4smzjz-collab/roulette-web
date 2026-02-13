@@ -102,29 +102,35 @@
                 tg.CloudStorage.getItem('balance', function(err, value) {
                     if (!err && value) {
                         stars = parseInt(value) || 0;
+                        console.log('Баланс загружен из CloudStorage:', stars);
                     } else {
                         // Если в CloudStorage нет данных, берем из URL
                         stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
+                        console.log('Баланс загружен из URL:', stars);
                     }
                     update();
                 });
             } else {
                 // Fallback для старых версий
                 stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
+                console.log('CloudStorage недоступен, баланс из URL:', stars);
                 update();
             }
         }
 
-        // ✅ СОХРАНЕНИЕ БАЛАНСА
-        function saveBalance() {
+        // ✅ СОХРАНЕНИЕ БАЛАНСА (с callback для надежности)
+        function saveBalance(callback) {
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem('balance', stars.toString(), function(err) {
                     if (err) {
                         console.error('Ошибка сохранения баланса:', err);
                     } else {
-                        console.log('Баланс сохранен:', stars);
+                        console.log('Баланс сохранен в CloudStorage:', stars);
                     }
+                    if (callback) callback();
                 });
+            } else {
+                if (callback) callback();
             }
         }
 
@@ -223,25 +229,45 @@
             e.target.classList.add('active'); 
         }
         
+        // ✅ ИСПРАВЛЕНО: Сначала добавляем звезды, сохраняем, потом отправляем в бота
         function doDep() { 
-            playClick(); 
-            tg.sendData(JSON.stringify({
-                action: "deposit", 
-                amount: depVal, 
-                stars: stars
-            })); 
+            playClick();
+            
+            // Добавляем звезды к балансу (предполагаем успешную оплату)
+            stars += depVal;
+            update();
+            
+            // Сохраняем баланс в CloudStorage ПЕРЕД отправкой в бота
+            saveBalance(function() {
+                // После успешного сохранения отправляем данные боту
+                tg.sendData(JSON.stringify({
+                    action: "deposit", 
+                    amount: depVal, 
+                    stars: stars
+                }));
+            });
         }
         
+        // ✅ ИСПРАВЛЕНО: Сначала вычитаем звезды, сохраняем, потом отправляем в бота
         function doWit() { 
             playClick(); 
             let val = parseInt(document.getElementById('w_stars').value);
             if(val > stars) return alert("Мало звезд!");
-            tg.sendData(JSON.stringify({
-                action: "withdraw", 
-                amount: val, 
-                address: document.getElementById('w_addr').value, 
-                stars: stars
-            })); 
+            
+            // Вычитаем звезды
+            stars -= val;
+            update();
+            
+            // Сохраняем баланс в CloudStorage ПЕРЕД отправкой в бота
+            saveBalance(function() {
+                // После успешного сохранения отправляем данные боту
+                tg.sendData(JSON.stringify({
+                    action: "withdraw", 
+                    amount: val, 
+                    address: document.getElementById('w_addr').value, 
+                    stars: stars
+                }));
+            });
         }
         
         function calcWit() { 
