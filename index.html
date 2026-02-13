@@ -24,7 +24,7 @@
         .tab.active { border-bottom: 3px solid #8e44ad; color: #8e44ad; }
         .tab-content { display: none; padding: 30px; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
         .tab-content.active { display: flex; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1.1em; box-sizing: border-box; }
+        .low-bal { background: #e74c3c !important; box-shadow: 0 0 15px #e74c3c !important; }
     </style>
 </head>
 <body>
@@ -48,27 +48,16 @@
     </div>
 
     <div id="modal">
-        <div class="tabs">
-            <div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div>
-            <div class="tab" onclick="setTab('wit', event)">ВЫВОД</div>
-        </div>
+        <div class="tabs"><div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div><div class="tab" onclick="setTab('wit', event)">ВЫВОД</div></div>
         <div id="dep" class="tab-content active">
             <h2 style="color: gold;">Сумма звезд</h2>
             <div class="bet-box">
-                <button class="btn-adj" onclick="adjDep(-10)">-</button>
-                <span id="dep_val" style="font-size: 2.5em; margin: 0 20px;">10</span>
-                <button class="btn-adj" onclick="adjDep(10)">+</button>
+                <button class="btn-adj" onclick="adjDep(-100)">-</button>
+                <span id="dep_val" style="font-size: 2.5em; margin: 0 20px;">100</span>
+                <button class="btn-adj" onclick="adjDep(100)">+</button>
             </div>
-            <button class="spin-btn" style="margin-top:20px;" onclick="doDep()">КУПИТЬ ⭐</button>
-            <p onclick="closeM()" style="margin-top:30px; color:#777;">← Назад</p>
-        </div>
-        <div id="wit" class="tab-content">
-            <h2 style="color: #0088cc;">Вывод TON</h2>
-            <input type="number" id="w_stars" placeholder="Сколько звезд вывести?" oninput="calcWit()">
-            <input type="text" id="w_addr" placeholder="Адрес кошелька (UQ...)">
-            <p id="wit_preview" style="color: #27ae60; font-weight: bold;">Вы получите: 0.00 TON</p>
-            <button class="spin-btn" onclick="doWit()">ОТПРАВИТЬ ЗАЯВКУ</button>
-            <p onclick="closeM()" style="margin-top:30px; color:#777;">← Назад</p>
+            <button class="spin-btn" onclick="doDep()">КУПИТЬ ⭐</button>
+            <p onclick="closeM()" style="margin-top:30px; color:#777;">Назад</p>
         </div>
     </div>
 
@@ -78,12 +67,11 @@
         
         const params = new URLSearchParams(location.search);
         let stars = parseInt(params.get('balance')) || 0;
-        let curBet = 5, depVal = 10, isSpinning = false;
+        let curBet = 5, depVal = 100, isSpinning = false;
 
-        function playClick() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3').play().catch(()=>{});
-        }
+        const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
+        const sndWheel = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
+        sndClick.volume = 0.2; sndWheel.volume = 0.3;
 
         const sectors = [
             {t: "💀", c: "#1a1a1a", v: 0},   {t: "20", c: "#8e44ad", v: 20},
@@ -95,7 +83,7 @@
         ];
 
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
-        let rotation = 0;
+        let currentRotation = 0;
 
         function draw(angle = 0) {
             const arc = (Math.PI * 2) / sectors.length;
@@ -114,57 +102,65 @@
             document.getElementById('s_bal').innerText = stars;
             document.getElementById('cur_bet').innerText = curBet;
             document.getElementById('dep_val').innerText = depVal;
+            const btn = document.getElementById('spinBtn');
+            if(stars < curBet) { btn.innerText = "ПОПОЛНИТЬ"; btn.classList.add('low-bal'); }
+            else { btn.innerText = "КРУТИТЬ"; btn.classList.remove('low-bal'); }
         }
 
         function handleSpin() {
-            if (isSpinning || stars < curBet) return;
-            playClick();
+            if (isSpinning) return;
+            if (stars < curBet) { openM(); return; }
+            playClick(); startSpin();
+        }
+
+        function startSpin() {
             isSpinning = true; stars -= curBet; update();
-            let extra = Math.floor(Math.random() * 360) + 2880;
-            let start = null;
-            function animate(time) {
-                if (!start) start = time;
-                let prog = (time - start) / 4000;
-                if (prog > 1) prog = 1;
-                let ease = 1 - Math.pow(1 - prog, 3);
-                rotation = (extra * ease * Math.PI) / 180;
-                draw(rotation);
-                if (prog < 1) requestAnimationFrame(animate);
-                else {
+            let startTime = null;
+            const duration = 5000; // 5 секунд вращения
+            const totalRotation = (Math.random() * 360) + 2880; // Минимум 8 полных оборотов
+            let lastSectorIdx = -1;
+
+            function animate(now) {
+                if (!startTime) startTime = now;
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Функция замедления (Ease Out Cubic)
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const angle = (totalRotation * easeOut) * (Math.PI / 180);
+                
+                // Звук трещотки при прохождении сектора
+                const currentSectorIdx = Math.floor(((totalRotation * easeOut) % 360) / (360 / sectors.length));
+                if (currentSectorIdx !== lastSectorIdx) {
+                    sndWheel.currentTime = 0; sndWheel.play().catch(()=>{});
+                    lastSectorIdx = currentSectorIdx;
+                }
+
+                draw(angle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
                     isSpinning = false;
-                    const stopAngle = (extra % 360);
+                    const stopAngle = (totalRotation % 360);
                     const idx = Math.floor((360 - stopAngle + 270) % 360 / (360/sectors.length));
                     const win = sectors[idx];
                     stars += win.v;
                     update();
-                    // Чтобы баланс сохранился, отправляем данные боту в фоне
+                    // Сохраняем баланс в боте через синхронизацию (не закрывая!)
                     tg.sendData(JSON.stringify({action: "sync", stars: stars}));
                 }
             }
             requestAnimationFrame(animate);
         }
 
+        function playClick() { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); sndClick.currentTime = 0; sndClick.play().catch(()=>{}); }
         function openM() { playClick(); document.getElementById('modal').style.display = 'flex'; }
         function closeM() { playClick(); document.getElementById('modal').style.display = 'none'; }
         function adjBet(v) { playClick(); curBet = Math.max(5, curBet + v); update(); }
         function adjDep(v) { playClick(); depVal = Math.max(10, depVal + v); update(); }
-        function setTab(t, e) { playClick(); document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); document.getElementById(t).classList.add('active'); e.target.classList.add('active'); }
-        
         function doDep() { playClick(); tg.sendData(JSON.stringify({action: "deposit", amount: depVal})); }
         
-        function doWit() {
-            playClick();
-            let amount = parseInt(document.getElementById('w_stars').value);
-            let address = document.getElementById('w_addr').value;
-            if (amount > stars) { alert("Недостаточно звезд!"); return; }
-            tg.sendData(JSON.stringify({action: "withdraw", amount: amount, address: address}));
-        }
-
-        function calcWit() {
-            let s = parseInt(document.getElementById('w_stars').value) || 0;
-            document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(3)} TON`;
-        }
-
         draw(); update();
     </script>
 </body>
