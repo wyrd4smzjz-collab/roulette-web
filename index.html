@@ -3,102 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Stars</title>
+    <title>Roulette Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; overflow-x: hidden; }
-        .balance-card { background: #222; padding: 15px; border-bottom: 3px solid #f39c12; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
-        
-        /* Круглая рулетка на CSS */
-        .wheel-box { position: relative; width: 300px; height: 300px; margin: 20px auto; }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #f39c12; z-index: 10; filter: drop-shadow(0 0 5px black); }
+        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        .balance-card { background: #222; padding: 15px; border-bottom: 3px solid #f39c12; display: flex; justify-content: space-between; font-weight: bold; }
+        .wheel-box { position: relative; width: 320px; height: 320px; margin: 20px auto; }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #f39c12; z-index: 10; }
         
         #wheel { 
-            width: 100%; height: 100%; border-radius: 50%; border: 10px solid #444; box-sizing: border-box;
+            width: 100%; height: 100%; border-radius: 50%; border: 8px solid #444; position: relative;
             background: conic-gradient(
-                #e74c3c 0deg 45deg, #2ecc71 45deg 90deg, 
-                #f1c40f 90deg 135deg, #3498db 135deg 180deg,
-                #9b59b6 180deg 225deg, #e67e22 225deg 270deg,
-                #1abc9c 270deg 315deg, #34495e 315deg 360deg
+                #e74c3c 0 45deg, #2ecc71 45deg 90deg, #f1c40f 90deg 135deg, #3498db 135deg 180deg,
+                #9b59b6 180deg 225deg, #e67e22 225deg 270deg, #1abc9c 270deg 315deg, #34495e 315deg 360deg
             );
             transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
-            display: flex; align-items: center; justify-content: center; font-size: 60px;
         }
 
-        .controls { padding: 20px; }
-        .bet-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .btn { border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-bet { background: #333; padding: 10px 20px; border: 2px solid transparent; }
-        .btn-bet.active { border-color: #f39c12; background: #444; }
+        /* Текст призов на колесе */
+        .sector { position: absolute; width: 50%; height: 2px; top: 50%; left: 50%; transform-origin: left center; text-align: right; padding-right: 20px; font-weight: bold; font-size: 14px; }
         
-        .btn-spin { background: #f39c12; width: 80%; padding: 15px; font-size: 20px; text-transform: uppercase; box-shadow: 0 5px 0 #d35400; margin-bottom: 25px; }
-        .btn-spin:active { transform: translateY(3px); box-shadow: 0 2px 0 #d35400; }
-
-        .deposit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
-        .btn-dep { background: #27ae60; padding: 12px; font-size: 16px; }
+        .controls { padding: 10px; }
+        .btn { border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-bet { background: #333; padding: 10px 20px; margin: 0 5px; border: 2px solid transparent; }
+        .btn-bet.active { border-color: #f39c12; }
+        .btn-spin { background: #f39c12; width: 80%; padding: 15px; font-size: 20px; margin-top: 15px; box-shadow: 0 4px 0 #d35400; }
+        .btn-dep { background: #27ae60; padding: 10px; font-size: 14px; margin: 5px; width: 40%; }
     </style>
 </head>
 <body>
     <div class="balance-card">
         <div>💰 <span id="balance">0</span> ⭐</div>
-        <div style="color: #f39c12;">Ставка: <span id="current-bet">5</span></div>
+        <div style="color:#f39c12">Ставка: <span id="bet-val">5</span></div>
     </div>
 
     <div class="wheel-box">
         <div class="pointer"></div>
-        <div id="wheel">🎡</div>
+        <div id="wheel">
+            <div class="sector" style="transform: rotate(22deg)">0</div>
+            <div class="sector" style="transform: rotate(67deg)">1⭐</div>
+            <div class="sector" style="transform: rotate(112deg)">3⭐</div>
+            <div class="sector" style="transform: rotate(157deg)">10⭐</div>
+            <div class="sector" style="transform: rotate(202deg)">50⭐</div>
+            <div class="sector" style="transform: rotate(247deg)">1000⭐</div>
+            <div class="sector" style="transform: rotate(292deg)">TON</div>
+            <div class="sector" style="transform: rotate(337deg)">TON</div>
+        </div>
     </div>
 
     <div class="controls">
-        <div class="bet-row">
-            <button class="btn btn-bet active" onclick="setBet(5, this)">5</button>
-            <button class="btn btn-bet" onclick="setBet(20, this)">20</button>
-            <button class="btn btn-bet" onclick="setBet(50, this)">50</button>
-        </div>
-        <button class="btn btn-spin" onclick="startSpin()">Крутить!</button>
+        <button class="btn btn-bet active" onclick="setBet(5, this)">5</button>
+        <button class="btn btn-bet" onclick="setBet(20, this)">20</button>
+        <button class="btn btn-bet" onclick="setBet(50, this)">50</button>
+        <br>
+        <button class="btn btn-spin" id="spinBtn" onclick="startSpin()">КРУТИТЬ</button>
     </div>
 
-    <div style="color: #888; margin-bottom: 10px;">Пополнить баланс</div>
-    <div class="deposit-grid">
-        <button class="btn btn-dep" onclick="deposit(10)">10 ⭐</button>
-        <button class="btn btn-dep" onclick="deposit(50)">50 ⭐</button>
-        <button class="btn btn-dep" onclick="deposit(500)">500 ⭐</button>
-        <button class="btn btn-dep" onclick="deposit(5000)">5000 ⭐</button>
+    <div style="margin-top:10px">
+        <button class="btn btn-dep" onclick="deposit(10)">+10 ⭐</button>
+        <button class="btn btn-dep" onclick="deposit(50)">+50 ⭐</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let balance = parseInt(urlParams.get('balance')) || 0;
+        let balance = parseInt(new URLSearchParams(window.location.search).get('balance')) || 0;
         document.getElementById('balance').innerText = balance;
-
         let currentBet = 5;
 
-        function setBet(amount, el) {
-            currentBet = amount;
-            document.getElementById('current-bet').innerText = amount;
+        function setBet(a, e) {
+            currentBet = a;
+            document.getElementById('bet-val').innerText = a;
             document.querySelectorAll('.btn-bet').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
+            e.classList.add('active');
         }
 
         function startSpin() {
-            if (balance < currentBet) {
-                tg.showAlert("Недостаточно звезд на балансе!");
-                return;
-            }
-            const wheel = document.getElementById('wheel');
-            const deg = Math.floor(Math.random() * 3600) + 720;
-            wheel.style.transform = `rotate(${deg}deg)`;
-            
-            setTimeout(() => {
-                tg.sendData("spin_" + currentBet);
-            }, 4000);
+            if (balance < currentBet) { tg.showAlert("Мало звезд!"); return; }
+            document.getElementById('spinBtn').disabled = true;
+            const deg = Math.floor(Math.random() * 3600) + 1440;
+            document.getElementById('wheel').style.transform = `rotate(${deg}deg)`;
+            setTimeout(() => { tg.sendData("spin_" + currentBet); }, 4100);
         }
 
-        function deposit(amount) {
-            tg.sendData("dep_" + amount);
+        function deposit(a) {
+            tg.sendData("dep_" + a);
+            setTimeout(() => { tg.close(); }, 700); // Закрываем, чтобы оплатить в боте
         }
     </script>
 </body>
