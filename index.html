@@ -89,17 +89,14 @@
         // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
         const sndTick = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
-        
-        // ✅ НОВЫЙ ЗВУК ВРАЩЕНИЯ (более длинный и реалистичный)
-        const sndSpin = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AQ==');
-        
+        const sndSpin = new Audio('https://www.soundjay.com/mechanical/sounds/mechanical-8.mp3');
         const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
         const sndLose = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
         
         sndClick.volume = 0.3; 
         sndTick.volume = 0.2;
-        sndSpin.volume = 0.5; // ✅ Увеличена громкость
-        sndSpin.loop = true;   // ✅ Зацикливание звука
+        sndSpin.volume = 0.5;
+        sndSpin.loop = true;
         sndWin.volume = 0.5;
         sndLose.volume = 0.3;
 
@@ -117,7 +114,7 @@
 
         // ✅ СИНХРОНИЗАЦИЯ С БОТОМ
         function syncWithBot() {
-            if (stars > 0) {
+            if (stars >= 0) {
                 tg.sendData(JSON.stringify({
                     action: "sync",
                     stars: stars
@@ -157,16 +154,18 @@
 
         // ✅ СОХРАНЕНИЕ БАЛАНСА
         function saveBalance(callback) {
+            console.log('💾 Попытка сохранить баланс:', stars);
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
                     if (err) {
                         console.error('❌ Ошибка сохранения:', err);
                     } else {
-                        console.log('💾 Баланс сохранен:', stars);
+                        console.log('✅ Баланс сохранен в CloudStorage:', stars);
                     }
                     if (callback) callback();
                 });
             } else {
+                console.warn('⚠️ CloudStorage недоступен');
                 if (callback) callback();
             }
         }
@@ -198,11 +197,15 @@
             if (stars < curBet) { openM(); return; }
             playClick();
             isSpinning = true; 
-            stars -= curBet; 
+            
+            const oldStars = stars;
+            stars -= curBet;
+            console.log(`🎰 Ставка ${curBet}, было ${oldStars}, стало ${stars}`);
+            
             update();
             saveBalance();
             
-            // 🎵 ЗАПУСК ЗВУКА ВРАЩЕНИЯ (зацикленный)
+            // 🎵 ЗАПУСК ЗВУКА ВРАЩЕНИЯ
             sndSpin.currentTime = 0;
             sndSpin.play().catch(e => console.log('Ошибка звука:', e));
             
@@ -236,7 +239,10 @@
                     isSpinning = false;
                     let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length));
                     let win = sectors[idx];
+                    
+                    const beforeWin = stars;
                     stars += win.v;
+                    console.log(`🎉 Выпало: ${win.t} (+${win.v}), было ${beforeWin}, стало ${stars}`);
                     
                     saveBalance();
                     
@@ -249,13 +255,13 @@
                         if (win.t === "🎁") {
                             setTimeout(() => alert("🎁 БОНУС: Бесплатная ставка!"), 200);
                         } else {
-                            setTimeout(() => alert(`🎉 Выигрыш: ${win.v} звезд!`), 200);
+                            setTimeout(() => alert(`🎉 Выигрыш: ${win.v} звезд!\n\nВаш баланс: ${stars} ⭐`), 200);
                         }
                     } else {
                         sndLose.currentTime = 0;
                         sndLose.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                        setTimeout(() => alert("💀 Не повезло... Попробуй еще раз!"), 200);
+                        setTimeout(() => alert(`💀 Не повезло... Попробуй еще раз!\n\nВаш баланс: ${stars} ⭐`), 200);
                     }
                     
                     update();
@@ -270,8 +276,16 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
         }
         
-        function openM() { playClick(); document.getElementById('modal').style.display = 'flex'; }
-        function closeM() { playClick(); document.getElementById('modal').style.display = 'none'; }
+        function openM() { 
+            playClick(); 
+            document.getElementById('modal').style.display = 'flex'; 
+            console.log('📂 Открыто меню, текущий баланс:', stars);
+        }
+        
+        function closeM() { 
+            playClick(); 
+            document.getElementById('modal').style.display = 'none'; 
+        }
         
         function adjBet(v) { 
             playClick(); 
@@ -305,8 +319,16 @@
         // ✅ ПРОВЕРКА МИНИМАЛЬНОЙ СУММЫ ВЫВОДА
         function doWit() { 
             playClick(); 
+            
             let val = parseInt(document.getElementById('w_stars').value);
             let addr = document.getElementById('w_addr').value.trim();
+            
+            console.log('💰 Попытка вывода:', {
+                сумма: val,
+                адрес: addr,
+                'текущий баланс': stars,
+                'минимум': MIN_WITHDRAW
+            });
             
             // Проверка на пустой адрес
             if (!addr) {
@@ -314,19 +336,26 @@
                 return;
             }
             
+            // Проверка на корректность суммы
+            if (!val || isNaN(val) || val <= 0) {
+                alert("❌ Введите корректную сумму для вывода!");
+                return;
+            }
+            
             // Проверка минимальной суммы
             if (val < MIN_WITHDRAW) {
-                alert(`❌ Минимальная сумма для вывода: ${MIN_WITHDRAW} ⭐\n\nУ вас сейчас: ${stars} ⭐`);
+                alert(`❌ Минимальная сумма для вывода: ${MIN_WITHDRAW} ⭐\n\nВы ввели: ${val} ⭐`);
                 return;
             }
             
             // Проверка достаточности баланса
             if (val > stars) {
-                alert(`❌ Недостаточно звезд для вывода!\n\nВы хотите вывести: ${val} ⭐\nУ вас на балансе: ${stars} ⭐`);
+                alert(`❌ Недостаточно звезд для вывода!\n\nВы хотите вывести: ${val} ⭐\nУ вас на балансе: ${stars} ⭐\n\nНужно еще: ${val - stars} ⭐`);
                 return;
             }
             
             // Всё ок, выводим
+            console.log('✅ Вывод разрешен');
             stars -= val;
             update();
             
@@ -346,6 +375,7 @@
         }
 
         // ✅ ЗАПУСК
+        console.log('🚀 Приложение запущено, userId:', userId);
         loadBalance();
         draw();
     </script>
