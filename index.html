@@ -50,42 +50,44 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-        let balance = 0;
-        let currentBet = 5;
-        
-        // Получаем баланс из стартовых данных (передается ботом)
-        const urlParams = new URLSearchParams(window.location.search);
-        balance = parseInt(urlParams.get('balance')) || 0;
-        document.getElementById('balance').innerText = balance;
+// Получаем баланс из ссылки
+const urlParams = new URLSearchParams(window.location.search);
+let balance = parseInt(urlParams.get('balance')) || 0;
+document.getElementById('balance').innerText = balance;
 
-        function setBet(amount) {
-            currentBet = amount;
-            document.getElementById('current-bet').innerText = amount;
-            document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-        }
+let currentBet = 5;
 
-        function startSpin() {
-            if (balance < currentBet) {
-                alert("Недостаточно звезд!");
-                return;
-            }
-            const wheel = document.getElementById('wheel');
-            const deg = Math.floor(Math.random() * 3600) + 720;
-            wheel.style.transform = `rotate(${deg}deg)`;
-            
-            // Отправляем боту команду на игру
-            setTimeout(() => {
-                tg.sendData("spin_" + currentBet);
-            }, 4500);
-        }
+function setBet(amount) {
+    currentBet = amount;
+    document.getElementById('current-bet').innerText = amount;
+    document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
 
-        function deposit(amount) {
-            tg.sendData("dep_" + amount);
-        }
+function startSpin() {
+    if (balance < currentBet) {
+        tg.showAlert("Недостаточно звезд на балансе!");
+        return;
+    }
+    const wheel = document.getElementById('wheel');
+    const deg = Math.floor(Math.random() * 3600) + 720;
+    wheel.style.transform = `rotate(${deg}deg)`;
+    
+    // Закрываем приложение и отправляем данные боту
+    setTimeout(() => {
+        tg.sendData("spin_" + currentBet);
+    }, 4000);
+}
+
+function deposit(amount) {
+    // Эта команда говорит боту выставить счет
+    tg.sendData("dep_" + amount);
+}
+
+    
     </script>
 </body>
 </html>
