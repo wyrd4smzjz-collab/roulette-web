@@ -6,29 +6,54 @@
     <title>Magik Spin</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            background: #050505; color: white; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; display: flex; flex-direction: column; align-items: center; 
-            height: 100vh; overflow: hidden; padding-top: env(safe-area-inset-top);
+        /* Исправление отображения на весь экран */
+        html, body { 
+            height: 100vh; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background: #050505;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
         }
-        .top-bar { width: 100%; padding: 10px; display: flex; justify-content: center; position: relative; }
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        }
+
+        /* Верхняя панель */
+        .top-bar { width: 100%; padding: 10px 0; display: flex; justify-content: center; position: relative; }
         .bal-display { font-size: 2.2em; font-weight: bold; color: gold; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
         .wallet-btn { position: absolute; right: 15px; top: 15px; background: rgba(142,68,173,0.3); border: 1px solid #8e44ad; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8em; }
-        .wheel-container { position: relative; width: 330px; height: 330px; margin-top: 5px; }
+
+        /* Контейнер рулетки */
+        .wheel-container { 
+            position: relative; 
+            width: 80vw; 
+            max-width: 310px; 
+            aspect-ratio: 1/1;
+        }
         canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
         .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; }
-        .controls { margin-top: 15px; text-align: center; width: 100%; }
+
+        /* Кнопки управления */
+        .controls { width: 100%; text-align: center; padding-bottom: 20px; }
         .bet-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px; }
-        .btn-adj { background: #8e44ad; border: none; color: white; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5em; box-shadow: 0 0 10px #8e44ad; }
-        .spin-btn { width: 85%; padding: 18px; border-radius: 50px; border: none; color: white; font-weight: bold; font-size: 1.4em; background: #8e44ad; box-shadow: 0 0 25px #8e44ad; transition: 0.3s; text-transform: uppercase; }
+        .btn-adj { background: #8e44ad; border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5em; display: flex; align-items: center; justify-content: center; }
+        .spin-btn { width: 85%; padding: 18px; border-radius: 50px; border: none; color: white; font-weight: bold; font-size: 1.4em; background: #8e44ad; box-shadow: 0 0 25px #8e44ad; }
         .btn-low-balance { background: #333 !important; box-shadow: none !important; color: #777; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; }
+
+        /* Модальное окно */
+        #modal { display: none; position: fixed; inset: 0; background: #000; z-index: 100; flex-direction: column; }
         .tabs { display: flex; background: #1a1a1a; }
         .tab { flex: 1; padding: 20px; text-align: center; font-weight: bold; }
         .tab.active { border-bottom: 3px solid #8e44ad; color: #8e44ad; }
-        .tab-content { display: none; padding: 30px; flex-direction: column; align-items: center; }
+        .tab-content { display: none; padding: 30px; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
         .tab-content.active { display: flex; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1em; }
+        input { width: 90%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -36,10 +61,12 @@
         <div class="bal-display">⭐ <span id="s_bal">0</span></div>
         <button class="wallet-btn" onclick="openM()">Кошелек</button>
     </div>
+
     <div class="wheel-container">
         <div class="pointer"></div>
         <canvas id="canvas" width="600" height="600"></canvas>
     </div>
+
     <div class="controls">
         <div class="bet-box">
             <button class="btn-adj" onclick="adjBet(-5)">-</button>
@@ -48,8 +75,12 @@
         </div>
         <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
     </div>
+
     <div id="modal">
-        <div class="tabs"><div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div><div class="tab" onclick="setTab('wit', event)">ВЫВОД</div></div>
+        <div class="tabs">
+            <div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div>
+            <div class="tab" onclick="setTab('wit', event)">ВЫВОД</div>
+        </div>
         <div id="dep" class="tab-content active">
             <h2 style="color: gold;">Сумма звезд</h2>
             <div class="bet-box">
@@ -72,12 +103,15 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
+        
         const params = new URLSearchParams(location.search);
         let stars = parseInt(params.get('balance')) || 0;
         let curBet = 5, depVal = 10, isSpinning = false;
 
-        const clickSnd = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
-        clickSnd.volume = 0.3; // Тихий звук
+        // Звук клика (негромкий)
+        const clickSnd = new Audio('https://actions.google.com/sounds/v1/foley/refrigerator_door_click.ogg');
+        clickSnd.volume = 0.3;
 
         const sectors = [
             {t: "💀", c: "#1a1a1a", v: 0},   {t: "20", c: "#8e44ad", v: 20},
@@ -113,7 +147,9 @@
 
         function handleSpin() {
             if (isSpinning || stars < curBet) return;
-            clickSnd.play(); isSpinning = true; stars -= curBet; update();
+            try { clickSnd.play(); } catch(e){} 
+            isSpinning = true; stars -= curBet; update();
+            
             let extra = Math.floor(Math.random() * 360) + 2880;
             let start = null;
             function animate(time) {
@@ -138,14 +174,44 @@
             requestAnimationFrame(animate);
         }
 
-        function openM() { clickSnd.play(); document.getElementById('modal').style.display = 'flex'; }
-        function closeM() { clickSnd.play(); document.getElementById('modal').style.display = 'none'; }
-        function adjBet(v) { clickSnd.play(); curBet = Math.max(5, curBet + v); update(); }
-        function adjDep(v) { clickSnd.play(); depVal = Math.max(10, depVal + v); update(); }
-        function setTab(t, e) { clickSnd.play(); document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); document.getElementById(t).classList.add('active'); e.target.classList.add('active'); }
-        function doDep() { clickSnd.play(); tg.sendData(JSON.stringify({action: "deposit", amount: depVal})); }
-        function doWit() { clickSnd.play(); tg.sendData(JSON.stringify({action: "withdraw", amount: parseInt(document.getElementById('w_stars').value), address: document.getElementById('w_addr').value})); tg.close(); }
-        function calcWit() { let s = parseInt(document.getElementById('w_stars').value) || 0; document.getElementById('wit_preview').innerText = `К получению: ${(s * 0.001).toFixed(2)} TON`; }
+        function openM() { try{clickSnd.play();}catch(e){} document.getElementById('modal').style.display = 'flex'; }
+        function closeM() { try{clickSnd.play();}catch(e){} document.getElementById('modal').style.display = 'none'; }
+        
+        function adjBet(v) { 
+            try{clickSnd.play();}catch(e){}
+            curBet = Math.max(5, curBet + v); 
+            update(); 
+        }
+        
+        function adjDep(v) { 
+            try{clickSnd.play();}catch(e){}
+            depVal = Math.max(10, depVal + v); 
+            update(); 
+        }
+
+        function setTab(t, e) { 
+            try{clickSnd.play();}catch(e){}
+            document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); 
+            document.getElementById(t).classList.add('active'); 
+            e.target.classList.add('active'); 
+        }
+
+        function doDep() { 
+            try{clickSnd.play();}catch(e){}
+            tg.sendData(JSON.stringify({action: "deposit", amount: depVal})); 
+        }
+
+        function doWit() { 
+            try{clickSnd.play();}catch(e){}
+            let val = parseInt(document.getElementById('w_stars').value);
+            if (val > stars) { alert("Недостаточно звезд!"); return; }
+            tg.sendData(JSON.stringify({action: "withdraw", amount: val, address: document.getElementById('w_addr').value})); 
+        }
+
+        function calcWit() { 
+            let s = parseInt(document.getElementById('w_stars').value) || 0; 
+            document.getElementById('wit_preview').innerText = `К получению: ${(s * 0.001).toFixed(2)} TON`; 
+        }
 
         draw(); update();
     </script>
