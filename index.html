@@ -26,6 +26,7 @@
         .tab-content { display: none; padding: 30px; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
         .tab-content.active { display: flex; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1.1em; box-sizing: border-box; }
+        .min-withdraw-warning { color: #e74c3c; font-size: 0.9em; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -65,7 +66,8 @@
         </div>
         <div id="wit" class="tab-content">
             <h2 style="color: #0088cc;">Вывод TON</h2>
-            <input type="number" id="w_stars" placeholder="Сумма звезд" oninput="calcWit()">
+            <p class="min-withdraw-warning">⚠️ Минимальная сумма вывода: 500 ⭐</p>
+            <input type="number" id="w_stars" placeholder="Сумма звезд (мин. 500)" oninput="calcWit()">
             <input type="text" id="w_addr" placeholder="Адрес (UQ...)">
             <p id="wit_preview">Вы получите: 0.00 TON</p>
             <button class="spin-btn" onclick="doWit()">ВЫВЕСТИ</button>
@@ -80,17 +82,24 @@
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
         let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
+        
+        // ✅ МИНИМАЛЬНАЯ СУММА ДЛЯ ВЫВОДА
+        const MIN_WITHDRAW = 500;
 
         // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
         const sndTick = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
-        const sndSpin = new Audio('https://www.soundjay.com/mechanical/sounds/mechanical-8.mp3');
+        
+        // ✅ НОВЫЙ ЗВУК ВРАЩЕНИЯ (более длинный и реалистичный)
+        const sndSpin = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AQ==');
+        
         const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
         const sndLose = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
         
         sndClick.volume = 0.3; 
-        sndTick.volume = 0.15;
-        sndSpin.volume = 0.4;
+        sndTick.volume = 0.2;
+        sndSpin.volume = 0.5; // ✅ Увеличена громкость
+        sndSpin.loop = true;   // ✅ Зацикливание звука
         sndWin.volume = 0.5;
         sndLose.volume = 0.3;
 
@@ -106,47 +115,54 @@
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
         let currentAngle = 0;
 
-        // ✅ НОВАЯ ЛОГИКА: Приоритет URL > CloudStorage
+        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ
+        function syncWithBot() {
+            if (stars > 0) {
+                tg.sendData(JSON.stringify({
+                    action: "sync",
+                    stars: stars
+                }));
+                console.log('🔄 Синхронизация с ботом:', stars);
+            }
+        }
+
+        // ✅ ЗАГРУЗКА БАЛАНСА
         function loadBalance() {
             const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
             
             if (!isNaN(urlBalance)) {
-                // Если баланс пришел из URL (от бота) - используем его
                 stars = urlBalance;
-                console.log('✅ Баланс загружен из URL (от бота):', stars);
-                
-                // Сохраняем в CloudStorage для синхронизации
+                console.log('✅ Баланс из URL:', stars);
                 saveBalance();
                 update();
             } else {
-                // Если URL не содержит баланс - загружаем из CloudStorage
                 if (tg.CloudStorage) {
                     tg.CloudStorage.getItem(`balance_${userId}`, function(err, value) {
                         if (!err && value) {
                             stars = parseInt(value) || 0;
-                            console.log('📦 Баланс загружен из CloudStorage:', stars);
+                            console.log('📦 Баланс из CloudStorage:', stars);
+                            syncWithBot();
                         } else {
                             stars = 0;
-                            console.log('⚠️ Баланс не найден, установлен 0');
+                            console.log('⚠️ Новый пользователь, баланс 0');
                         }
                         update();
                     });
                 } else {
                     stars = 0;
-                    console.log('⚠️ CloudStorage недоступен');
                     update();
                 }
             }
         }
 
-        // ✅ СОХРАНЕНИЕ С УНИКАЛЬНЫМ КЛЮЧОМ ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
+        // ✅ СОХРАНЕНИЕ БАЛАНСА
         function saveBalance(callback) {
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
                     if (err) {
-                        console.error('❌ Ошибка сохранения баланса:', err);
+                        console.error('❌ Ошибка сохранения:', err);
                     } else {
-                        console.log('💾 Баланс сохранен в CloudStorage:', stars);
+                        console.log('💾 Баланс сохранен:', stars);
                     }
                     if (callback) callback();
                 });
@@ -186,9 +202,9 @@
             update();
             saveBalance();
             
-            // 🎵 ЗВУК ВРАЩЕНИЯ
+            // 🎵 ЗАПУСК ЗВУКА ВРАЩЕНИЯ (зацикленный)
             sndSpin.currentTime = 0;
-            sndSpin.play().catch(()=>{});
+            sndSpin.play().catch(e => console.log('Ошибка звука:', e));
             
             let rotation = (Math.random() * 360) + 3600;
             let start = null;
@@ -205,14 +221,15 @@
                 
                 // 🎵 ТИКАНЬЕ
                 if (Math.floor(currentPos / (360/sectors.length)) > lastTickAngle) {
-                    sndTick.currentTime = 0; sndTick.play().catch(()=>{});
+                    sndTick.currentTime = 0; 
+                    sndTick.play().catch(()=>{});
                     lastTickAngle = Math.floor(currentPos / (360/sectors.length));
                 }
 
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
                 else {
-                    // 🎵 ОСТАНАВЛИВАЕМ ВРАЩЕНИЕ
+                    // 🎵 ОСТАНАВЛИВАЕМ ЗВУК ВРАЩЕНИЯ
                     sndSpin.pause();
                     sndSpin.currentTime = 0;
                     
@@ -278,7 +295,6 @@
         function doDep() { 
             playClick();
             
-            // Отправляем запрос на пополнение боту
             tg.sendData(JSON.stringify({
                 action: "deposit", 
                 amount: depVal, 
@@ -286,11 +302,31 @@
             }));
         }
         
+        // ✅ ПРОВЕРКА МИНИМАЛЬНОЙ СУММЫ ВЫВОДА
         function doWit() { 
             playClick(); 
             let val = parseInt(document.getElementById('w_stars').value);
-            if(val > stars) return alert("Мало звезд!");
+            let addr = document.getElementById('w_addr').value.trim();
             
+            // Проверка на пустой адрес
+            if (!addr) {
+                alert("❌ Введите адрес кошелька TON!");
+                return;
+            }
+            
+            // Проверка минимальной суммы
+            if (val < MIN_WITHDRAW) {
+                alert(`❌ Минимальная сумма для вывода: ${MIN_WITHDRAW} ⭐\n\nУ вас сейчас: ${stars} ⭐`);
+                return;
+            }
+            
+            // Проверка достаточности баланса
+            if (val > stars) {
+                alert(`❌ Недостаточно звезд для вывода!\n\nВы хотите вывести: ${val} ⭐\nУ вас на балансе: ${stars} ⭐`);
+                return;
+            }
+            
+            // Всё ок, выводим
             stars -= val;
             update();
             
@@ -298,7 +334,7 @@
                 tg.sendData(JSON.stringify({
                     action: "withdraw", 
                     amount: val, 
-                    address: document.getElementById('w_addr').value, 
+                    address: addr, 
                     stars: stars
                 }));
             });
