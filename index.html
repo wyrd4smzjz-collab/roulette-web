@@ -83,7 +83,6 @@
         let curBet = 5, depVal = 100, isSpinning = false;
         let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
         
-        // ✅ МИНИМАЛЬНАЯ СУММА ДЛЯ ВЫВОДА
         const MIN_WITHDRAW = 500;
 
         // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
@@ -112,24 +111,15 @@
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
         let currentAngle = 0;
 
-        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ
-        function syncWithBot() {
-            if (stars >= 0) {
-                tg.sendData(JSON.stringify({
-                    action: "sync",
-                    stars: stars
-                }));
-                console.log('🔄 Синхронизация с ботом:', stars);
-            }
-        }
-
         // ✅ ЗАГРУЗКА БАЛАНСА
         function loadBalance() {
             const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
             
-            if (!isNaN(urlBalance)) {
+            console.log('📊 Загрузка баланса, URL balance:', urlBalance);
+            
+            if (!isNaN(urlBalance) && urlBalance >= 0) {
                 stars = urlBalance;
-                console.log('✅ Баланс из URL:', stars);
+                console.log('✅ Установлен баланс из URL (от бота):', stars);
                 saveBalance();
                 update();
             } else {
@@ -138,7 +128,6 @@
                         if (!err && value) {
                             stars = parseInt(value) || 0;
                             console.log('📦 Баланс из CloudStorage:', stars);
-                            syncWithBot();
                         } else {
                             stars = 0;
                             console.log('⚠️ Новый пользователь, баланс 0');
@@ -154,7 +143,7 @@
 
         // ✅ СОХРАНЕНИЕ БАЛАНСА
         function saveBalance(callback) {
-            console.log('💾 Попытка сохранить баланс:', stars);
+            console.log('💾 Сохранение баланса:', stars);
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
                     if (err) {
@@ -165,7 +154,6 @@
                     if (callback) callback();
                 });
             } else {
-                console.warn('⚠️ CloudStorage недоступен');
                 if (callback) callback();
             }
         }
@@ -309,14 +297,17 @@
         function doDep() { 
             playClick();
             
-            tg.sendData(JSON.stringify({
-                action: "deposit", 
-                amount: depVal, 
-                stars: stars
-            }));
+            // ✅ СНАЧАЛА СОХРАНЯЕМ, ПОТОМ ОТПРАВЛЯЕМ
+            saveBalance(function() {
+                tg.sendData(JSON.stringify({
+                    action: "deposit", 
+                    amount: depVal, 
+                    stars: stars
+                }));
+            });
         }
         
-        // ✅ ПРОВЕРКА МИНИМАЛЬНОЙ СУММЫ ВЫВОДА
+        // ✅ ИСПРАВЛЕНО: Перед выводом синхронизируем баланс с ботом
         function doWit() { 
             playClick(); 
             
@@ -324,9 +315,9 @@
             let addr = document.getElementById('w_addr').value.trim();
             
             console.log('💰 Попытка вывода:', {
-                сумма: val,
-                адрес: addr,
-                'текущий баланс': stars,
+                'сумма для вывода': val,
+                'адрес': addr,
+                'текущий баланс в игре': stars,
                 'минимум': MIN_WITHDRAW
             });
             
@@ -354,18 +345,25 @@
                 return;
             }
             
-            // Всё ок, выводим
-            console.log('✅ Вывод разрешен');
-            stars -= val;
-            update();
+            // ✅ НОВАЯ ЛОГИКА: Сначала сохраняем актуальный баланс, потом вычитаем и отправляем
+            console.log('✅ Вывод разрешен, сохраняем баланс перед выводом');
             
+            // Сохраняем текущий баланс в CloudStorage
             saveBalance(function() {
-                tg.sendData(JSON.stringify({
-                    action: "withdraw", 
-                    amount: val, 
-                    address: addr, 
-                    stars: stars
-                }));
+                // После сохранения вычитаем сумму вывода
+                stars -= val;
+                update();
+                
+                // Сохраняем новый баланс
+                saveBalance(function() {
+                    // Отправляем данные боту
+                    tg.sendData(JSON.stringify({
+                        action: "withdraw", 
+                        amount: val, 
+                        address: addr, 
+                        stars: stars
+                    }));
+                });
             });
         }
         
