@@ -6,33 +6,49 @@
     <title>Mystic Wheel Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #050505; color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; }
-        .header { width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, #111, #000); border-bottom: 1px solid #333; box-sizing: border-box; }
-        .bal-box { color: #f1c40f; font-size: 1.3em; font-weight: 800; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; background: #111; border-bottom: 1px solid #333; box-sizing: border-box; }
+        .bal-group { display: flex; flex-direction: column; gap: 5px; }
+        .bal-item { font-weight: bold; font-size: 1.1em; }
         
-        .wheel-area { position: relative; margin: 30px 0; width: 320px; height: 320px; }
-        #canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 20px #000); transition: filter 0.5s; }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; filter: drop-shadow(0 0 5px gold); }
+        /* Модальное окно вывода */
+        #withdrawModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; padding: 20px; border-radius: 20px; width: 85%; border: 1px solid #333; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
         
-        .win-glow { filter: drop-shadow(0 0 30px gold) !important; }
-        .lose-glow { filter: drop-shadow(0 0 30px #e74c3c) !important; }
-
-        .controls { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
-        .bet-row { display: flex; gap: 10px; }
-        .bet-btn { background: #1a1a1a; border: 1px solid #444; color: #888; padding: 10px 20px; border-radius: 12px; font-weight: bold; transition: 0.2s; }
-        .bet-btn.active { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
-
-        .spin-btn { background: linear-gradient(135deg, #8e44ad, #6c3483); border: none; padding: 18px 80px; border-radius: 40px; color: white; font-size: 1.4em; font-weight: bold; box-shadow: 0 10px 20px rgba(142, 68, 173, 0.4); }
-        .spin-btn:active { transform: scale(0.95); }
-
-        .dep-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 90%; margin-top: 20px; }
-        .dep-btn { background: #111; border: 1px solid #27ae60; color: #27ae60; padding: 12px; border-radius: 10px; font-weight: bold; }
+        .wheel-area { position: relative; margin: 15px 0; width: 280px; height: 280px; }
+        #canvas { width: 100%; height: 100%; border-radius: 50%; }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid gold; z-index: 10; }
+        
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+        .bet-btn { background: #222; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 10px; }
+        .bet-btn.active { border-color: gold; color: gold; }
+        .spin-btn { background: linear-gradient(135deg, #8e44ad, #6c3483); border: none; padding: 15px 60px; border-radius: 30px; color: white; font-size: 1.2em; font-weight: bold; }
+        
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 15px; }
+        .btn-action { padding: 12px; border-radius: 10px; font-weight: bold; border: 1px solid; text-align: center; }
+        .dep-color { border-color: #27ae60; color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+        .out-color { border-color: #e67e22; color: #e67e22; background: rgba(230, 126, 34, 0.1); }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="bal-box">✨ <span id="balance">0</span> ⭐</div>
+        <div class="bal-group">
+            <div class="bal-item" style="color: gold;">✨ <span id="stars_bal">0</span></div>
+            <div class="bal-item" style="color: #0088cc;">💎 <span id="ton_bal">0.00</span></div>
+        </div>
         <div style="color: #666">Ставка: <span id="curBet">5</span></div>
+    </div>
+
+    <div id="withdrawModal">
+        <div class="modal-content">
+            <h3 id="wTitle">Вывод Stars</h3>
+            <p id="wLimit" style="font-size: 0.8em; color: #888;"></p>
+            <input type="number" id="wAmount" placeholder="Сумма">
+            <input type="text" id="wAddr" placeholder="Адрес (для TON) или коммент">
+            <button class="spin-btn" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="sendWithdraw()">ОТПРАВИТЬ</button>
+            <button onclick="closeModal()" style="background: none; border: none; color: #666; width: 100%; margin-top: 15px;">Отмена</button>
+        </div>
     </div>
 
     <div class="wheel-area">
@@ -41,102 +57,104 @@
     </div>
 
     <div class="controls">
-        <div class="bet-row">
+        <div style="display: flex; gap: 10px;">
             <button class="bet-btn active" onclick="setBet(5, this)">5</button>
             <button class="bet-btn" onclick="setBet(10, this)">10</button>
             <button class="bet-btn" onclick="setBet(50, this)">50</button>
         </div>
-        <button class="spin-btn" id="spinBtn" onclick="doSpin()">ЗАКЛИНАНИЕ</button>
+        <button class="spin-btn" onclick="doSpin()">ЗАКЛИНАНИЕ</button>
     </div>
 
-    <div class="dep-grid">
-        <button class="dep-btn" onclick="buy(10)">10 ⭐</button>
-        <button class="dep-btn" onclick="buy(100)">100 ⭐</button>
-        <button class="dep-btn" onclick="buy(500)">500 ⭐</button>
-        <button class="dep-btn" onclick="buy(5000)">5000 ⭐</button>
+    <div class="action-grid">
+        <div class="btn-action dep-color" onclick="buy(10)">+10 ⭐</div>
+        <div class="btn-action out-color" onclick="openModal('stars')">ВЫВОД ⭐</div>
+        <div class="btn-action dep-color" onclick="buy(100)">+100 ⭐</div>
+        <div class="btn-action out-color" onclick="openModal('ton')">ВЫВОД TON</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const params = new URLSearchParams(window.location.search);
         
-        let balance = parseInt(params.get('balance')) || 0;
+        let stars = parseInt(params.get('balance')) || 0;
+        let ton = parseFloat(params.get('ton')) || 0.0;
         let bet = 5;
-        let rotating = false;
-        document.getElementById('balance').innerText = balance;
+        let spinning = false;
+        let currentWType = 'stars';
 
+        document.getElementById('stars_bal').innerText = stars;
+        document.getElementById('ton_bal').innerText = ton.toFixed(2);
+
+        // --- ЛОГИКА МОДАЛКИ ---
+        function openModal(type) {
+            currentWType = type;
+            document.getElementById('withdrawModal').style.display = 'flex';
+            document.getElementById('wTitle').innerText = type === 'stars' ? "Вывод Stars" : "Вывод TON";
+            document.getElementById('wLimit').innerText = type === 'stars' ? "Минимум 500 ⭐" : "Минимум 10 TON";
+            document.getElementById('wAddr').placeholder = type === 'stars' ? "Ваш ник или комментарий" : "Ваш TON адрес (UQ...)";
+        }
+        function closeModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+        
+        function sendWithdraw() {
+            const amt = parseFloat(document.getElementById('wAmount').value);
+            const addr = document.getElementById('wAddr').value;
+            
+            if (currentWType === 'stars' && (amt < 500 || stars < amt)) { tg.showAlert("Недостаточно Stars или меньше 500"); return; }
+            if (currentWType === 'ton' && (amt < 10 || ton < amt)) { tg.showAlert("Недостаточно TON или меньше 10"); return; }
+            if (!addr) { tg.showAlert("Введите адрес/инфо"); return; }
+            
+            tg.sendData(`withdraw_${currentWType}_${amt}_${addr}`);
+            tg.close();
+        }
+
+        // --- РУЛЕТКА (код как в прошлом шаге) ---
         const prizes = [
-            {t: "НЕУДАЧА 💀", c: "#1a1a1a", v: 0},
-            {t: "1 ⭐", c: "#f1c40f", v: 1},
-            {t: "FREE SPIN 🌀", c: "#3498db", v: 5},
-            {t: "10 ⭐", c: "#8e44ad", v: 10},
-            {t: "НЕУДАЧА 💀", c: "#1a1a1a", v: 0},
-            {t: "50 ⭐", c: "#27ae60", v: 50},
-            {t: "1000 ⭐", c: "#e74c3c", v: 1000},
-            {t: "TON 💎", c: "#9b59b6", v: 0}
+            {t: "НЕУДАЧА 💀", c: "#1a1a1a", s: 0, ton: 0},
+            {t: "1 ⭐", c: "#f1c40f", s: 1, ton: 0},
+            {t: "FREE SPIN 🌀", c: "#3498db", s: 5, ton: 0},
+            {t: "10 ⭐", c: "#8e44ad", s: 10, ton: 0},
+            {t: "НЕУДАЧА 💀", c: "#1a1a1a", s: 0, ton: 0},
+            {t: "50 ⭐", c: "#27ae60", s: 50, ton: 0},
+            {t: "1000 ⭐", c: "#e74c3c", s: 1000, ton: 0},
+            {t: "0.5 TON 💎", c: "#0088cc", s: 0, ton: 0.5}
         ];
 
         function draw(angle = 0) {
             const arc = (Math.PI * 2) / prizes.length;
             ctx.clearRect(0,0,600,600);
             prizes.forEach((p, i) => {
-                ctx.beginPath();
-                ctx.fillStyle = p.c;
-                ctx.moveTo(300, 300);
-                ctx.arc(300, 300, 280, i * arc + angle, (i + 1) * arc + angle);
-                ctx.fill();
-                ctx.strokeStyle = "rgba(255,255,255,0.1)";
-                ctx.stroke();
-                
-                ctx.save();
-                ctx.translate(300, 300);
-                ctx.rotate(i * arc + arc/2 + angle);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 24px Arial";
-                ctx.fillText(p.t, 120, 10);
-                ctx.restore();
+                ctx.beginPath(); ctx.fillStyle = p.c; ctx.moveTo(300, 300);
+                ctx.arc(300, 300, 280, i * arc + angle, (i + 1) * arc + angle); ctx.fill();
+                ctx.save(); ctx.translate(300, 300); ctx.rotate(i * arc + arc/2 + angle);
+                ctx.fillStyle = "white"; ctx.font = "bold 22px Arial"; ctx.fillText(p.t, 100, 10); ctx.restore();
             });
         }
 
         function setBet(v, b) {
-            bet = v;
-            document.querySelectorAll('.bet-btn').forEach(el => el.classList.remove('active'));
-            b.classList.add('active');
-            document.getElementById('curBet').innerText = v;
+            bet = v; document.querySelectorAll('.bet-btn').forEach(el => el.classList.remove('active'));
+            b.classList.add('active'); document.getElementById('curBet').innerText = v;
         }
 
         function doSpin() {
-            if (rotating || balance < bet) return;
-            rotating = true;
-            balance -= bet;
-            document.getElementById('balance').innerText = balance;
-            document.getElementById('canvas').className = "";
-
-            let start = performance.now();
-            let totalRot = Math.random() * 360 + 3600;
-
+            if (spinning || stars < bet) return;
+            spinning = true; stars -= bet;
+            document.getElementById('stars_bal').innerText = stars;
+            let start = performance.now(); let totalRot = Math.random() * 360 + 3600;
             function anim(time) {
-                let p = (time - start) / 5000;
-                if (p > 1) p = 1;
-                let ease = 1 - Math.pow(1 - p, 4);
-                draw((totalRot * ease * Math.PI) / 180);
+                let p = (time - start) / 4000; if (p > 1) p = 1;
+                let ease = 1 - Math.pow(1 - p, 3); draw((totalRot * ease * Math.PI) / 180);
                 if (p < 1) requestAnimationFrame(anim);
                 else {
-                    rotating = false;
-                    const finalIdx = Math.floor((360 - (totalRot % 360) + 270) % 360 / (360/prizes.length));
-                    const win = prizes[finalIdx];
-                    balance += win.v;
-                    document.getElementById('balance').innerText = balance;
-                    document.getElementById('canvas').className = win.v > 0 ? "win-glow" : "lose-glow";
-                    tg.sendData(`spin_${bet}_${win.v}_${win.t}`);
+                    spinning = false; const idx = Math.floor((360 - (totalRot % 360) + 270) % 360 / (360/prizes.length));
+                    const win = prizes[idx]; stars += win.s; ton += win.ton;
+                    document.getElementById('stars_bal').innerText = stars; document.getElementById('ton_bal').innerText = ton.toFixed(2);
+                    tg.sendData(`spin_${bet}_${win.s}_${win.ton}_${win.t}`);
                 }
             }
             requestAnimationFrame(anim);
         }
-
         function buy(a) { tg.sendData("dep_" + a); }
         draw();
     </script>
