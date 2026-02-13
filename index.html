@@ -3,122 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mystic Wheel Pro</title>
+    <title>Magic Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
-        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; background: #111; border-bottom: 1px solid #333; box-sizing: border-box; }
-        .bal-group { display: flex; flex-direction: column; gap: 5px; }
-        .bal-item { font-weight: bold; font-size: 1.1em; }
+        body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; height: 100vh; }
         
-        /* Модальное окно вывода */
-        #withdrawModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        .modal-content { background: #1a1a1a; padding: 20px; border-radius: 20px; width: 85%; border: 1px solid #333; }
+        /* Шапка с балансом и кнопками */
+        .top-bar { width: 100%; padding: 10px; background: rgba(20,20,20,0.9); display: flex; justify-content: space-between; border-bottom: 1px solid #333; }
+        .bals { display: flex; flex-direction: column; gap: 2px; }
+        .bal-val { font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .top-btns { display: flex; gap: 8px; align-items: center; }
+        .mini-btn { padding: 6px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; border: 1px solid; }
+        .dep-btn { border-color: #27ae60; color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+        .out-btn { border-color: #e67e22; color: #e67e22; background: rgba(230, 126, 34, 0.1); }
+
+        /* Колесо */
+        .wheel-container { position: relative; margin-top: 30px; width: 320px; height: 320px; }
+        canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #000); transition: 0.5s; }
+        .center-spin { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80px; height: 80px; background: radial-gradient(#8e44ad, #4b0082);
+            border-radius: 50%; border: 4px solid #fff; z-index: 100;
+            display: flex; align-items: center; text-align: center; justify-content: center;
+            font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #8e44ad;
+            font-size: 0.7em; text-transform: uppercase;
+        }
+        .center-spin:active { transform: translate(-50%, -50%) scale(0.9); }
+        
+        /* Неоновые эффекты */
+        .glow-win { filter: drop-shadow(0 0 30px #f1c40f) !important; }
+        .glow-fs { filter: drop-shadow(0 0 30px #3498db) !important; }
+
+        /* Ставки */
+        .bets { display: flex; gap: 15px; margin-top: 40px; }
+        .bet { padding: 10px 25px; border-radius: 15px; border: 1px solid #444; background: #1a1a1a; color: #888; transition: 0.3s; }
+        .bet.active { border-color: #f1c40f; color: #f1c40f; box-shadow: 0 0 15px rgba(241,196,15,0.3); }
+
+        /* Модалки */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+        .m-content { background: #151515; padding: 25px; border-radius: 20px; width: 80%; border: 1px solid #333; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
-        
-        .wheel-area { position: relative; margin: 15px 0; width: 280px; height: 280px; }
-        #canvas { width: 100%; height: 100%; border-radius: 50%; }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid gold; z-index: 10; }
-        
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
-        .bet-btn { background: #222; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 10px; }
-        .bet-btn.active { border-color: gold; color: gold; }
-        .spin-btn { background: linear-gradient(135deg, #8e44ad, #6c3483); border: none; padding: 15px 60px; border-radius: 30px; color: white; font-size: 1.2em; font-weight: bold; }
-        
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 15px; }
-        .btn-action { padding: 12px; border-radius: 10px; font-weight: bold; border: 1px solid; text-align: center; }
-        .dep-color { border-color: #27ae60; color: #27ae60; background: rgba(39, 174, 96, 0.1); }
-        .out-color { border-color: #e67e22; color: #e67e22; background: rgba(230, 126, 34, 0.1); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="bal-group">
-            <div class="bal-item" style="color: gold;">✨ <span id="stars_bal">0</span></div>
-            <div class="bal-item" style="color: #0088cc;">💎 <span id="ton_bal">0.00</span></div>
+    <div class="top-bar">
+        <div class="bals">
+            <div class="bal-val" style="color: gold;">✨ <span id="s_bal">0</span></div>
+            <div class="bal-val" style="color: #0088cc;">💎 <span id="t_bal">0.00</span></div>
         </div>
-        <div style="color: #666">Ставка: <span id="curBet">5</span></div>
-    </div>
-
-    <div id="withdrawModal">
-        <div class="modal-content">
-            <h3 id="wTitle">Вывод Stars</h3>
-            <p id="wLimit" style="font-size: 0.8em; color: #888;"></p>
-            <input type="number" id="wAmount" placeholder="Сумма">
-            <input type="text" id="wAddr" placeholder="Адрес (для TON) или коммент">
-            <button class="spin-btn" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="sendWithdraw()">ОТПРАВИТЬ</button>
-            <button onclick="closeModal()" style="background: none; border: none; color: #666; width: 100%; margin-top: 15px;">Отмена</button>
+        <div class="top-btns">
+            <div class="mini-btn dep-btn" onclick="openM('dep')">ДЕПОЗИТ</div>
+            <div class="mini-btn out-btn" onclick="openM('out')">ВЫВОД</div>
         </div>
     </div>
 
-    <div class="wheel-area">
-        <div class="pointer"></div>
+    <div class="wheel-container">
+        <div class="center-spin" onclick="doSpin()">ПУСК</div>
         <canvas id="canvas" width="600" height="600"></canvas>
     </div>
 
-    <div class="controls">
-        <div style="display: flex; gap: 10px;">
-            <button class="bet-btn active" onclick="setBet(5, this)">5</button>
-            <button class="bet-btn" onclick="setBet(10, this)">10</button>
-            <button class="bet-btn" onclick="setBet(50, this)">50</button>
-        </div>
-        <button class="spin-btn" onclick="doSpin()">ЗАКЛИНАНИЕ</button>
+    <div class="bets">
+        <div class="bet active" onclick="setBet(5, this)">5</div>
+        <div class="bet" onclick="setBet(10, this)">10</div>
+        <div class="bet" onclick="setBet(50, this)">50</div>
     </div>
 
-    <div class="action-grid">
-        <div class="btn-action dep-color" onclick="buy(10)">+10 ⭐</div>
-        <div class="btn-action out-color" onclick="openModal('stars')">ВЫВОД ⭐</div>
-        <div class="btn-action dep-color" onclick="buy(100)">+100 ⭐</div>
-        <div class="btn-action out-color" onclick="openModal('ton')">ВЫВОД TON</div>
+    <div id="modal">
+        <div class="m-content">
+            <h3 id="mTitle">Заголовок</h3>
+            <input type="number" id="mAmount" placeholder="Сумма">
+            <input type="text" id="mAddr" placeholder="Адрес/Комментарий" style="display:none">
+            <button class="mini-btn dep-btn" style="width:100%; padding:15px; margin-top:10px" onclick="confirmM()">ПОДТВЕРДИТЬ</button>
+            <button onclick="closeM()" style="background:none; border:none; color:#555; width:100%; margin-top:10px">Отмена</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const params = new URLSearchParams(window.location.search);
         
         let stars = parseInt(params.get('balance')) || 0;
-        let ton = parseFloat(params.get('ton')) || 0.0;
+        let ton = parseFloat(params.get('ton')) || 0;
         let bet = 5;
         let spinning = false;
-        let currentWType = 'stars';
+        let mMode = '';
 
-        document.getElementById('stars_bal').innerText = stars;
-        document.getElementById('ton_bal').innerText = ton.toFixed(2);
-
-        // --- ЛОГИКА МОДАЛКИ ---
-        function openModal(type) {
-            currentWType = type;
-            document.getElementById('withdrawModal').style.display = 'flex';
-            document.getElementById('wTitle').innerText = type === 'stars' ? "Вывод Stars" : "Вывод TON";
-            document.getElementById('wLimit').innerText = type === 'stars' ? "Минимум 500 ⭐" : "Минимум 10 TON";
-            document.getElementById('wAddr').placeholder = type === 'stars' ? "Ваш ник или комментарий" : "Ваш TON адрес (UQ...)";
+        function updateUI() {
+            document.getElementById('s_bal').innerText = stars;
+            document.getElementById('t_bal').innerText = ton.toFixed(2);
         }
-        function closeModal() { document.getElementById('withdrawModal').style.display = 'none'; }
-        
-        function sendWithdraw() {
-            const amt = parseFloat(document.getElementById('wAmount').value);
-            const addr = document.getElementById('wAddr').value;
-            
-            if (currentWType === 'stars' && (amt < 500 || stars < amt)) { tg.showAlert("Недостаточно Stars или меньше 500"); return; }
-            if (currentWType === 'ton' && (amt < 10 || ton < amt)) { tg.showAlert("Недостаточно TON или меньше 10"); return; }
-            if (!addr) { tg.showAlert("Введите адрес/инфо"); return; }
-            
-            tg.sendData(`withdraw_${currentWType}_${amt}_${addr}`);
-            tg.close();
-        }
+        updateUI();
 
-        // --- РУЛЕТКА (код как в прошлом шаге) ---
         const prizes = [
-            {t: "НЕУДАЧА 💀", c: "#1a1a1a", s: 0, ton: 0},
+            {t: "💀", c: "#1a1a1a", s: 0, ton: 0},
             {t: "1 ⭐", c: "#f1c40f", s: 1, ton: 0},
-            {t: "FREE SPIN 🌀", c: "#3498db", s: 5, ton: 0},
+            {t: "FREE SPIN 🌀", c: "#3498db", s: 5, ton: 0, fs: true},
             {t: "10 ⭐", c: "#8e44ad", s: 10, ton: 0},
-            {t: "НЕУДАЧА 💀", c: "#1a1a1a", s: 0, ton: 0},
+            {t: "💀", c: "#1a1a1a", s: 0, ton: 0},
             {t: "50 ⭐", c: "#27ae60", s: 50, ton: 0},
-            {t: "1000 ⭐", c: "#e74c3c", s: 1000, ton: 0},
-            {t: "0.5 TON 💎", c: "#0088cc", s: 0, ton: 0.5}
+            {t: "1000 ⭐", c: "#c0392b", s: 1000, ton: 0},
+            {t: "TON 💎", c: "#2980b9", s: 0, ton: 0.5}
         ];
 
         function draw(angle = 0) {
@@ -128,34 +115,66 @@
                 ctx.beginPath(); ctx.fillStyle = p.c; ctx.moveTo(300, 300);
                 ctx.arc(300, 300, 280, i * arc + angle, (i + 1) * arc + angle); ctx.fill();
                 ctx.save(); ctx.translate(300, 300); ctx.rotate(i * arc + arc/2 + angle);
-                ctx.fillStyle = "white"; ctx.font = "bold 22px Arial"; ctx.fillText(p.t, 100, 10); ctx.restore();
+                ctx.fillStyle = "white"; ctx.font = "bold 24px Arial"; ctx.fillText(p.t, 120, 10); ctx.restore();
             });
         }
 
-        function setBet(v, b) {
-            bet = v; document.querySelectorAll('.bet-btn').forEach(el => el.classList.remove('active'));
-            b.classList.add('active'); document.getElementById('curBet').innerText = v;
+        function setBet(v, el) {
+            bet = v;
+            document.querySelectorAll('.bet').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
         }
 
         function doSpin() {
-            if (spinning || stars < bet) return;
-            spinning = true; stars -= bet;
-            document.getElementById('stars_bal').innerText = stars;
-            let start = performance.now(); let totalRot = Math.random() * 360 + 3600;
+            if (spinning) return;
+            if (stars < bet) { tg.showAlert("Недостаточно звезд для заклинания!"); return; }
+            
+            spinning = true;
+            stars -= bet;
+            updateUI();
+            canvas.className = "";
+
+            let totalRot = Math.random() * 360 + 3600;
+            let start = performance.now();
+
             function anim(time) {
-                let p = (time - start) / 4000; if (p > 1) p = 1;
-                let ease = 1 - Math.pow(1 - p, 3); draw((totalRot * ease * Math.PI) / 180);
+                let p = (time - start) / 4000;
+                if (p > 1) p = 1;
+                let ease = 1 - Math.pow(1 - p, 3);
+                draw((totalRot * ease * Math.PI) / 180);
                 if (p < 1) requestAnimationFrame(anim);
                 else {
-                    spinning = false; const idx = Math.floor((360 - (totalRot % 360) + 270) % 360 / (360/prizes.length));
-                    const win = prizes[idx]; stars += win.s; ton += win.ton;
-                    document.getElementById('stars_bal').innerText = stars; document.getElementById('ton_bal').innerText = ton.toFixed(2);
-                    tg.sendData(`spin_${bet}_${win.s}_${win.ton}_${win.t}`);
+                    spinning = false;
+                    const idx = Math.floor((360 - (totalRot % 360) + 270) % 360 / (360/prizes.length));
+                    const win = prizes[idx];
+                    stars += win.s;
+                    ton += win.ton;
+                    updateUI();
+                    
+                    if(win.fs) canvas.className = "glow-fs";
+                    else if(win.s > 0 || win.ton > 0) canvas.className = "glow-win";
+                    
+                    tg.sendData(`spin_${bet}_${win.s}_${win.ton}`);
                 }
             }
             requestAnimationFrame(anim);
         }
-        function buy(a) { tg.sendData("dep_" + a); }
+
+        function openM(type) {
+            mMode = type;
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('mTitle').innerText = type === 'dep' ? "Пополнение Stars" : "Вывод средств";
+            document.getElementById('mAddr').style.display = type === 'out' ? 'block' : 'none';
+        }
+        function closeM() { document.getElementById('modal').style.display = 'none'; }
+        
+        function confirmM() {
+            const amt = document.getElementById('mAmount').value;
+            const adr = document.getElementById('mAddr').value;
+            if (mMode === 'dep') tg.sendData(`dep_${amt}`);
+            else tg.sendData(`withdraw_stars_${amt}_${adr}`); // Для примера stars
+            closeM();
+        }
         draw();
     </script>
 </body>
