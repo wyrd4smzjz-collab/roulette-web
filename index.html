@@ -188,7 +188,7 @@
         function openM() { document.getElementById('modal').style.display = 'flex'; }
         function closeM() { document.getElementById('modal').style.display = 'none'; }
         function adjBet(v) { if(!isSpinning) { curBet = Math.max(5, curBet + v); update(); } }
-        function adjDep(v) { depVal = Math.max(100, depVal + v); update(); }
+        function adjDep(v) { depVal = Math.max(10, depVal + v); update(); }
         function setTab(t, e) {
             document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(t).classList.add('active');
