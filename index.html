@@ -3,51 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mystic Wheel</title>
+    <title>Mystic Wheel Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #0a0a0a; color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; background: #1a1a1a; border-bottom: 2px solid #333; box-sizing: border-box; }
-        .balance { color: #f1c40f; font-weight: bold; font-size: 1.2em; }
+        body { background: #050505; color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+        .header { width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, #111, #000); border-bottom: 1px solid #333; box-sizing: border-box; }
+        .bal-box { color: #f1c40f; font-size: 1.3em; font-weight: 800; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
         
-        .wheel-box { position: relative; margin: 20px 0; width: 300px; height: 300px; transition: 0.3s; border-radius: 50%; }
-        .win-glow { box-shadow: 0 0 40px gold; }
-        .lose-glow { box-shadow: 0 0 40px #e74c3c; }
+        .wheel-area { position: relative; margin: 30px 0; width: 320px; height: 320px; }
+        #canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 20px #000); transition: filter 0.5s; }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; filter: drop-shadow(0 0 5px gold); }
         
-        #canvas { width: 100%; height: 100%; }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; }
+        .win-glow { filter: drop-shadow(0 0 30px gold) !important; }
+        .lose-glow { filter: drop-shadow(0 0 30px #e74c3c) !important; }
 
-        .bet-selector { display: flex; gap: 10px; margin: 15px 0; }
-        .bet-btn { background: #333; border: 1px solid #555; color: #fff; padding: 8px 15px; border-radius: 8px; }
-        .bet-btn.active { background: #f1c40f; color: #000; border-color: #f1c40f; }
+        .controls { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
+        .bet-row { display: flex; gap: 10px; }
+        .bet-btn { background: #1a1a1a; border: 1px solid #444; color: #888; padding: 10px 20px; border-radius: 12px; font-weight: bold; transition: 0.2s; }
+        .bet-btn.active { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
 
-        .spin-btn { background: #8e44ad; border: none; padding: 15px 60px; border-radius: 30px; color: white; font-size: 1.5em; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
-        
-        .deposit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; padding-bottom: 30px; }
-        .dep-btn { background: #27ae60; border: none; padding: 10px; border-radius: 8px; color: white; font-weight: bold; }
+        .spin-btn { background: linear-gradient(135deg, #8e44ad, #6c3483); border: none; padding: 18px 80px; border-radius: 40px; color: white; font-size: 1.4em; font-weight: bold; box-shadow: 0 10px 20px rgba(142, 68, 173, 0.4); }
+        .spin-btn:active { transform: scale(0.95); }
+
+        .dep-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 90%; margin-top: 20px; }
+        .dep-btn { background: #111; border: 1px solid #27ae60; color: #27ae60; padding: 12px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="balance">✨ <span id="bal-val">0</span> ⭐</div>
-        <div style="color: #888">Ставка: <span id="current-bet">5</span></div>
+        <div class="bal-box">✨ <span id="balance">0</span> ⭐</div>
+        <div style="color: #666">Ставка: <span id="curBet">5</span></div>
     </div>
 
-    <div class="wheel-box" id="wheel-container">
+    <div class="wheel-area">
         <div class="pointer"></div>
-        <canvas id="canvas" width="300" height="300"></canvas>
+        <canvas id="canvas" width="600" height="600"></canvas>
     </div>
 
-    <div class="bet-selector">
-        <button class="bet-btn active" onclick="setBet(5, this)">5</button>
-        <button class="bet-btn" onclick="setBet(10, this)">10</button>
-        <button class="bet-btn" onclick="setBet(50, this)">50</button>
+    <div class="controls">
+        <div class="bet-row">
+            <button class="bet-btn active" onclick="setBet(5, this)">5</button>
+            <button class="bet-btn" onclick="setBet(10, this)">10</button>
+            <button class="bet-btn" onclick="setBet(50, this)">50</button>
+        </div>
+        <button class="spin-btn" id="spinBtn" onclick="doSpin()">ЗАКЛИНАНИЕ</button>
     </div>
 
-    <button class="spin-btn" id="spin-btn" onclick="startSpin()">ЗАКЛИНАНИЕ</button>
-
-    <div style="margin-bottom: 10px; color: #888;">Пополнить энергию:</div>
-    <div class="deposit-grid">
+    <div class="dep-grid">
         <button class="dep-btn" onclick="buy(10)">10 ⭐</button>
         <button class="dep-btn" onclick="buy(100)">100 ⭐</button>
         <button class="dep-btn" onclick="buy(500)">500 ⭐</button>
@@ -56,97 +58,87 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const params = new URLSearchParams(window.location.search);
         
         let balance = parseInt(params.get('balance')) || 0;
-        let currentBet = 5;
-        let isSpinning = false;
-        document.getElementById('bal-val').innerText = balance;
+        let bet = 5;
+        let rotating = false;
+        document.getElementById('balance').innerText = balance;
 
         const prizes = [
-            {t: "НЕУДАЧА", c: "#2c3e50", v: 0},
-            {t: "1⭐", c: "#8e44ad", v: 1},
-            {t: "FREE SPIN", c: "#2980b9", v: 5},
-            {t: "10⭐", c: "#f1c40f", v: 10},
-            {t: "НЕУДАЧА", c: "#2c3e50", v: 0},
-            {t: "50⭐", c: "#27ae60", v: 50},
-            {t: "1000⭐", c: "#e74c3c", v: 1000},
-            {t: "TON", c: "#9b59b6", v: 0}
+            {t: "НЕУДАЧА 💀", c: "#1a1a1a", v: 0},
+            {t: "1 ⭐", c: "#f1c40f", v: 1},
+            {t: "FREE SPIN 🌀", c: "#3498db", v: 5},
+            {t: "10 ⭐", c: "#8e44ad", v: 10},
+            {t: "НЕУДАЧА 💀", c: "#1a1a1a", v: 0},
+            {t: "50 ⭐", c: "#27ae60", v: 50},
+            {t: "1000 ⭐", c: "#e74c3c", v: 1000},
+            {t: "TON 💎", c: "#9b59b6", v: 0}
         ];
 
-        function drawWheel(angle = 0) {
+        function draw(angle = 0) {
             const arc = (Math.PI * 2) / prizes.length;
-            ctx.clearRect(0,0,300,300);
+            ctx.clearRect(0,0,600,600);
             prizes.forEach((p, i) => {
                 ctx.beginPath();
                 ctx.fillStyle = p.c;
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 140, i * arc + angle, (i + 1) * arc + angle);
+                ctx.moveTo(300, 300);
+                ctx.arc(300, 300, 280, i * arc + angle, (i + 1) * arc + angle);
                 ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.1)";
+                ctx.stroke();
+                
                 ctx.save();
-                ctx.translate(150, 150);
+                ctx.translate(300, 300);
                 ctx.rotate(i * arc + arc/2 + angle);
-                ctx.fillStyle = "#fff";
-                ctx.font = "bold 12px Arial";
-                ctx.fillText(p.t, 60, 5);
+                ctx.fillStyle = "white";
+                ctx.font = "bold 24px Arial";
+                ctx.fillText(p.t, 120, 10);
                 ctx.restore();
             });
         }
 
-        function setBet(val, btn) {
-            currentBet = val;
-            document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('current-bet').innerText = val;
+        function setBet(v, b) {
+            bet = v;
+            document.querySelectorAll('.bet-btn').forEach(el => el.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById('curBet').innerText = v;
         }
 
-        function startSpin() {
-            if (isSpinning || balance < currentBet) return;
-            isSpinning = true;
-            balance -= currentBet;
-            document.getElementById('bal-val').innerText = balance;
-            document.getElementById('wheel-container').className = "wheel-box";
+        function doSpin() {
+            if (rotating || balance < bet) return;
+            rotating = true;
+            balance -= bet;
+            document.getElementById('balance').innerText = balance;
+            document.getElementById('canvas').className = "";
 
-            let rotation = 0;
-            const duration = 4000;
-            const start = performance.now();
-            const extraRot = Math.random() * 360 + (360 * 10);
+            let start = performance.now();
+            let totalRot = Math.random() * 360 + 3600;
 
-            function animate(time) {
-                let progress = (time - start) / duration;
-                if (progress > 1) progress = 1;
-                let ease = 1 - Math.pow(1 - progress, 3);
-                rotation = ease * extraRot;
-                drawWheel((rotation * Math.PI) / 180);
-                if (progress < 1) requestAnimationFrame(animate);
-                else finishSpin(rotation % 360);
+            function anim(time) {
+                let p = (time - start) / 5000;
+                if (p > 1) p = 1;
+                let ease = 1 - Math.pow(1 - p, 4);
+                draw((totalRot * ease * Math.PI) / 180);
+                if (p < 1) requestAnimationFrame(anim);
+                else {
+                    rotating = false;
+                    const finalIdx = Math.floor((360 - (totalRot % 360) + 270) % 360 / (360/prizes.length));
+                    const win = prizes[finalIdx];
+                    balance += win.v;
+                    document.getElementById('balance').innerText = balance;
+                    document.getElementById('canvas').className = win.v > 0 ? "win-glow" : "lose-glow";
+                    tg.sendData(`spin_${bet}_${win.v}_${win.t}`);
+                }
             }
-            requestAnimationFrame(animate);
+            requestAnimationFrame(anim);
         }
 
-        function finishSpin(deg) {
-            isSpinning = false;
-            const realDeg = (360 - deg + 270) % 360;
-            const idx = Math.floor(realDeg / (360 / prizes.length));
-            const prize = prizes[idx];
-            
-            const container = document.getElementById('wheel-container');
-            if (prize.v > 0) {
-                container.classList.add('win-glow');
-                balance += prize.v;
-            } else {
-                container.classList.add('lose-glow');
-            }
-            
-            document.getElementById('bal-val').innerText = balance;
-            // Отправляем данные боту в фоне, не закрывая окно
-            tg.sendData(`spin_${currentBet}_${prize.v}_${prize.t}`);
-        }
-
-        function buy(amt) { tg.sendData("dep_" + amt); }
-        drawWheel();
+        function buy(a) { tg.sendData("dep_" + a); }
+        draw();
     </script>
 </body>
 </html>
