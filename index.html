@@ -80,9 +80,18 @@
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
 
+        // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
         const sndTick = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
-        sndClick.volume = 0.3; sndTick.volume = 0.1;
+        const sndSpin = new Audio('https://www.soundjay.com/mechanical/sounds/mechanical-8.mp3');
+        const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+        const sndLose = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
+        
+        sndClick.volume = 0.3; 
+        sndTick.volume = 0.15;
+        sndSpin.volume = 0.4;
+        sndWin.volume = 0.5;
+        sndLose.volume = 0.3;
 
         const sectors = [
             {t: "💀", c: "#1a1a1a", v: 0},   {t: "20", c: "#8e44ad", v: 20},
@@ -104,21 +113,19 @@
                         stars = parseInt(value) || 0;
                         console.log('Баланс загружен из CloudStorage:', stars);
                     } else {
-                        // Если в CloudStorage нет данных, берем из URL
                         stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
                         console.log('Баланс загружен из URL:', stars);
                     }
                     update();
                 });
             } else {
-                // Fallback для старых версий
                 stars = parseInt(new URLSearchParams(location.search).get('balance')) || 0;
                 console.log('CloudStorage недоступен, баланс из URL:', stars);
                 update();
             }
         }
 
-        // ✅ СОХРАНЕНИЕ БАЛАНСА (с callback для надежности)
+        // ✅ СОХРАНЕНИЕ БАЛАНСА
         function saveBalance(callback) {
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem('balance', stars.toString(), function(err) {
@@ -163,7 +170,11 @@
             isSpinning = true; 
             stars -= curBet; 
             update();
-            saveBalance(); // Сохраняем после списания ставки
+            saveBalance();
+            
+            // 🎵 ЗВУК ВРАЩЕНИЯ
+            sndSpin.currentTime = 0;
+            sndSpin.play().catch(()=>{});
             
             let rotation = (Math.random() * 360) + 3600;
             let start = null;
@@ -178,6 +189,7 @@
                 let currentPos = rotation * easeOut;
                 currentAngle = (currentPos * Math.PI) / 180;
                 
+                // 🎵 ТИКАНЬЕ
                 if (Math.floor(currentPos / (360/sectors.length)) > lastTickAngle) {
                     sndTick.currentTime = 0; sndTick.play().catch(()=>{});
                     lastTickAngle = Math.floor(currentPos / (360/sectors.length));
@@ -186,18 +198,33 @@
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
                 else {
+                    // 🎵 ОСТАНАВЛИВАЕМ ВРАЩЕНИЕ
+                    sndSpin.pause();
+                    sndSpin.currentTime = 0;
+                    
                     isSpinning = false;
                     let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length));
                     let win = sectors[idx];
                     stars += win.v;
                     
-                    // ✅ СОХРАНЯЕМ БАЛАНС ПОСЛЕ ВЫИГРЫША
                     saveBalance();
                     
-                    if (win.t === "🎁") {
-                        setTimeout(() => alert("🎁 БОНУС: Бесплатная ставка!"), 100);
-                    } else if (win.v > 0) {
-                        setTimeout(() => alert(`🎉 Выигрыш: ${win.v} звезд!`), 100);
+                    // 🎵 ЗВУКИ РЕЗУЛЬТАТА
+                    if (win.v > 0) {
+                        sndWin.currentTime = 0;
+                        sndWin.play().catch(()=>{});
+                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                        
+                        if (win.t === "🎁") {
+                            setTimeout(() => alert("🎁 БОНУС: Бесплатная ставка!"), 200);
+                        } else {
+                            setTimeout(() => alert(`🎉 Выигрыш: ${win.v} звезд!`), 200);
+                        }
+                    } else {
+                        sndLose.currentTime = 0;
+                        sndLose.play().catch(()=>{});
+                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                        setTimeout(() => alert("💀 Не повезло... Попробуй еще раз!"), 200);
                     }
                     
                     update();
@@ -206,7 +233,12 @@
             requestAnimationFrame(animate);
         }
 
-        function playClick() { sndClick.currentTime = 0; sndClick.play().catch(()=>{}); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+        function playClick() { 
+            sndClick.currentTime = 0; 
+            sndClick.play().catch(()=>{}); 
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
+        }
+        
         function openM() { playClick(); document.getElementById('modal').style.display = 'flex'; }
         function closeM() { playClick(); document.getElementById('modal').style.display = 'none'; }
         
@@ -229,17 +261,11 @@
             e.target.classList.add('active'); 
         }
         
-        // ✅ ИСПРАВЛЕНО: Сначала добавляем звезды, сохраняем, потом отправляем в бота
         function doDep() { 
             playClick();
             
-            // Добавляем звезды к балансу (предполагаем успешную оплату)
-            stars += depVal;
-            update();
-            
-            // Сохраняем баланс в CloudStorage ПЕРЕД отправкой в бота
+            // НЕ добавляем звезды сразу - они добавятся после оплаты
             saveBalance(function() {
-                // После успешного сохранения отправляем данные боту
                 tg.sendData(JSON.stringify({
                     action: "deposit", 
                     amount: depVal, 
@@ -248,19 +274,15 @@
             });
         }
         
-        // ✅ ИСПРАВЛЕНО: Сначала вычитаем звезды, сохраняем, потом отправляем в бота
         function doWit() { 
             playClick(); 
             let val = parseInt(document.getElementById('w_stars').value);
             if(val > stars) return alert("Мало звезд!");
             
-            // Вычитаем звезды
             stars -= val;
             update();
             
-            // Сохраняем баланс в CloudStorage ПЕРЕД отправкой в бота
             saveBalance(function() {
-                // После успешного сохранения отправляем данные боту
                 tg.sendData(JSON.stringify({
                     action: "withdraw", 
                     amount: val, 
@@ -275,7 +297,6 @@
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
 
-        // ✅ ЗАГРУЖАЕМ БАЛАНС ПРИ ЗАПУСКЕ
         loadBalance();
         draw();
     </script>
