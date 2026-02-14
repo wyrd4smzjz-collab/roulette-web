@@ -82,11 +82,10 @@
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
         let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
-        let syncTimer = null;
         
         const MIN_WITHDRAW = 500;
 
-        // 🎵 ЗВУКОВЫЕ ЭФФЕКТЫ
+        // 🎵 ЗВУКИ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
         const sndTick = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
         const sndSpin = new Audio('https://www.soundjay.com/mechanical/sounds/mechanical-8.mp3');
@@ -112,30 +111,13 @@
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
         let currentAngle = 0;
 
-        // ✅ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ С ЗАДЕРЖКОЙ
-        function scheduleSyncWithBot() {
-            if (syncTimer) clearTimeout(syncTimer);
-            
-            syncTimer = setTimeout(() => {
-                console.log('⏰ Авто-синхронизация баланса с ботом:', stars);
-                
-                // Отправляем через sendData (закроет приложение, но обновит баланс в боте)
-                tg.sendData(JSON.stringify({
-                    action: "sync",
-                    stars: stars
-                }));
-            }, 2000); // Через 2 секунды после последнего изменения
-        }
-
         // ✅ ЗАГРУЗКА БАЛАНСА
         function loadBalance() {
             const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
             
-            console.log('📊 Загрузка баланса, URL balance:', urlBalance);
-            
             if (!isNaN(urlBalance) && urlBalance >= 0) {
                 stars = urlBalance;
-                console.log('✅ Установлен баланс из URL (от бота):', stars);
+                console.log('✅ Баланс из URL:', stars);
                 saveBalance();
                 update();
             } else {
@@ -146,7 +128,6 @@
                             console.log('📦 Баланс из CloudStorage:', stars);
                         } else {
                             stars = 0;
-                            console.log('⚠️ Новый пользователь, баланс 0');
                         }
                         update();
                     });
@@ -159,19 +140,23 @@
 
         // ✅ СОХРАНЕНИЕ БАЛАНСА
         function saveBalance(callback) {
-            console.log('💾 Сохранение баланса:', stars);
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
-                    if (err) {
-                        console.error('❌ Ошибка сохранения:', err);
-                    } else {
-                        console.log('✅ Баланс сохранен в CloudStorage:', stars);
-                    }
+                    if (!err) console.log('💾 Баланс сохранен:', stars);
                     if (callback) callback();
                 });
             } else {
                 if (callback) callback();
             }
+        }
+
+        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ (без закрытия приложения)
+        function syncWithBot() {
+            console.log('🔄 Синхронизация с ботом:', stars);
+            tg.sendData(JSON.stringify({
+                action: "sync",
+                stars: stars
+            }));
         }
 
         function draw(angle = 0) {
@@ -202,16 +187,12 @@
             playClick();
             isSpinning = true; 
             
-            const oldStars = stars;
             stars -= curBet;
-            console.log(`🎰 Ставка ${curBet}, было ${oldStars}, стало ${stars}`);
-            
             update();
             saveBalance();
             
-            // 🎵 ЗАПУСК ЗВУКА ВРАЩЕНИЯ
             sndSpin.currentTime = 0;
-            sndSpin.play().catch(e => console.log('Ошибка звука:', e));
+            sndSpin.play().catch(()=>{});
             
             let rotation = (Math.random() * 360) + 3600;
             let start = null;
@@ -226,7 +207,6 @@
                 let currentPos = rotation * easeOut;
                 currentAngle = (currentPos * Math.PI) / 180;
                 
-                // 🎵 ТИКАНЬЕ
                 if (Math.floor(currentPos / (360/sectors.length)) > lastTickAngle) {
                     sndTick.currentTime = 0; 
                     sndTick.play().catch(()=>{});
@@ -236,7 +216,6 @@
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
                 else {
-                    // 🎵 ОСТАНАВЛИВАЕМ ЗВУК ВРАЩЕНИЯ
                     sndSpin.pause();
                     sndSpin.currentTime = 0;
                     
@@ -244,13 +223,9 @@
                     let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length));
                     let win = sectors[idx];
                     
-                    const beforeWin = stars;
                     stars += win.v;
-                    console.log(`🎉 Выпало: ${win.t} (+${win.v}), было ${beforeWin}, стало ${stars}`);
-                    
                     saveBalance();
                     
-                    // 🎵 ЗВУКИ РЕЗУЛЬТАТА
                     if (win.v > 0) {
                         sndWin.currentTime = 0;
                         sndWin.play().catch(()=>{});
@@ -265,7 +240,7 @@
                         sndLose.currentTime = 0;
                         sndLose.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                        setTimeout(() => alert(`💀 Не повезло... Попробуй еще раз!\n\nВаш баланс: ${stars} ⭐`), 200);
+                        setTimeout(() => alert(`💀 Не повезло...\n\nВаш баланс: ${stars} ⭐`), 200);
                     }
                     
                     update();
@@ -282,11 +257,9 @@
         
         function openM() { 
             playClick(); 
-            document.getElementById('modal').style.display = 'flex'; 
-            console.log('📂 Открыто меню, текущий баланс:', stars);
-            
-            // ✅ ПРИ ОТКРЫТИИ МЕНЮ - СИНХРОНИЗИРУЕМ С БОТОМ
-            scheduleSyncWithBot();
+            document.getElementById('modal').style.display = 'flex';
+            // ✅ Синхронизируем при открытии меню
+            syncWithBot();
         }
         
         function closeM() { 
@@ -315,29 +288,19 @@
         
         function doDep() { 
             playClick();
-            
-            saveBalance(function() {
-                tg.sendData(JSON.stringify({
-                    action: "deposit", 
-                    amount: depVal, 
-                    stars: stars
-                }));
-            });
+            tg.sendData(JSON.stringify({
+                action: "deposit", 
+                amount: depVal, 
+                stars: stars
+            }));
         }
         
-        // ✅ ИСПРАВЛЕНО: Вывод отправляет АКТУАЛЬНЫЙ баланс
+        // ✅ ВЫВОД (БЕЗ sendData - не закрывает приложение!)
         function doWit() { 
             playClick(); 
             
             let val = parseInt(document.getElementById('w_stars').value);
             let addr = document.getElementById('w_addr').value.trim();
-            
-            console.log('💰 Попытка вывода:', {
-                'сумма для вывода': val,
-                'адрес': addr,
-                'текущий баланс в игре': stars,
-                'минимум': MIN_WITHDRAW
-            });
             
             if (!addr) {
                 alert("❌ Введите адрес кошелька TON!");
@@ -345,29 +308,27 @@
             }
             
             if (!val || isNaN(val) || val <= 0) {
-                alert("❌ Введите корректную сумму для вывода!");
+                alert("❌ Введите корректную сумму!");
                 return;
             }
             
             if (val < MIN_WITHDRAW) {
-                alert(`❌ Минимальная сумма для вывода: ${MIN_WITHDRAW} ⭐\n\nВы ввели: ${val} ⭐`);
+                alert(`❌ Минимум: ${MIN_WITHDRAW} ⭐\nВы ввели: ${val} ⭐`);
                 return;
             }
             
             if (val > stars) {
-                alert(`❌ Недостаточно звезд для вывода!\n\nВы хотите вывести: ${val} ⭐\nУ вас на балансе: ${stars} ⭐\n\nНужно еще: ${val - stars} ⭐`);
+                alert(`❌ Недостаточно звезд!\n\nВывести: ${val} ⭐\nБаланс: ${stars} ⭐\nНужно еще: ${val - stars} ⭐`);
                 return;
             }
             
-            console.log('✅ Вывод разрешен');
-            
-            // ✅ ОТПРАВЛЯЕМ АКТУАЛЬНЫЙ БАЛАНС ВМЕСТЕ С ЗАПРОСОМ НА ВЫВОД
+            // ✅ ОТПРАВЛЯЕМ БЕЗ sendData
             saveBalance(function() {
                 tg.sendData(JSON.stringify({
                     action: "withdraw", 
                     amount: val, 
                     address: addr, 
-                    stars: stars  // Отправляем ТЕКУЩИЙ баланс
+                    stars: stars
                 }));
             });
         }
@@ -377,7 +338,6 @@
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
 
-        console.log('🚀 Приложение запущено, userId:', userId);
         loadBalance();
         draw();
     </script>
