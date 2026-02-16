@@ -108,34 +108,48 @@
             {t: "💀", c: "#1a1a1a", v: 0},   {t: "🎁", c: "#27ae60", v: 5}
         ];
 
-        const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         let currentAngle = 0;
 
-        // ✅ ЗАГРУЗКА БАЛАНСА (ПРИОРИТЕТ URL > CloudStorage)
+        function draw(angle = 0) {
+            const arc = (Math.PI * 2) / sectors.length;
+            ctx.clearRect(0, 0, 600, 600);
+            sectors.forEach((s, i) => {
+                const a = i * arc + angle;
+                ctx.beginPath(); 
+                ctx.fillStyle = s.c; 
+                ctx.moveTo(300, 300);
+                ctx.arc(300, 300, 280, a, a + arc); 
+                ctx.fill();
+                ctx.save(); 
+                ctx.translate(300, 300); 
+                ctx.rotate(a + arc/2);
+                ctx.fillStyle = "white"; 
+                ctx.font = "bold 35px Arial";
+                ctx.fillText(s.t, 150, 10); 
+                ctx.restore();
+            });
+        }
+
         function loadBalance() {
             const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
             
-            console.log('📊 Загрузка баланса, URL:', urlBalance);
-            
-            // ПРИОРИТЕТ 1: Баланс из URL (свежий от бота)
             if (!isNaN(urlBalance) && urlBalance >= 0) {
                 stars = urlBalance;
-                console.log('✅ Баланс из URL (от бота):', stars);
+                console.log('✅ Баланс из URL:', stars);
                 saveBalance();
                 update();
                 return;
             }
             
-            // ПРИОРИТЕТ 2: Баланс из CloudStorage (последний сохраненный)
             if (tg.CloudStorage) {
                 tg.CloudStorage.getItem(`balance_${userId}`, function(err, value) {
                     if (!err && value) {
-                        const cloudBalance = parseInt(value) || 0;
-                        stars = cloudBalance;
+                        stars = parseInt(value) || 0;
                         console.log('📦 Баланс из CloudStorage:', stars);
                     } else {
                         stars = 0;
-                        console.log('⚠️ Новый пользователь');
                     }
                     update();
                 });
@@ -145,35 +159,15 @@
             }
         }
 
-        // ✅ СОХРАНЕНИЕ БАЛАНСА В CLOUDSTORAGE
         function saveBalance(callback) {
-            console.log('💾 Сохранение баланса в CloudStorage:', stars);
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
-                    if (err) {
-                        console.error('❌ Ошибка сохранения:', err);
-                    } else {
-                        console.log('✅ Сохранено в CloudStorage:', stars);
-                    }
+                    if (!err) console.log('💾 Сохранено:', stars);
                     if (callback) callback();
                 });
             } else {
-                console.warn('⚠️ CloudStorage недоступен');
                 if (callback) callback();
             }
-        }
-
-        function draw(angle = 0) {
-            const arc = (Math.PI * 2) / sectors.length;
-            ctx.clearRect(0, 0, 600, 600);
-            sectors.forEach((s, i) => {
-                const a = i * arc + angle;
-                ctx.beginPath(); ctx.fillStyle = s.c; ctx.moveTo(300, 300);
-                ctx.arc(300, 300, 280, a, a + arc); ctx.fill();
-                ctx.save(); ctx.translate(300, 300); ctx.rotate(a + arc/2);
-                ctx.fillStyle = "white"; ctx.font = "bold 35px Arial";
-                ctx.fillText(s.t, 150, 10); ctx.restore();
-            });
         }
 
         function update() {
@@ -181,8 +175,13 @@
             document.getElementById('cur_bet').innerText = curBet;
             document.getElementById('dep_val').innerText = depVal;
             const btn = document.getElementById('spinBtn');
-            if (stars < curBet) { btn.innerText = "ПОПОЛНИТЬ"; btn.classList.add('dep-mode'); }
-            else { btn.innerText = "КРУТИТЬ"; btn.classList.remove('dep-mode'); }
+            if (stars < curBet) { 
+                btn.innerText = "ПОПОЛНИТЬ"; 
+                btn.classList.add('dep-mode'); 
+            } else { 
+                btn.innerText = "КРУТИТЬ"; 
+                btn.classList.remove('dep-mode'); 
+            }
         }
 
         function handleSpin() {
@@ -191,12 +190,9 @@
             playClick();
             isSpinning = true; 
             
-            const beforeBet = stars;
             stars -= curBet;
-            console.log(`🎰 Ставка ${curBet}: было ${beforeBet}, стало ${stars}`);
-            
             update();
-            saveBalance(); // Сохраняем после ставки
+            saveBalance();
             
             sndSpin.currentTime = 0;
             sndSpin.play().catch(()=>{});
@@ -230,11 +226,7 @@
                     let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length));
                     let win = sectors[idx];
                     
-                    const beforeWin = stars;
                     stars += win.v;
-                    console.log(`🎉 Выпало ${win.t} (+${win.v}): было ${beforeWin}, стало ${stars}`);
-                    
-                    // ✅ СОХРАНЯЕМ БАЛАНС ПОСЛЕ ВЫИГРЫША
                     saveBalance();
                     
                     if (win.v > 0) {
@@ -269,7 +261,6 @@
         function openM() { 
             playClick(); 
             document.getElementById('modal').style.display = 'flex';
-            console.log('📂 Меню открыто, баланс:', stars);
         }
         
         function closeM() { 
@@ -298,8 +289,6 @@
         
         function doDep() { 
             playClick();
-            
-            // Сохраняем текущий баланс перед пополнением
             saveBalance(function() {
                 tg.sendData(JSON.stringify({
                     action: "deposit", 
@@ -309,18 +298,11 @@
             });
         }
         
-        // ✅ ВЫВОД
         function doWit() { 
             playClick(); 
             
             let val = parseInt(document.getElementById('w_stars').value);
             let addr = document.getElementById('w_addr').value.trim();
-            
-            console.log('💰 Попытка вывода:', {
-                запрос: val,
-                баланс: stars,
-                адрес: addr
-            });
             
             if (!addr) {
                 alert("❌ Введите адрес кошелька TON!");
@@ -342,14 +324,11 @@
                 return;
             }
             
-            console.log('✅ Вывод разрешен, отправка данных боту');
-            
-            // Отправляем данные боту (ВКЛЮЧАЯ текущий баланс)
             tg.sendData(JSON.stringify({
                 action: "withdraw", 
                 amount: val, 
                 address: addr, 
-                stars: stars  // ← ТЕКУЩИЙ баланс из игры!
+                stars: stars
             }));
         }
         
@@ -358,9 +337,12 @@
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
 
-        console.log('🚀 Приложение запущено, userId:', userId);
-        loadBalance();
-        draw();
+        // ✅ ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Приложение запущено');
+            loadBalance();
+            draw(); // ← Рисуем рулетку сразу!
+        });
     </script>
 </body>
 </html>
