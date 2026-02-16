@@ -15,15 +15,14 @@
         canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
         .pointer { 
             position: absolute; 
-            top: 50%; 
+            top: -10px; 
             left: 50%; 
+            transform: translateX(-50%);
             width: 0; 
             height: 0; 
-            border-left: 12px solid transparent; 
-            border-right: 12px solid transparent; 
-            border-bottom: 40px solid #f1c40f; 
-            transform-origin: 50% 100%;
-            transform: translate(-50%, -50%) rotate(0deg);
+            border-left: 15px solid transparent; 
+            border-right: 15px solid transparent; 
+            border-top: 25px solid #f1c40f; 
             z-index: 10;
             filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.8));
         }
@@ -127,7 +126,6 @@
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const pointer = document.getElementById('pointer');
         let currentAngle = 0;
 
         function getWeightedRandomSector() {
@@ -199,6 +197,23 @@
             }
         }
 
+        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ (отправка данных боту)
+        function syncWithBot() {
+            console.log('🔄 Синхронизация с ботом:', stars);
+            if (tg.initData) {
+                // Используем MainButton для отправки данных без закрытия приложения
+                fetch(`https://api.telegram.org/bot${tg.initDataUnsafe?.user?.id || ''}/sendData`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "sync",
+                        stars: stars,
+                        user_id: userId
+                    })
+                }).catch(e => console.log('Sync error:', e));
+            }
+        }
+
         function update() {
             document.getElementById('s_bal').innerText = stars;
             document.getElementById('cur_bet').innerText = curBet;
@@ -219,7 +234,7 @@
             }
         }
 
-        // ✅ СОЗДАЕМ ЗВУК ТРЕЩОТКИ ПРОГРАММНО
+        // ✅ СОЗДАЕМ ЗВУК ТРЕЩОТКИ
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         let clickInterval = null;
 
@@ -282,7 +297,6 @@
             let rotation = targetAngle + 360 * 10;
             
             let start = null;
-            let lastSectorIdx = -1;
 
             // ✅ ЗАПУСК ТРЕЩОТКИ
             let ratchetSpeed = 50;
@@ -320,10 +334,6 @@
                     clearInterval(clickInterval);
                     clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
                 }
-                
-                // ✅ ВРАЩАЕМ УКАЗАТЕЛЬ
-                const pointerRotation = -(currentPos % 360);
-                pointer.style.transform = `translate(-50%, -50%) rotate(${pointerRotation}deg)`;
 
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
@@ -387,14 +397,6 @@
         function openM() { 
             playClick(); 
             document.getElementById('modal').style.display = 'flex';
-            
-            // ✅ СИНХРОНИЗИРУЕМ ПРИ ОТКРЫТИИ МЕНЮ
-            saveBalance(function() {
-                tg.sendData(JSON.stringify({
-                    action: "sync",
-                    stars: stars
-                }));
-            });
         }
         
         function closeM() { 
@@ -421,15 +423,16 @@
             e.target.classList.add('active'); 
         }
         
+        // ✅ ПОПОЛНЕНИЕ (БЕЗ sendData - не закрывает приложение!)
         function doDep() { 
             playClick();
-            saveBalance(function() {
-                tg.sendData(JSON.stringify({
-                    action: "deposit", 
-                    amount: depVal, 
-                    stars: stars
-                }));
-            });
+            
+            // Просто вызываем sendData для отправки invoice
+            tg.sendData(JSON.stringify({
+                action: "deposit", 
+                amount: depVal, 
+                stars: stars
+            }));
         }
         
         function doWit() { 
@@ -470,6 +473,18 @@
             let s = parseInt(document.getElementById('w_stars').value) || 0; 
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
+
+        // ✅ СИНХРОНИЗАЦИЯ ПРИ ЗАКРЫТИИ ПРИЛОЖЕНИЯ
+        window.addEventListener('beforeunload', function() {
+            saveBalance();
+            syncWithBot();
+        });
+
+        // ✅ СИНХРОНИЗАЦИЯ ПРИ СВОРАЧИВАНИИ (blur)
+        window.addEventListener('blur', function() {
+            saveBalance();
+            syncWithBot();
+        });
 
         window.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Приложение запущено');
