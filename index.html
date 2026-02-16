@@ -13,12 +13,26 @@
         .wallet-btn { position: absolute; right: 15px; top: 15px; background: rgba(142,68,173,0.3); border: 1px solid #8e44ad; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8em; }
         .wheel-container { position: relative; width: 80vw; max-width: 310px; aspect-ratio: 1/1; }
         canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; }
+        .pointer { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            width: 0; 
+            height: 0; 
+            border-left: 12px solid transparent; 
+            border-right: 12px solid transparent; 
+            border-bottom: 40px solid #f1c40f; 
+            transform-origin: 50% 100%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            z-index: 10;
+            filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.8));
+        }
         .controls { width: 100%; text-align: center; padding-bottom: 20px; }
         .bet-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px; }
         .btn-adj { background: #8e44ad; border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5em; display: flex; align-items: center; justify-content: center; }
-        .spin-btn { width: 85%; padding: 18px; border-radius: 50px; border: none; color: white; font-weight: bold; font-size: 1.4em; background: #8e44ad; box-shadow: 0 0 25px #8e44ad; }
+        .spin-btn { width: 85%; padding: 18px; border-radius: 50px; border: none; color: white; font-weight: bold; font-size: 1.4em; background: #8e44ad; box-shadow: 0 0 25px #8e44ad; transition: all 0.3s; }
         .dep-mode { background: #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; }
+        .free-mode { background: #27ae60 !important; box-shadow: 0 0 25px #27ae60 !important; }
         #modal { display: none; position: fixed; inset: 0; background: #000; z-index: 100; flex-direction: column; }
         .tabs { display: flex; background: #1a1a1a; }
         .tab { flex: 1; padding: 20px; text-align: center; font-weight: bold; }
@@ -36,7 +50,7 @@
     </div>
 
     <div class="wheel-container">
-        <div class="pointer"></div>
+        <div class="pointer" id="pointer"></div>
         <canvas id="canvas" width="600" height="600"></canvas>
     </div>
 
@@ -82,46 +96,40 @@
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
         let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
-        let hasFreeSpins = 0; // Количество фри-спинов
+        let hasFreeSpins = 0;
         
         const MIN_WITHDRAW = 500;
 
         // 🎵 ЗВУКИ
         const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
-        const sndTick = new Audio('https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3');
-        const sndSpin = new Audio('https://www.soundjay.com/mechanical/sounds/mechanical-8.mp3');
         const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
         const sndLose = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
         
         sndClick.volume = 0.3; 
-        sndTick.volume = 0.2;
-        sndSpin.volume = 0.5;
-        sndSpin.loop = true;
         sndWin.volume = 0.5;
         sndLose.volume = 0.3;
 
-        // 🎰 НОВЫЕ СЕКТОРЫ С МНОЖИТЕЛЯМИ
-        // RTP ~85% (в пользу казино)
+        // 🎰 СЕКТОРЫ С МНОЖИТЕЛЯМИ
         const sectors = [
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 25},      // Проигрыш - 25%
-            {t: "×1", c: "#555555", mult: 1, weight: 20},     // Возврат ставки - 20%
-            {t: "FREE", c: "#27ae60", mult: 0, weight: 15},   // Фри-спин - 15%
-            {t: "×2", c: "#3498db", mult: 2, weight: 18},     // ×2 - 18%
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 10},      // Проигрыш
-            {t: "×5", c: "#9b59b6", mult: 5, weight: 8},      // ×5 - 8%
-            {t: "×1", c: "#555555", mult: 1, weight: 10},     // Возврат ставки
-            {t: "×10", c: "#f39c12", mult: 10, weight: 3},    // ×10 - 3%
-            {t: "FREE", c: "#27ae60", mult: 0, weight: 5},    // Фри-спин
-            {t: "×100", c: "#e74c3c", mult: 100, weight: 0.5}, // ×100 - 0.5% (РЕДКО!)
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 5},      // Проигрыш
-            {t: "×2", c: "#3498db", mult: 2, weight: 10}      // ×2
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 25},
+            {t: "×1", c: "#555555", mult: 1, weight: 20},
+            {t: "FREE", c: "#27ae60", mult: 0, weight: 15},
+            {t: "×2", c: "#3498db", mult: 2, weight: 18},
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 10},
+            {t: "×5", c: "#9b59b6", mult: 5, weight: 8},
+            {t: "×1", c: "#555555", mult: 1, weight: 10},
+            {t: "×10", c: "#f39c12", mult: 10, weight: 3},
+            {t: "FREE", c: "#27ae60", mult: 0, weight: 5},
+            {t: "×100", c: "#e74c3c", mult: 100, weight: 0.5},
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 5},
+            {t: "×2", c: "#3498db", mult: 2, weight: 10}
         ];
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const pointer = document.getElementById('pointer');
         let currentAngle = 0;
 
-        // ✅ ВЗВЕШЕННЫЙ СЛУЧАЙНЫЙ ВЫБОР (с учетом весов)
         function getWeightedRandomSector() {
             const totalWeight = sectors.reduce((sum, s) => sum + s.weight, 0);
             let random = Math.random() * totalWeight;
@@ -191,15 +199,6 @@
             }
         }
 
-        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ
-        function syncWithBot() {
-            console.log('🔄 Синхронизация баланса с ботом:', stars);
-            tg.sendData(JSON.stringify({
-                action: "sync",
-                stars: stars
-            }));
-        }
-
         function update() {
             document.getElementById('s_bal').innerText = stars;
             document.getElementById('cur_bet').innerText = curBet;
@@ -209,19 +208,41 @@
             if (hasFreeSpins > 0) {
                 btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
                 btn.classList.remove('dep-mode');
+                btn.classList.add('free-mode');
             } else if (stars < curBet) { 
                 btn.innerText = "ПОПОЛНИТЬ"; 
-                btn.classList.add('dep-mode'); 
+                btn.classList.add('dep-mode');
+                btn.classList.remove('free-mode');
             } else { 
                 btn.innerText = "КРУТИТЬ"; 
-                btn.classList.remove('dep-mode'); 
+                btn.classList.remove('dep-mode', 'free-mode'); 
             }
+        }
+
+        // ✅ СОЗДАЕМ ЗВУК ТРЕЩОТКИ ПРОГРАММНО
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let clickInterval = null;
+
+        function playRatchetSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.05);
         }
 
         function handleSpin() {
             if (isSpinning) return;
             
-            // Проверка баланса (если нет фри-спинов)
             if (hasFreeSpins === 0 && stars < curBet) { 
                 openM(); 
                 return; 
@@ -230,97 +251,102 @@
             playClick();
             isSpinning = true;
             
-            // ✅ СПИСАНИЕ СТАВКИ (если не фри-спин)
             let isFreeSpinUsed = false;
             if (hasFreeSpins > 0) {
                 hasFreeSpins--;
                 isFreeSpinUsed = true;
-                console.log('🎁 Использован фри-спин, осталось:', hasFreeSpins);
             } else {
                 stars -= curBet;
-                console.log('💰 Ставка:', curBet, 'Новый баланс:', stars);
             }
             
             update();
             saveBalance();
             
-            sndSpin.currentTime = 0;
-            sndSpin.play().catch(()=>{});
-            
-            // ✅ ВЫБОР РЕЗУЛЬТАТА (взвешенный случайный)
             const targetIdx = getWeightedRandomSector();
             const targetSector = sectors[targetIdx];
             
-            // ✅ ЭФФЕКТ "ПОЧТИ ВЫИГРАЛ" для больших множителей
-            const isNearMiss = (targetSector.mult <= 2 && Math.random() < 0.3); // 30% шанс
-            let nearMissIdx = targetIdx;
+            const isNearMiss = (targetSector.mult <= 2 && Math.random() < 0.3);
+            let finalIdx = targetIdx;
             
             if (isNearMiss) {
-                // Находим ближайший большой множитель
                 for (let i = 0; i < sectors.length; i++) {
                     if (sectors[i].mult >= 10) {
-                        nearMissIdx = (i + 1) % sectors.length; // Остановимся рядом с ним
+                        finalIdx = (i + 1) % sectors.length;
                         break;
                     }
                 }
             }
             
             const arc = (360 / sectors.length);
-            const finalIdx = isNearMiss ? nearMissIdx : targetIdx;
-            const targetAngle = 360 - (finalIdx * arc) + (arc / 2) + (Math.random() * 10 - 5);
-            let rotation = targetAngle + 360 * 10; // 10 полных оборотов
+            const targetAngle = 360 - (finalIdx * arc) + (arc / 2);
+            let rotation = targetAngle + 360 * 10;
             
             let start = null;
-            let lastTickAngle = 0;
-            let slowdownStarted = false;
+            let lastSectorIdx = -1;
+
+            // ✅ ЗАПУСК ТРЕЩОТКИ
+            let ratchetSpeed = 50;
+            clickInterval = setInterval(() => {
+                playRatchetSound();
+            }, ratchetSpeed);
 
             function animate(now) {
                 if (!start) start = now;
                 let elapsed = now - start;
                 
-                // ✅ БАЗОВАЯ ДЛИТЕЛЬНОСТЬ: 5 секунд
-                let baseDuration = 5000;
+                let duration = isNearMiss ? 6500 : 5000;
+                let progress = Math.min(elapsed / duration, 1);
                 
-                // ✅ ЭФФЕКТ ЗАМЕДЛЕНИЯ перед большим множителем
-                if (isNearMiss && !slowdownStarted && elapsed > 3000) {
-                    baseDuration = 7000; // Увеличиваем длительность
-                    slowdownStarted = true;
+                // ✅ ЗАМЕДЛЕНИЕ
+                let easeOut;
+                if (progress < 0.7) {
+                    easeOut = progress;
+                } else {
+                    const slowProgress = (progress - 0.7) / 0.3;
+                    easeOut = 0.7 + 0.3 * (1 - Math.pow(1 - slowProgress, 3));
                 }
                 
-                let progress = Math.min(elapsed / baseDuration, 1);
-                
-                let easeOut = 1 - Math.pow(1 - progress, 4);
                 let currentPos = rotation * easeOut;
                 currentAngle = (currentPos * Math.PI) / 180;
                 
-                if (Math.floor(currentPos / (360/sectors.length)) > lastTickAngle) {
-                    sndTick.currentTime = 0; 
-                    sndTick.play().catch(()=>{});
-                    lastTickAngle = Math.floor(currentPos / (360/sectors.length));
+                // ✅ ОБНОВЛЯЕМ СКОРОСТЬ ТРЕЩОТКИ
+                if (progress > 0.8) {
+                    ratchetSpeed = 150;
+                } else if (progress > 0.6) {
+                    ratchetSpeed = 80;
                 }
+                
+                if (clickInterval) {
+                    clearInterval(clickInterval);
+                    clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
+                }
+                
+                // ✅ ВРАЩАЕМ УКАЗАТЕЛЬ
+                const pointerRotation = -(currentPos % 360);
+                pointer.style.transform = `translate(-50%, -50%) rotate(${pointerRotation}deg)`;
 
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
                 else {
-                    sndSpin.pause();
-                    sndSpin.currentTime = 0;
+                    // ✅ ОСТАНАВЛИВАЕМ ТРЕЩОТКУ
+                    if (clickInterval) {
+                        clearInterval(clickInterval);
+                        clickInterval = null;
+                    }
                     
                     isSpinning = false;
                     let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length)) % sectors.length;
                     let win = sectors[idx];
                     
-                    // ✅ РАСЧЕТ ВЫИГРЫША
                     let winAmount = 0;
                     
                     if (win.t === "FREE") {
-                        // Фри-спин
                         hasFreeSpins++;
                         sndWin.currentTime = 0;
                         sndWin.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                         setTimeout(() => alert(`🎁 БЕСПЛАТНЫЙ ПРОКРУТ!\n\nУ вас ${hasFreeSpins} фри-спин(ов)`), 200);
                     } else if (win.mult > 0) {
-                        // Множитель
                         winAmount = curBet * win.mult;
                         stars += winAmount;
                         
@@ -334,7 +360,6 @@
                         
                         setTimeout(() => alert(msg), 200);
                     } else {
-                        // Проигрыш
                         sndLose.currentTime = 0;
                         sndLose.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
@@ -348,9 +373,6 @@
                     
                     saveBalance();
                     update();
-                    
-                    // ✅ СИНХРОНИЗАЦИЯ С БОТОМ после каждого спина
-                    syncWithBot();
                 }
             }
             requestAnimationFrame(animate);
@@ -365,6 +387,14 @@
         function openM() { 
             playClick(); 
             document.getElementById('modal').style.display = 'flex';
+            
+            // ✅ СИНХРОНИЗИРУЕМ ПРИ ОТКРЫТИИ МЕНЮ
+            saveBalance(function() {
+                tg.sendData(JSON.stringify({
+                    action: "sync",
+                    stars: stars
+                }));
+            });
         }
         
         function closeM() { 
