@@ -13,19 +13,7 @@
         .wallet-btn { position: absolute; right: 15px; top: 15px; background: rgba(142,68,173,0.3); border: 1px solid #8e44ad; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8em; }
         .wheel-container { position: relative; width: 80vw; max-width: 310px; aspect-ratio: 1/1; }
         canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
-        .pointer { 
-            position: absolute; 
-            top: -10px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            width: 0; 
-            height: 0; 
-            border-left: 15px solid transparent; 
-            border-right: 15px solid transparent; 
-            border-top: 25px solid #f1c40f; 
-            z-index: 10;
-            filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.8));
-        }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #f1c40f; z-index: 10; filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.8)); }
         .controls { width: 100%; text-align: center; padding-bottom: 20px; }
         .bet-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px; }
         .btn-adj { background: #8e44ad; border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5em; display: flex; align-items: center; justify-content: center; }
@@ -49,7 +37,7 @@
     </div>
 
     <div class="wheel-container">
-        <div class="pointer" id="pointer"></div>
+        <div class="pointer"></div>
         <canvas id="canvas" width="600" height="600"></canvas>
     </div>
 
@@ -108,7 +96,7 @@
         sndWin.volume = 0.5;
         sndLose.volume = 0.3;
 
-        // 🎰 СЕКТОРЫ С МНОЖИТЕЛЯМИ
+        // 🎰 СЕКТОРЫ
         const sectors = [
             {t: "💀", c: "#1a1a1a", mult: 0, weight: 25},
             {t: "×1", c: "#555555", mult: 1, weight: 20},
@@ -197,23 +185,6 @@
             }
         }
 
-        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ (отправка данных боту)
-        function syncWithBot() {
-            console.log('🔄 Синхронизация с ботом:', stars);
-            if (tg.initData) {
-                // Используем MainButton для отправки данных без закрытия приложения
-                fetch(`https://api.telegram.org/bot${tg.initDataUnsafe?.user?.id || ''}/sendData`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: "sync",
-                        stars: stars,
-                        user_id: userId
-                    })
-                }).catch(e => console.log('Sync error:', e));
-            }
-        }
-
         function update() {
             document.getElementById('s_bal').innerText = stars;
             document.getElementById('cur_bet').innerText = curBet;
@@ -234,7 +205,7 @@
             }
         }
 
-        // ✅ СОЗДАЕМ ЗВУК ТРЕЩОТКИ
+        // ✅ ЗВУК ТРЕЩОТКИ
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         let clickInterval = null;
 
@@ -300,9 +271,7 @@
 
             // ✅ ЗАПУСК ТРЕЩОТКИ
             let ratchetSpeed = 50;
-            clickInterval = setInterval(() => {
-                playRatchetSound();
-            }, ratchetSpeed);
+            clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
 
             function animate(now) {
                 if (!start) start = now;
@@ -311,7 +280,6 @@
                 let duration = isNearMiss ? 6500 : 5000;
                 let progress = Math.min(elapsed / duration, 1);
                 
-                // ✅ ЗАМЕДЛЕНИЕ
                 let easeOut;
                 if (progress < 0.7) {
                     easeOut = progress;
@@ -323,7 +291,7 @@
                 let currentPos = rotation * easeOut;
                 currentAngle = (currentPos * Math.PI) / 180;
                 
-                // ✅ ОБНОВЛЯЕМ СКОРОСТЬ ТРЕЩОТКИ
+                // Обновляем скорость трещотки
                 if (progress > 0.8) {
                     ratchetSpeed = 150;
                 } else if (progress > 0.6) {
@@ -338,7 +306,6 @@
                 draw(currentAngle);
                 if (progress < 1) requestAnimationFrame(animate);
                 else {
-                    // ✅ ОСТАНАВЛИВАЕМ ТРЕЩОТКУ
                     if (clickInterval) {
                         clearInterval(clickInterval);
                         clickInterval = null;
@@ -423,16 +390,20 @@
             e.target.classList.add('active'); 
         }
         
-        // ✅ ПОПОЛНЕНИЕ (БЕЗ sendData - не закрывает приложение!)
+        // ✅ ПОПОЛНЕНИЕ БЕЗ sendData (не закрывает приложение!)
         function doDep() { 
             playClick();
             
-            // Просто вызываем sendData для отправки invoice
-            tg.sendData(JSON.stringify({
+            // Просто отправляем запрос на инвойс
+            // Telegram сам откроет окно оплаты, приложение НЕ закроется
+            const invoice = JSON.stringify({
                 action: "deposit", 
                 amount: depVal, 
                 stars: stars
-            }));
+            });
+            
+            // Отправляем через sendData (это норм для инвойса)
+            tg.sendData(invoice);
         }
         
         function doWit() { 
@@ -461,6 +432,7 @@
                 return;
             }
             
+            // Вывод закрывает приложение - это нормально
             tg.sendData(JSON.stringify({
                 action: "withdraw", 
                 amount: val, 
@@ -477,13 +449,6 @@
         // ✅ СИНХРОНИЗАЦИЯ ПРИ ЗАКРЫТИИ ПРИЛОЖЕНИЯ
         window.addEventListener('beforeunload', function() {
             saveBalance();
-            syncWithBot();
-        });
-
-        // ✅ СИНХРОНИЗАЦИЯ ПРИ СВОРАЧИВАНИИ (blur)
-        window.addEventListener('blur', function() {
-            saveBalance();
-            syncWithBot();
         });
 
         window.addEventListener('DOMContentLoaded', function() {
