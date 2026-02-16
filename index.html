@@ -82,6 +82,7 @@
         let stars = 0;
         let curBet = 5, depVal = 100, isSpinning = false;
         let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
+        let hasFreeSpins = 0; // Количество фри-спинов
         
         const MIN_WITHDRAW = 500;
 
@@ -99,18 +100,38 @@
         sndWin.volume = 0.5;
         sndLose.volume = 0.3;
 
+        // 🎰 НОВЫЕ СЕКТОРЫ С МНОЖИТЕЛЯМИ
+        // RTP ~85% (в пользу казино)
         const sectors = [
-            {t: "💀", c: "#1a1a1a", v: 0},   {t: "20", c: "#8e44ad", v: 20},
-            {t: "🎁", c: "#27ae60", v: 5},  {t: "💀", c: "#1a1a1a", v: 0},
-            {t: "50", c: "#f1c40f", v: 50}, {t: "🎁", c: "#27ae60", v: 5},
-            {t: "💀", c: "#1a1a1a", v: 0},   {t: "100", c: "#e67e22", v: 100},
-            {t: "🎁", c: "#27ae60", v: 5},  {t: "600", c: "#e74c3c", v: 600},
-            {t: "💀", c: "#1a1a1a", v: 0},   {t: "🎁", c: "#27ae60", v: 5}
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 25},      // Проигрыш - 25%
+            {t: "×1", c: "#555555", mult: 1, weight: 20},     // Возврат ставки - 20%
+            {t: "FREE", c: "#27ae60", mult: 0, weight: 15},   // Фри-спин - 15%
+            {t: "×2", c: "#3498db", mult: 2, weight: 18},     // ×2 - 18%
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 10},      // Проигрыш
+            {t: "×5", c: "#9b59b6", mult: 5, weight: 8},      // ×5 - 8%
+            {t: "×1", c: "#555555", mult: 1, weight: 10},     // Возврат ставки
+            {t: "×10", c: "#f39c12", mult: 10, weight: 3},    // ×10 - 3%
+            {t: "FREE", c: "#27ae60", mult: 0, weight: 5},    // Фри-спин
+            {t: "×100", c: "#e74c3c", mult: 100, weight: 0.5}, // ×100 - 0.5% (РЕДКО!)
+            {t: "💀", c: "#1a1a1a", mult: 0, weight: 5},      // Проигрыш
+            {t: "×2", c: "#3498db", mult: 2, weight: 10}      // ×2
         ];
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let currentAngle = 0;
+
+        // ✅ ВЗВЕШЕННЫЙ СЛУЧАЙНЫЙ ВЫБОР (с учетом весов)
+        function getWeightedRandomSector() {
+            const totalWeight = sectors.reduce((sum, s) => sum + s.weight, 0);
+            let random = Math.random() * totalWeight;
+            
+            for (let i = 0; i < sectors.length; i++) {
+                random -= sectors[i].weight;
+                if (random <= 0) return i;
+            }
+            return 0;
+        }
 
         function draw(angle = 0) {
             const arc = (Math.PI * 2) / sectors.length;
@@ -126,7 +147,7 @@
                 ctx.translate(300, 300); 
                 ctx.rotate(a + arc/2);
                 ctx.fillStyle = "white"; 
-                ctx.font = "bold 35px Arial";
+                ctx.font = "bold 30px Arial";
                 ctx.fillText(s.t, 150, 10); 
                 ctx.restore();
             });
@@ -170,12 +191,25 @@
             }
         }
 
+        // ✅ СИНХРОНИЗАЦИЯ С БОТОМ
+        function syncWithBot() {
+            console.log('🔄 Синхронизация баланса с ботом:', stars);
+            tg.sendData(JSON.stringify({
+                action: "sync",
+                stars: stars
+            }));
+        }
+
         function update() {
             document.getElementById('s_bal').innerText = stars;
             document.getElementById('cur_bet').innerText = curBet;
             document.getElementById('dep_val').innerText = depVal;
             const btn = document.getElementById('spinBtn');
-            if (stars < curBet) { 
+            
+            if (hasFreeSpins > 0) {
+                btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
+                btn.classList.remove('dep-mode');
+            } else if (stars < curBet) { 
                 btn.innerText = "ПОПОЛНИТЬ"; 
                 btn.classList.add('dep-mode'); 
             } else { 
@@ -186,25 +220,74 @@
 
         function handleSpin() {
             if (isSpinning) return;
-            if (stars < curBet) { openM(); return; }
-            playClick();
-            isSpinning = true; 
             
-            stars -= curBet;
+            // Проверка баланса (если нет фри-спинов)
+            if (hasFreeSpins === 0 && stars < curBet) { 
+                openM(); 
+                return; 
+            }
+            
+            playClick();
+            isSpinning = true;
+            
+            // ✅ СПИСАНИЕ СТАВКИ (если не фри-спин)
+            let isFreeSpinUsed = false;
+            if (hasFreeSpins > 0) {
+                hasFreeSpins--;
+                isFreeSpinUsed = true;
+                console.log('🎁 Использован фри-спин, осталось:', hasFreeSpins);
+            } else {
+                stars -= curBet;
+                console.log('💰 Ставка:', curBet, 'Новый баланс:', stars);
+            }
+            
             update();
             saveBalance();
             
             sndSpin.currentTime = 0;
             sndSpin.play().catch(()=>{});
             
-            let rotation = (Math.random() * 360) + 3600;
+            // ✅ ВЫБОР РЕЗУЛЬТАТА (взвешенный случайный)
+            const targetIdx = getWeightedRandomSector();
+            const targetSector = sectors[targetIdx];
+            
+            // ✅ ЭФФЕКТ "ПОЧТИ ВЫИГРАЛ" для больших множителей
+            const isNearMiss = (targetSector.mult <= 2 && Math.random() < 0.3); // 30% шанс
+            let nearMissIdx = targetIdx;
+            
+            if (isNearMiss) {
+                // Находим ближайший большой множитель
+                for (let i = 0; i < sectors.length; i++) {
+                    if (sectors[i].mult >= 10) {
+                        nearMissIdx = (i + 1) % sectors.length; // Остановимся рядом с ним
+                        break;
+                    }
+                }
+            }
+            
+            const arc = (360 / sectors.length);
+            const finalIdx = isNearMiss ? nearMissIdx : targetIdx;
+            const targetAngle = 360 - (finalIdx * arc) + (arc / 2) + (Math.random() * 10 - 5);
+            let rotation = targetAngle + 360 * 10; // 10 полных оборотов
+            
             let start = null;
             let lastTickAngle = 0;
+            let slowdownStarted = false;
 
             function animate(now) {
                 if (!start) start = now;
                 let elapsed = now - start;
-                let progress = Math.min(elapsed / 6000, 1);
+                
+                // ✅ БАЗОВАЯ ДЛИТЕЛЬНОСТЬ: 5 секунд
+                let baseDuration = 5000;
+                
+                // ✅ ЭФФЕКТ ЗАМЕДЛЕНИЯ перед большим множителем
+                if (isNearMiss && !slowdownStarted && elapsed > 3000) {
+                    baseDuration = 7000; // Увеличиваем длительность
+                    slowdownStarted = true;
+                }
+                
+                let progress = Math.min(elapsed / baseDuration, 1);
                 
                 let easeOut = 1 - Math.pow(1 - progress, 4);
                 let currentPos = rotation * easeOut;
@@ -223,30 +306,51 @@
                     sndSpin.currentTime = 0;
                     
                     isSpinning = false;
-                    let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length));
+                    let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length)) % sectors.length;
                     let win = sectors[idx];
                     
-                    stars += win.v;
-                    saveBalance();
+                    // ✅ РАСЧЕТ ВЫИГРЫША
+                    let winAmount = 0;
                     
-                    if (win.v > 0) {
+                    if (win.t === "FREE") {
+                        // Фри-спин
+                        hasFreeSpins++;
+                        sndWin.currentTime = 0;
+                        sndWin.play().catch(()=>{});
+                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                        setTimeout(() => alert(`🎁 БЕСПЛАТНЫЙ ПРОКРУТ!\n\nУ вас ${hasFreeSpins} фри-спин(ов)`), 200);
+                    } else if (win.mult > 0) {
+                        // Множитель
+                        winAmount = curBet * win.mult;
+                        stars += winAmount;
+                        
                         sndWin.currentTime = 0;
                         sndWin.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                         
-                        if (win.t === "🎁") {
-                            setTimeout(() => alert("🎁 БОНУС: Бесплатная ставка!"), 200);
-                        } else {
-                            setTimeout(() => alert(`🎉 Выигрыш: ${win.v} звезд!\n\nБаланс: ${stars} ⭐`), 200);
-                        }
+                        let msg = isFreeSpinUsed 
+                            ? `🎉 ВЫИГРЫШ на FREE SPIN!\n\n${win.t} = ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`
+                            : `🎉 ВЫИГРЫШ!\n\n${win.t} от ставки ${curBet} ⭐\n= ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`;
+                        
+                        setTimeout(() => alert(msg), 200);
                     } else {
+                        // Проигрыш
                         sndLose.currentTime = 0;
                         sndLose.play().catch(()=>{});
                         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                        setTimeout(() => alert(`💀 Не повезло...\n\nБаланс: ${stars} ⭐`), 200);
+                        
+                        let msg = isFreeSpinUsed
+                            ? `💀 FREE SPIN не сыграл...\n\nБаланс: ${stars} ⭐`
+                            : `💀 Не повезло...\n\nБаланс: ${stars} ⭐`;
+                        
+                        setTimeout(() => alert(msg), 200);
                     }
                     
+                    saveBalance();
                     update();
+                    
+                    // ✅ СИНХРОНИЗАЦИЯ С БОТОМ после каждого спина
+                    syncWithBot();
                 }
             }
             requestAnimationFrame(animate);
@@ -337,11 +441,10 @@
             document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
         }
 
-        // ✅ ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
         window.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Приложение запущено');
             loadBalance();
-            draw(); // ← Рисуем рулетку сразу!
+            draw();
         });
     </script>
 </body>
