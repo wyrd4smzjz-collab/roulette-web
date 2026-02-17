@@ -7,17 +7,26 @@
     <title>Magik Spin</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        html, body {
-            height: 100vh; margin: 0; padding: 0; overflow: hidden;
-            background: #050505; color: white; font-family: 'Segoe UI', sans-serif;
-        }
+        * { box-sizing: border-box; }
+        html { height: 100%; }
         body {
+            min-height: 100vh; margin: 0; padding: 0;
+            background: #050505; color: white;
+            font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            justify-content: space-between;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+            /* Do NOT use overflow:hidden — modal needs scrolling */
+            overflow-x: hidden;
         }
 
 ```
+    /* ── MAIN SCREEN ── */
+    #main-screen {
+        width: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: space-between;
+        min-height: 100vh;
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    }
+
     /* ── TOP BAR ── */
     .top-bar {
         width: 100%; padding: 10px 0;
@@ -31,32 +40,15 @@
         position: absolute; right: 15px; top: 15px;
         background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
         color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8em;
-    }
-
-    /* ── SOUND BUTTON ── */
-    #sound-btn {
-        position: fixed;
-        top: calc(env(safe-area-inset-top) + 8px);
-        right: 10px;
-        z-index: 201;
-        background: rgba(142,68,173,0.35);
-        border: 1px solid #8e44ad;
-        color: white;
-        border-radius: 50%;
-        width: 38px; height: 38px;
-        font-size: 18px;
-        display: flex; align-items: center; justify-content: center;
         cursor: pointer;
-        transition: background 0.2s;
     }
-    #sound-btn:hover { background: rgba(142,68,173,0.6); }
 
-    /* ── SUPERBONUS BANNER top-left ── */
+    /* ── SUPERBONUS BANNER (only on main screen) ── */
     #sb-banner {
         position: fixed;
         top: calc(env(safe-area-inset-top) + 8px);
         left: 10px;
-        z-index: 200;
+        z-index: 50; /* lower than modal z-index=100 */
         background: linear-gradient(135deg, #1a0f00 0%, #2d1a00 60%, #1a0f00 100%);
         border: 1.5px solid #ffd700;
         border-radius: 10px;
@@ -70,36 +62,60 @@
         0%,100% { box-shadow: 0 0 8px #ffd700, 0 0 20px #ffaa00, 0 0 35px rgba(255,136,0,0.4); }
         50%      { box-shadow: 0 0 16px #ffd700, 0 0 36px #ffaa00, 0 0 65px rgba(255,136,0,0.7); }
     }
-    #sb-banner .sb-crown { font-size: 20px; filter: drop-shadow(0 0 6px #ffd700); }
-    #sb-banner .sb-text  { display: flex; flex-direction: column; line-height: 1.2; }
-    #sb-banner .sb-label { font-size: 8px; font-weight: 900; letter-spacing: 2px; color: #ffd700; text-transform: uppercase; }
+    #sb-banner .sb-crown  { font-size: 20px; filter: drop-shadow(0 0 6px #ffd700); }
+    #sb-banner .sb-text   { display: flex; flex-direction: column; line-height: 1.2; }
+    #sb-banner .sb-label  { font-size: 8px; font-weight: 900; letter-spacing: 2px; color: #ffd700; text-transform: uppercase; }
     #sb-banner .sb-amount { font-size: 14px; font-weight: 900; color: #fff; text-shadow: 0 0 8px #ffd700, 0 0 18px #ffaa00; }
 
     /* ── WHEEL ── */
-    .wheel-container { position: relative; width: 80vw; max-width: 310px; aspect-ratio: 1/1; }
+    .wheel-container {
+        position: relative; width: 80vw; max-width: 310px; aspect-ratio: 1/1;
+    }
     canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 15px #8e44ad); }
+
+    /* Animated pointer */
     .pointer {
-        position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+        position: absolute; top: -10px; left: 50%;
+        transform: translateX(-50%);
         width: 0; height: 0;
         border-left: 15px solid transparent;
         border-right: 15px solid transparent;
         border-top: 25px solid #f1c40f;
         z-index: 10;
         filter: drop-shadow(0 0 8px rgba(241,196,15,0.8));
+        transition: top 0.05s;
     }
 
     /* ── CONTROLS ── */
     .controls { width: 100%; text-align: center; padding-bottom: 10px; }
-    .bet-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 12px; }
+    .bet-row {
+        display: flex; align-items: center; justify-content: center;
+        gap: 12px; margin-bottom: 12px;
+    }
     .btn-adj {
         background: #8e44ad; border: none; color: white;
         width: 50px; height: 50px; border-radius: 50%; font-size: 1.5em;
         display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
     }
+    /* Sound button — left of bet */
+    #sound-btn {
+        background: rgba(142,68,173,0.3);
+        border: 1px solid #8e44ad;
+        color: white; border-radius: 50%;
+        width: 44px; height: 44px;
+        font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: background 0.2s;
+        flex-shrink: 0;
+    }
+    #sound-btn:hover { background: rgba(142,68,173,0.6); }
+
     .spin-btn {
         width: 85%; padding: 18px; border-radius: 50px; border: none;
         color: white; font-weight: bold; font-size: 1.4em;
-        background: #8e44ad; box-shadow: 0 0 25px #8e44ad; transition: all 0.3s;
+        background: #8e44ad; box-shadow: 0 0 25px #8e44ad;
+        transition: all 0.3s; cursor: pointer;
     }
     .dep-mode  { background: #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; }
     .free-mode { background: #27ae60 !important; box-shadow: 0 0 25px #27ae60 !important; }
@@ -108,19 +124,13 @@
     #history-bar {
         width: 90%; max-width: 310px;
         display: flex; gap: 6px; overflow-x: auto;
-        padding: 4px 0 6px; scrollbar-width: none;
-        margin-bottom: 4px;
+        padding: 4px 0 6px; scrollbar-width: none; margin-bottom: 4px;
     }
     #history-bar::-webkit-scrollbar { display: none; }
     .h-chip {
-        flex-shrink: 0;
-        border-radius: 20px;
-        padding: 4px 10px;
-        font-size: 0.75em;
-        font-weight: bold;
-        white-space: nowrap;
-        opacity: 0;
-        transform: scale(0.5);
+        flex-shrink: 0; border-radius: 20px; padding: 4px 10px;
+        font-size: 0.75em; font-weight: bold; white-space: nowrap;
+        opacity: 0; transform: scale(0.5);
         animation: chipIn 0.3s forwards;
     }
     @keyframes chipIn { to { opacity: 1; transform: scale(1); } }
@@ -128,41 +138,48 @@
     .h-lose { background: rgba(231,76,60,0.25);   border: 1px solid #e74c3c; color: #e74c3c; }
     .h-free { background: rgba(52,152,219,0.25);  border: 1px solid #3498db; color: #74b9ff; }
 
-    /* ── WIN TOAST ── */
-    #win-toast {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        z-index: 300;
-        background: rgba(0,0,0,0.88);
-        border-radius: 20px;
-        padding: 22px 34px;
-        text-align: center;
-        border: 2px solid #8e44ad;
-        box-shadow: 0 0 40px rgba(142,68,173,0.6);
-        pointer-events: none;
-        transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
-        opacity: 0;
+    /* ── MODAL (wallet) ── */
+    #modal {
+        display: none;
+        position: fixed; inset: 0;
+        background: #000;
+        z-index: 100;
+        flex-direction: column;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
-    #win-toast.show {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-    #win-toast .wt-icon  { font-size: 3em; }
-    #win-toast .wt-title { font-size: 1.5em; font-weight: bold; margin: 6px 0; }
-    #win-toast .wt-prize { font-size: 2em; font-weight: 900; color: gold; text-shadow: 0 0 14px gold; }
-    #win-toast .wt-bal   { font-size: 0.9em; color: #aaa; margin-top: 4px; }
-
-    /* ── MODAL ── */
-    #modal { display: none; position: fixed; inset: 0; background: #000; z-index: 100; flex-direction: column; }
-    .tabs { display: flex; background: #1a1a1a; }
-    .tab { flex: 1; padding: 20px; text-align: center; font-weight: bold; }
+    #modal.open { display: flex; }
+    .tabs { display: flex; background: #1a1a1a; flex-shrink: 0; }
+    .tab { flex: 1; padding: 20px; text-align: center; font-weight: bold; cursor: pointer; }
     .tab.active { border-bottom: 3px solid #8e44ad; color: #8e44ad; }
-    .tab-content { display: none; padding: 30px; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+
+    .tab-content {
+        display: none; padding: 24px 20px 60px;
+        flex-direction: column; align-items: center;
+        width: 100%;
+    }
     .tab-content.active { display: flex; }
-    input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1.1em; box-sizing: border-box; }
-    .min-withdraw-warning { color: #e74c3c; font-size: 0.9em; margin-top: 10px; text-align: center; }
+
+    /* Input style */
+    .modal-input {
+        width: 100%; padding: 15px; margin: 10px 0;
+        border-radius: 12px; border: 1px solid #444;
+        background: #111; color: white; font-size: 1.1em;
+    }
+    .modal-input:focus { outline: none; border-color: #8e44ad; }
+
+    .hint-text { color: #777; font-size: 0.82em; text-align: center; margin-top: 6px; line-height: 1.4; }
+    .min-warn  { color: #e74c3c; font-size: 0.88em; text-align: center; margin: 8px 0 0; }
+    .preview-ton { color: #0088cc; font-size: 1.05em; font-weight: bold; margin: 10px 0 6px; }
+
+    .modal-btn {
+        width: 100%; padding: 18px; border-radius: 50px; border: none;
+        color: white; font-weight: bold; font-size: 1.3em;
+        background: #8e44ad; box-shadow: 0 0 20px #8e44ad;
+        margin-top: 14px; cursor: pointer;
+    }
+    .modal-btn.green { background: #27ae60; box-shadow: 0 0 20px #27ae60; }
+    .back-link { margin-top: 24px; color: #777; font-size: 0.95em; cursor: pointer; }
 </style>
 ```
 
@@ -170,7 +187,7 @@
 <body>
 
 ```
-<!-- SuperBonus Banner (top-left) -->
+<!-- SuperBonus Banner (fixed, z-index < modal) -->
 <div id="sb-banner">
     <span class="sb-crown">👑</span>
     <div class="sb-text">
@@ -179,306 +196,303 @@
     </div>
 </div>
 
-<!-- Sound Button (top-right) -->
-<button id="sound-btn" onclick="toggleSound()">🔊</button>
-
-<!-- Win Toast -->
-<div id="win-toast">
-    <div class="wt-icon" id="wt-icon">🎉</div>
-    <div class="wt-title" id="wt-title">ВЫИГРЫШ!</div>
-    <div class="wt-prize" id="wt-prize">+50 ⭐</div>
-    <div class="wt-bal"   id="wt-bal">Баланс: 150 ⭐</div>
-</div>
-
-<!-- Top Bar -->
-<div class="top-bar">
-    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
-    <button class="wallet-btn" onclick="openM()">Кошелек</button>
-</div>
-
-<!-- Wheel -->
-<div class="wheel-container">
-    <div class="pointer"></div>
-    <canvas id="canvas" width="600" height="600"></canvas>
-</div>
-
-<!-- History chips -->
-<div id="history-bar"></div>
-
-<!-- Controls -->
-<div class="controls">
-    <div class="bet-box">
-        <button class="btn-adj" onclick="adjBet(-5)">-</button>
-        <div>Ставка<br><b id="cur_bet">5</b> ⭐</div>
-        <button class="btn-adj" onclick="adjBet(5)">+</button>
+<!-- Main Screen -->
+<div id="main-screen">
+    <div class="top-bar">
+        <div class="bal-display">⭐ <span id="s_bal">0</span></div>
+        <button class="wallet-btn" onclick="openM()">Кошелек</button>
     </div>
-    <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+
+    <div class="wheel-container">
+        <div class="pointer" id="pointer"></div>
+        <canvas id="canvas" width="600" height="600"></canvas>
+    </div>
+
+    <div id="history-bar"></div>
+
+    <div class="controls">
+        <div class="bet-row">
+            <button id="sound-btn" onclick="toggleSound()">🔊</button>
+            <button class="btn-adj" onclick="adjBet(-5)">-</button>
+            <div>Ставка<br><b id="cur_bet">5</b> ⭐</div>
+            <button class="btn-adj" onclick="adjBet(5)">+</button>
+        </div>
+        <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+    </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal Wallet -->
 <div id="modal">
     <div class="tabs">
-        <div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div>
-        <div class="tab" onclick="setTab('wit', event)">ВЫВОД</div>
+        <div class="tab active" id="tab-dep" onclick="setTab('dep',this)">ПОПОЛНИТЬ</div>
+        <div class="tab"        id="tab-wit" onclick="setTab('wit',this)">ВЫВОД</div>
     </div>
+
+    <!-- DEPOSIT -->
     <div id="dep" class="tab-content active">
-        <h2 style="color: gold;">Сумма звезд</h2>
-        <div class="bet-box">
-            <button class="btn-adj" onclick="adjDep(-100)">-</button>
-            <span id="dep_val" style="font-size: 2.5em; margin: 0 20px;">100</span>
-            <button class="btn-adj" onclick="adjDep(100)">+</button>
-        </div>
-        <button class="spin-btn" onclick="doDep()">КУПИТЬ ⭐</button>
-        <p onclick="closeM()" style="margin-top:30px; color:#777;">← Назад</p>
+        <h2 style="color:gold; margin-bottom:6px;">Пополнение ⭐</h2>
+        <p class="min-warn">Минимум 10 ⭐</p>
+        <input  class="modal-input" type="number" id="dep_val"
+                placeholder="Введите сумму звёзд"
+                min="10" inputmode="numeric"
+                oninput="validateDep()">
+        <p class="hint-text">Введите количество звёзд для пополнения баланса.</p>
+        <button class="modal-btn green" onclick="doDep()">КУПИТЬ ⭐</button>
+        <p class="back-link" onclick="closeM()">← Назад</p>
     </div>
+
+    <!-- WITHDRAW -->
     <div id="wit" class="tab-content">
-        <h2 style="color: #0088cc;">Вывод TON</h2>
-        <p class="min-withdraw-warning">⚠️ Минимальная сумма вывода: 500 ⭐</p>
-        <input type="number" id="w_stars" placeholder="Сумма звезд (мин. 500)" oninput="calcWit()">
-        <input type="text"   id="w_addr"  placeholder="Адрес (UQ...)">
-        <p id="wit_preview">Вы получите: 0.00 TON</p>
-        <button class="spin-btn" onclick="doWit()">ВЫВЕСТИ</button>
-        <p onclick="closeM()" style="margin-top:30px; color:#777;">Назад</p>
+        <h2 style="color:#0088cc; margin-bottom:6px;">Вывод TON</h2>
+        <p class="min-warn">Минимум 500 ⭐</p>
+
+        <input class="modal-input" type="number" id="w_stars"
+               placeholder="Сумма звёзд (мин. 500)"
+               inputmode="numeric" oninput="calcWit()">
+
+        <div class="preview-ton" id="wit_preview">Вы получите: — TON</div>
+        <p class="hint-text" id="rate-label">Курс: загрузка...</p>
+
+        <input class="modal-input" type="text" id="w_addr"
+               placeholder="Адрес TON (UQ...)">
+
+        <input class="modal-input" type="text" id="w_memo"
+               placeholder="MEMO (если требуется)">
+        <p class="hint-text">MEMO — если требуется биржей или кошельком.</p>
+
+        <button class="modal-btn" onclick="doWit()">ВЫВЕСТИ</button>
+        <p class="back-link" onclick="closeM()">← Назад</p>
     </div>
 </div>
+```
 
 <script>
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-let stars = 0, curBet = 5, depVal = 100, isSpinning = false;
-let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
+let stars = 0, curBet = 5, isSpinning = false;
+let userId       = new URLSearchParams(location.search).get('uid') || 'unknown';
 let hasFreeSpins = 0;
 const MIN_WITHDRAW = 500;
+const MIN_DEPOSIT  = 10;
 
-// ═══════════════════════════════════════════════
-// AUDIO SYSTEM
-// ═══════════════════════════════════════════════
+// TON/Star rate — fetched or default
+let tonPerStar = 0.013333; // ~1 XTR = 0.013333 TON (Telegram standard)
+
+// Try fetch real rate from CoinGecko via TON price
+(async function fetchRate() {
+    try {
+        // stars → USD: 1 star = $0.013 (Telegram pricing)
+        // Get TON/USD
+        const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {cache:'no-cache'});
+        if (r.ok) {
+            const d = await r.json();
+            const tonUsd = d['the-open-network']?.usd;
+            if (tonUsd && tonUsd > 0) {
+                tonPerStar = 0.013 / tonUsd; // 0.013 USD per star
+                document.getElementById('rate-label').textContent =
+                    `Курс: 1 ⭐ ≈ ${tonPerStar.toFixed(5)} TON (TON = $${tonUsd.toFixed(2)})`;
+                calcWit();
+            }
+        }
+    } catch(e) {
+        document.getElementById('rate-label').textContent =
+            `Курс: 1 ⭐ ≈ ${tonPerStar.toFixed(5)} TON (без учёта комиссии)`;
+    }
+})();
+
+// ═══════════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════════
 let soundEnabled = true;
-let bgMusicNode  = null;
-let bgMusicGain  = null;
+let bgLoopTimer  = null;
+let bgGain       = null;
 const audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
 
-// Background casino music (generated via Web Audio)
+function ensureAudio() {
+    if (audioCtx.state === 'suspended') return audioCtx.resume();
+    return Promise.resolve();
+}
+
 function startBgMusic() {
-    if (!soundEnabled || bgMusicNode) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (!soundEnabled || bgLoopTimer) return;
+    bgGain = audioCtx.createGain();
+    bgGain.gain.value = 0.05;
+    bgGain.connect(audioCtx.destination);
 
-    bgMusicGain = audioCtx.createGain();
-    bgMusicGain.gain.value = 0.06;
-    bgMusicGain.connect(audioCtx.destination);
-
-    const reverb = audioCtx.createConvolver();
-    const reverbBuf = audioCtx.createBuffer(2, audioCtx.sampleRate * 2, audioCtx.sampleRate);
-    for (let c = 0; c < 2; c++) {
-        const d = reverbBuf.getChannelData(c);
-        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
-    }
-    reverb.buffer = reverbBuf;
-    bgMusicGain.connect(reverb);
-    reverb.connect(audioCtx.destination);
-
-    // Casino waltz – simple looping melody
     const melody = [
-        // note(freq, time, dur)
-        [523.25, 0.00, 0.4], [659.25, 0.50, 0.4], [783.99, 1.00, 0.4],
-        [1046.5, 1.50, 0.6], [783.99, 2.20, 0.3], [659.25, 2.60, 0.3],
-        [523.25, 3.00, 0.4], [493.88, 3.50, 0.4], [392.00, 4.00, 0.4],
-        [523.25, 4.50, 0.5], [659.25, 5.10, 0.4], [783.99, 5.60, 0.4],
-        [880.00, 6.10, 0.6], [783.99, 6.80, 0.3], [659.25, 7.20, 0.3],
-        [523.25, 7.60, 1.0],
+        [523.25,0.0,0.35],[659.25,0.45,0.35],[783.99,0.9,0.35],
+        [1046.5,1.35,0.55],[783.99,2.0,0.25],[659.25,2.35,0.25],
+        [523.25,2.7,0.35],[493.88,3.15,0.35],[392.00,3.6,0.35],
+        [523.25,4.0,0.4],[659.25,4.5,0.35],[783.99,4.95,0.35],
+        [880.00,5.4,0.55],[783.99,6.05,0.25],[659.25,6.4,0.25],
+        [523.25,6.75,0.9],
     ];
-    const loopLen = 8.8;
+    const bass = [[130.81,0],[130.81,1.35],[98.00,2.7],[130.81,4.0],[130.81,5.4]];
+    const LOOP = 8.0;
 
-    function scheduleLoop(startTime) {
-        melody.forEach(([freq, t, dur]) => {
-            const osc  = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(bgMusicGain);
-            osc.type      = 'triangle';
-            osc.frequency.value = freq;
-            const s = startTime + t;
-            gain.gain.setValueAtTime(0, s);
-            gain.gain.linearRampToValueAtTime(0.7, s + 0.03);
-            gain.gain.exponentialRampToValueAtTime(0.001, s + dur);
-            osc.start(s); osc.stop(s + dur + 0.05);
+    function sched(t0) {
+        if (!bgGain) return;
+        melody.forEach(([f,t,d]) => {
+            const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+            osc.connect(g); g.connect(bgGain);
+            osc.type='triangle'; osc.frequency.value=f;
+            const s=t0+t;
+            g.gain.setValueAtTime(0,s);
+            g.gain.linearRampToValueAtTime(0.65,s+0.03);
+            g.gain.exponentialRampToValueAtTime(0.001,s+d);
+            osc.start(s); osc.stop(s+d+0.05);
         });
-
-        // Bass
-        [[130.81, 0.0], [130.81, 1.5], [98.00, 3.0], [130.81, 4.5], [130.81, 6.1]].forEach(([f, t]) => {
-            const osc  = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(bgMusicGain);
-            osc.type = 'sine';
-            osc.frequency.value = f;
-            const s = startTime + t;
-            gain.gain.setValueAtTime(0, s);
-            gain.gain.linearRampToValueAtTime(0.5, s + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, s + 0.5);
-            osc.start(s); osc.stop(s + 0.6);
+        bass.forEach(([f,t]) => {
+            const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+            osc.connect(g); g.connect(bgGain);
+            osc.type='sine'; osc.frequency.value=f;
+            const s=t0+t;
+            g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(0.45,s+0.05);
+            g.gain.exponentialRampToValueAtTime(0.001,s+0.5);
+            osc.start(s); osc.stop(s+0.6);
         });
     }
 
     let t = audioCtx.currentTime + 0.1;
-    scheduleLoop(t);
-
-    // Loop it
-    bgMusicNode = setInterval(() => {
+    sched(t);
+    bgLoopTimer = setInterval(() => {
         if (!soundEnabled) { stopBgMusic(); return; }
-        t += loopLen;
-        scheduleLoop(t);
-    }, (loopLen - 0.3) * 1000);
+        t += LOOP;
+        sched(t);
+    }, (LOOP - 0.4) * 1000);
 }
 
 function stopBgMusic() {
-    if (bgMusicNode) { clearInterval(bgMusicNode); bgMusicNode = null; }
-    if (bgMusicGain) { bgMusicGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3); bgMusicGain = null; }
+    if (bgLoopTimer) { clearInterval(bgLoopTimer); bgLoopTimer = null; }
+    if (bgGain) { bgGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3); bgGain = null; }
 }
 
 function toggleSound() {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
-    if (soundEnabled) startBgMusic();
+    if (soundEnabled) ensureAudio().then(startBgMusic);
     else              stopBgMusic();
 }
 
-// Sound effects (Web Audio, no external files)
 function playTone(freq, type, dur, vol) {
     if (!soundEnabled) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.type = type; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    osc.start(); osc.stop(audioCtx.currentTime + dur);
+    const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type=type; osc.frequency.value=freq;
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    osc.start(); osc.stop(audioCtx.currentTime+dur);
 }
-function playWin()   { [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.3, 0.3), i * 80)); }
-function playLose()  { [300, 220, 160].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.2, 0.2), i * 100)); }
+function playWin()   { [523,659,783,1046].forEach((f,i) => setTimeout(()=>playTone(f,'triangle',0.3,0.3),i*80)); }
+function playLose()  { [300,220,160].forEach((f,i) => setTimeout(()=>playTone(f,'sawtooth',0.2,0.2),i*100)); }
+function playFree()  { [659,880,1108].forEach((f,i) => setTimeout(()=>playTone(f,'sine',0.25,0.25),i*90)); }
 function playClick() {
     if (!soundEnabled) return;
-    playTone(800, 'square', 0.05, 0.1);
+    playTone(800,'square',0.05,0.1);
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
-function playFree() { [659, 880, 1108].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.25, 0.25), i * 90)); }
 
-// Ratchet
-let ratchetInterval = null;
-function startRatchet(speed) {
+let ratchetTimer = null;
+function startRatchet(ms) {
     stopRatchet();
-    ratchetInterval = setInterval(() => {
-        if (!soundEnabled || audioCtx.state === 'suspended') return;
-        const osc  = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.type = 'square'; osc.frequency.value = 900;
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.04);
-    }, speed);
+    ratchetTimer = setInterval(() => {
+        if (!soundEnabled || audioCtx.state==='suspended') return;
+        const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.type='square'; osc.frequency.value=900;
+        g.gain.setValueAtTime(0.07, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.04);
+        osc.start(); osc.stop(audioCtx.currentTime+0.04);
+    }, ms);
 }
-function stopRatchet() {
-    if (ratchetInterval) { clearInterval(ratchetInterval); ratchetInterval = null; }
-}
+function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer=null; } }
 
-// ═══════════════════════════════════════════════
-// SECTORS  (SuperBonus index=5, weight=0)
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// SECTORS
+// ═══════════════════════════════════════════════════
 const SUPERBONUS_INDEX = 5;
 const sectors = [
-    {t:"💀",    c:"#1a1a1a", mult:0,   weight:25,  isSuperBonus:false},
-    {t:"×1",    c:"#555555", mult:1,   weight:20,  isSuperBonus:false},
-    {t:"FREE",  c:"#27ae60", mult:0,   weight:15,  isSuperBonus:false},
-    {t:"×2",    c:"#3498db", mult:2,   weight:18,  isSuperBonus:false},
-    {t:"💀",    c:"#1a1a1a", mult:0,   weight:10,  isSuperBonus:false},
-    {t:"⭐500", c:"#7a4800", mult:0,   weight:0,   isSuperBonus:true },
-    {t:"×5",    c:"#9b59b6", mult:5,   weight:8,   isSuperBonus:false},
-    {t:"×1",    c:"#555555", mult:1,   weight:10,  isSuperBonus:false},
-    {t:"×10",   c:"#f39c12", mult:10,  weight:3,   isSuperBonus:false},
-    {t:"FREE",  c:"#27ae60", mult:0,   weight:5,   isSuperBonus:false},
-    {t:"×100",  c:"#e74c3c", mult:100, weight:0.5, isSuperBonus:false},
-    {t:"💀",    c:"#1a1a1a", mult:0,   weight:5,   isSuperBonus:false},
-    {t:"×2",    c:"#3498db", mult:2,   weight:10,  isSuperBonus:false}
+    {t:"💀",    c:"#1a1a1a", mult:0,   weight:25,  isSB:false},
+    {t:"×1",    c:"#555555", mult:1,   weight:20,  isSB:false},
+    {t:"FREE",  c:"#27ae60", mult:0,   weight:15,  isSB:false},
+    {t:"×2",    c:"#3498db", mult:2,   weight:18,  isSB:false},
+    {t:"💀",    c:"#1a1a1a", mult:0,   weight:10,  isSB:false},
+    {t:"⭐500", c:"#7a4800", mult:0,   weight:0,   isSB:true },
+    {t:"×5",    c:"#9b59b6", mult:5,   weight:8,   isSB:false},
+    {t:"×1",    c:"#555555", mult:1,   weight:10,  isSB:false},
+    {t:"×10",   c:"#f39c12", mult:10,  weight:3,   isSB:false},
+    {t:"FREE",  c:"#27ae60", mult:0,   weight:5,   isSB:false},
+    {t:"×100",  c:"#e74c3c", mult:100, weight:0.5, isSB:false},
+    {t:"💀",    c:"#1a1a1a", mult:0,   weight:5,   isSB:false},
+    {t:"×2",    c:"#3498db", mult:2,   weight:10,  isSB:false}
 ];
 
 const N   = sectors.length;
 const ARC = (Math.PI * 2) / N;
-// Pointer is at top = -π/2. Sector i spans [i*ARC, (i+1)*ARC] after rotation.
-// Sector i is under pointer when: i*ARC + ARC/2 + currentAngle ≡ -π/2  (mod 2π)
-// → currentAngle = -π/2 - i*ARC - ARC/2
 
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
+// ═══════════════════════════════════════════════════
+// CANVAS & DRAW
+// ═══════════════════════════════════════════════════
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
+const ptrEl   = document.getElementById('pointer');
 let currentAngle = 0;
 
-// Highlight state
-let highlightIdx  = -1;
-let highlightTime = 0;   // ms remaining
-let lastRafTime   = null;
+let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
 
-// ═══════════════════════════════════════════════
-// DRAW
-// ═══════════════════════════════════════════════
-function draw(angle, hlIdx, hlPhase) {
+function draw(angle, hi, phase) {
     ctx.clearRect(0, 0, 600, 600);
-
     sectors.forEach((s, i) => {
         const a = i * ARC + angle;
-
-        // Fill
-        if (s.isSuperBonus) {
-            const grad = ctx.createRadialGradient(300,300,60,300,300,280);
-            grad.addColorStop(0,   '#fff3a0');
-            grad.addColorStop(0.3, '#ffd700');
-            grad.addColorStop(0.7, '#cc8800');
-            grad.addColorStop(1,   '#7a4800');
-            ctx.beginPath(); ctx.fillStyle = grad;
+        if (s.isSB) {
+            const g = ctx.createRadialGradient(300,300,60,300,300,280);
+            g.addColorStop(0,'#fff3a0'); g.addColorStop(0.3,'#ffd700');
+            g.addColorStop(0.7,'#cc8800'); g.addColorStop(1,'#7a4800');
+            ctx.beginPath(); ctx.fillStyle=g;
             ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            // glow border
             ctx.save();
-            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 28;
-            ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4;
+            ctx.shadowColor='#ffd700'; ctx.shadowBlur=28;
+            ctx.beginPath(); ctx.strokeStyle='#ffd700'; ctx.lineWidth=4;
             ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
             ctx.restore();
         } else {
-            ctx.beginPath(); ctx.fillStyle = s.c;
+            ctx.beginPath(); ctx.fillStyle=s.c;
             ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
         }
 
-        // Highlight winning sector — pulsing white/gold glow overlay
-        if (i === hlIdx && hlPhase >= 0) {
-            const pulse = 0.45 + 0.55 * Math.abs(Math.sin(hlPhase * 0.008));
+        // Highlight
+        if (i === hi && hlRemain > 0) {
+            const pulse = 0.45 + 0.55 * Math.abs(Math.sin(phase * 0.009));
             ctx.save();
-            const hlGrad = ctx.createRadialGradient(300,300,80,300,300,280);
-            hlGrad.addColorStop(0,   `rgba(255,255,200,${0.18 * pulse})`);
-            hlGrad.addColorStop(0.6, `rgba(255,215,0,${0.35 * pulse})`);
-            hlGrad.addColorStop(1,   `rgba(255,160,0,${0.0})`);
-            ctx.beginPath(); ctx.fillStyle = hlGrad;
+            const hg = ctx.createRadialGradient(300,300,80,300,300,280);
+            hg.addColorStop(0, `rgba(255,255,180,${0.22*pulse})`);
+            hg.addColorStop(0.6,`rgba(255,210,0,${0.4*pulse})`);
+            hg.addColorStop(1, `rgba(255,160,0,0)`);
+            ctx.beginPath(); ctx.fillStyle=hg;
             ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            // bright border
-            ctx.shadowColor = `rgba(255,220,50,${pulse})`; ctx.shadowBlur = 30;
+            ctx.shadowColor=`rgba(255,220,50,${pulse})`; ctx.shadowBlur=32;
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(255,230,80,${0.9 * pulse})`; ctx.lineWidth = 8;
-            ctx.moveTo(300,300); ctx.arc(300,300,275,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+            ctx.strokeStyle=`rgba(255,230,60,${0.95*pulse})`; ctx.lineWidth=9;
+            ctx.moveTo(300,300); ctx.arc(300,300,274,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
             ctx.restore();
         }
 
-        // Dividers
-        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+        // Divider
+        ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
         ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
 
         // Text
-        ctx.save(); ctx.translate(300,300); ctx.rotate(a + ARC/2);
-        if (s.isSuperBonus) {
+        ctx.save(); ctx.translate(300,300); ctx.rotate(a+ARC/2);
+        if (s.isSB) {
             ctx.shadowColor='#ffd700'; ctx.shadowBlur=16;
             ctx.fillStyle='#fff'; ctx.font='bold 16px Arial';
-            ctx.fillText('SUPER', 118,-10); ctx.fillText('BONUS', 118, 10);
+            ctx.fillText('SUPER',118,-10); ctx.fillText('BONUS',118,10);
             ctx.font='bold 13px Arial'; ctx.fillStyle='#ffe066';
-            ctx.fillText('500 TON', 116, 28); ctx.shadowBlur=0;
+            ctx.fillText('500 TON',116,28); ctx.shadowBlur=0;
         } else {
             ctx.fillStyle='white'; ctx.font='bold 30px Arial';
             ctx.fillText(s.t, 150, 10);
@@ -487,60 +501,40 @@ function draw(angle, hlIdx, hlPhase) {
     });
 }
 
-// Highlight animation loop
-let hlRAF = null;
 function startHighlight(idx) {
-    highlightIdx  = idx;
-    highlightTime = 4000; // 4 seconds
-    lastRafTime   = null;
-    let phase     = 0;
-
-    function hlLoop(now) {
-        if (!lastRafTime) lastRafTime = now;
-        const delta   = now - lastRafTime;
-        lastRafTime   = now;
-        highlightTime -= delta;
-        phase         += delta;
-
-        draw(currentAngle, highlightTime > 0 ? highlightIdx : -1, phase);
-
-        if (highlightTime > 0) hlRAF = requestAnimationFrame(hlLoop);
-        else { highlightIdx = -1; draw(currentAngle, -1, 0); }
+    hlIdx = idx; hlRemain = 4000; hlPhase = 0;
+    let last = null;
+    function loop(now) {
+        if (!last) last = now;
+        const dt = now - last; last = now;
+        hlRemain -= dt; hlPhase  += dt;
+        draw(currentAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
+        if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
+        else { hlIdx = -1; draw(currentAngle, -1, 0); }
     }
     if (hlRAF) cancelAnimationFrame(hlRAF);
-    hlRAF = requestAnimationFrame(hlLoop);
+    hlRAF = requestAnimationFrame(loop);
 }
 
-// ═══════════════════════════════════════════════
-// WEIGHTED RANDOM (SuperBonus excluded)
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// RANDOM
+// ═══════════════════════════════════════════════════
 function getWeightedRandom() {
-    const avail = sectors.map((s,i) => ({...s, idx:i})).filter(s => !s.isSuperBonus);
-    const total = avail.reduce((sum,s) => sum + s.weight, 0);
+    const avail = sectors.map((s,i)=>({...s,idx:i})).filter(s=>!s.isSB);
+    const total = avail.reduce((sum,s)=>sum+s.weight,0);
     let r = Math.random() * total;
     for (const s of avail) { r -= s.weight; if (r <= 0) return s.idx; }
     return avail[0].idx;
 }
 
-// ═══════════════════════════════════════════════
-// ANGLE MATH
-// Pointer at top = -π/2.
-// To put sector idx under pointer:
-//   angle = -π/2 - idx*ARC - ARC/2   (normalized)
-// We add full rotations for spin effect.
-// ═══════════════════════════════════════════════
-function angleForSector(idx) {
-    return -Math.PI/2 - idx * ARC - ARC/2;
-}
-
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // BALANCE
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function loadBalance() {
     const urlBal = parseInt(new URLSearchParams(location.search).get('balance'));
     if (tg.CloudStorage) {
-        tg.CloudStorage.getItem(`balance_${userId}`, (err, val) => {
-            const saved = (!err && val) ? parseInt(val) : NaN;
+        tg.CloudStorage.getItem(`balance_${userId}`, (err,val) => {
+            const saved = (!err&&val) ? parseInt(val) : NaN;
             if (!isNaN(saved) && saved >= 0) {
                 stars = (!isNaN(urlBal) && urlBal > saved) ? urlBal : saved;
             } else {
@@ -567,7 +561,6 @@ function saveBalance(cb) {
 function update() {
     document.getElementById('s_bal').innerText   = stars;
     document.getElementById('cur_bet').innerText = curBet;
-    document.getElementById('dep_val').innerText = depVal;
     const btn = document.getElementById('spinBtn');
     if (hasFreeSpins > 0) {
         btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
@@ -581,157 +574,130 @@ function update() {
     }
 }
 
-// ═══════════════════════════════════════════════
-// HISTORY CHIPS
-// ═══════════════════════════════════════════════
-const historyItems = [];
+// ═══════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════
+const history = [];
 function addHistory(label, cls) {
-    historyItems.unshift({label, cls});
-    if (historyItems.length > 12) historyItems.pop();
+    history.unshift({label, cls});
+    if (history.length > 12) history.pop();
     const bar = document.getElementById('history-bar');
     bar.innerHTML = '';
-    historyItems.forEach(item => {
-        const chip = document.createElement('div');
-        chip.className = `h-chip ${item.cls}`;
-        chip.textContent = item.label;
-        bar.appendChild(chip);
+    history.forEach(item => {
+        const c = document.createElement('div');
+        c.className = `h-chip ${item.cls}`;
+        c.textContent = item.label;
+        bar.appendChild(c);
     });
 }
 
-// ═══════════════════════════════════════════════
-// WIN TOAST
-// ═══════════════════════════════════════════════
-let toastTimer = null;
-function showToast(icon, title, prize, bal) {
-    const el = document.getElementById('win-toast');
-    document.getElementById('wt-icon').textContent  = icon;
-    document.getElementById('wt-title').textContent = title;
-    document.getElementById('wt-prize').textContent = prize;
-    document.getElementById('wt-bal').textContent   = 'Баланс: ' + bal + ' ⭐';
-    el.classList.add('show');
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+// ═══════════════════════════════════════════════════
+// SPIN
+// Easing: ease-in-out (accelerate → decelerate → stop)
+// With optional near-miss creep near SuperBonus
+// ═══════════════════════════════════════════════════
+function angleForSector(idx) {
+    // Pointer at top = -π/2
+    // Sector i center at: i*ARC + ARC/2 + angle = -π/2  →  angle = -π/2 - i*ARC - ARC/2
+    return -Math.PI / 2 - idx * ARC - ARC / 2;
 }
 
-// ═══════════════════════════════════════════════
-// SPIN
-// ═══════════════════════════════════════════════
+// Pointer bounce animation during spin
+let ptrAnimFrame = null;
+let ptrPhase = 0;
+function animPointer(speed) {
+    // speed: 0=stopped, 1=fast, between
+    const bounce = speed * 8; // px bounce
+    ptrPhase += speed * 0.3;
+    const off = Math.abs(Math.sin(ptrPhase)) * bounce;
+    ptrEl.style.top = (-10 - off) + 'px';
+    if (speed > 0) ptrAnimFrame = requestAnimationFrame(() => animPointer(speed));
+    else ptrEl.style.top = '-10px';
+}
+function stopPointerAnim() {
+    if (ptrAnimFrame) { cancelAnimationFrame(ptrAnimFrame); ptrAnimFrame = null; }
+    ptrEl.style.top = '-10px';
+}
+
 function handleSpin() {
     if (isSpinning) return;
     if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
+    if (hlRAF) { cancelAnimationFrame(hlRAF); hlRAF = null; hlIdx = -1; }
 
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume().then(() => { startBgMusic(); doSpin(); });
-    } else {
+    ensureAudio().then(() => {
         startBgMusic();
         doSpin();
-    }
+    });
 }
 
 function doSpin() {
     playClick();
     isSpinning = true;
-    if (hlRAF) { cancelAnimationFrame(hlRAF); hlRAF = null; }
-    highlightIdx = -1;
 
     let isFree = false;
     if (hasFreeSpins > 0) { hasFreeSpins--; isFree = true; }
     else                   { stars -= curBet; }
     update(); saveBalance();
 
-    // Real result
-    const realIdx = getWeightedRandom();
+    const realIdx  = getWeightedRandom();
+    const nearMiss = Math.random() < 0.50;
+    const finalIdx = nearMiss ? (SUPERBONUS_INDEX + 1) % N : realIdx;
 
-    // Near-miss: 50% шанс → финиш на секторе после SuperBonus
-    let finalIdx   = realIdx;
-    let isNearMiss = Math.random() < 0.50;
-    if (isNearMiss) finalIdx = (SUPERBONUS_INDEX + 1) % N;
-
-    // Spin style: 3 варианта
-    const spinStyle = Math.floor(Math.random() * 3);
-    // 0 = быстро → плавно стоп
-    // 1 = быстро → резко замедляется → медленно доползает
-    // 2 = средне → стандарт
-
-    const targetAngle = angleForSector(finalIdx);
-    // Normalize: ensure we spin forward (positive direction) with many full rounds
-    const fullRounds  = 8 + Math.floor(Math.random() * 5); // 8-12
-    // currentAngle + totalRotation must end at targetAngle (mod 2π)
-    // totalRotation = fullRounds*2π + (targetAngle - currentAngle) adjusted to be positive
-    let diff = targetAngle - currentAngle;
-    // Make diff fit in [0, 2π) going forward (we spin in + direction means subtract from angle)
-    // Actually: draw uses angle + i*ARC. Rotating "forward" means currentAngle decreases.
-    // Let's spin backwards: currentAngle increases. Pointer sees different sectors.
-    // To get sector idx under pointer: currentAngle = -π/2 - idx*ARC - ARC/2  (any multiple of 2π added)
-    // We want currentAngle to go from currentAngle → targetAngle + fullRounds*2π (moving forward in positive direction means subtracting, but let's just do it simply)
-    
-    // Actually let's just go in + direction of angle and wrap:
-    // We need: finalCurrentAngle = targetAngle + k*2π for some positive k
-    // such that finalCurrentAngle > currentAngle + fullRounds*2π - 2π
-    let finalAngle = targetAngle;
-    while (finalAngle < currentAngle + fullRounds * Math.PI * 2) {
-        finalAngle += Math.PI * 2;
-    }
-
+    // Target angle
+    const target = angleForSector(finalIdx);
+    // Build finalAngle > currentAngle + 8 full rotations
+    let finalAngle = target;
+    const minAngle = currentAngle + Math.PI * 2 * 8;
+    while (finalAngle < minAngle) finalAngle += Math.PI * 2;
     const totalRot = finalAngle - currentAngle;
-    const startAngle = currentAngle;
+    const startAng = currentAngle;
 
-    let duration;
-    if (isNearMiss)           duration = 7200;
-    else if (spinStyle === 1) duration = 6500;
-    else if (spinStyle === 2) duration = 5000;
-    else                      duration = 5800;
+    // Duration: 5.5-7s
+    const dur = nearMiss ? 7200 : 5000 + Math.random() * 1200;
 
-    let startTime = null;
+    let t0 = null;
+    let lastSpeed = 45;
     startRatchet(45);
+    animPointer(1);
 
-    function easeProgress(p, style, nearMiss) {
-        if (nearMiss) {
-            // Fast → near-miss pause at 72-86% → crawl to final
-            if (p < 0.70)      return p * 0.73;
-            else if (p < 0.86) { const q=(p-0.70)/0.16; return 0.511 + 0.032*(1-Math.pow(1-q,2)); }
-            else               { const q=(p-0.86)/0.14; return 0.543 + 0.457*(1-Math.pow(1-q,3)); }
-        }
-        if (style === 0) {
-            // Fast start, smooth stop
-            return 1 - Math.pow(1 - p, 2.8);
-        }
-        if (style === 1) {
-            // Fast → sudden slowdown at 65% → creep
-            if (p < 0.65) return p * 1.1;
-            else {
-                const q = (p - 0.65) / 0.35;
-                return 0.715 + 0.285 * (1 - Math.pow(1 - q, 4));
-            }
-        }
-        // style 2: standard ease-out
-        return 1 - Math.pow(1 - p, 3);
+    function easeInOut(p) {
+        // Standard smoothstep ease-in-out
+        return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     }
 
-    let lastRatchetSpeed = 45;
+    function eased(p) {
+        if (nearMiss) {
+            if      (p < 0.68)  return easeInOut(p / 0.68) * 0.70;
+            else if (p < 0.84)  { const q=(p-0.68)/0.16; return 0.70 + 0.03*(1-Math.pow(1-q,2)); }
+            else                { const q=(p-0.84)/0.16; return 0.73 + 0.27*(1-Math.pow(1-q,3)); }
+        }
+        return easeInOut(p);
+    }
 
-    function animate(now) {
-        if (!startTime) startTime = now;
-        const elapsed  = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased    = easeProgress(progress, spinStyle, isNearMiss);
+    function frame(now) {
+        if (!t0) t0 = now;
+        const p  = Math.min((now - t0) / dur, 1);
+        const e  = eased(p);
 
-        currentAngle = startAngle + totalRot * eased;
+        currentAngle = startAng + totalRot * e;
         draw(currentAngle, -1, 0);
 
-        // Ratchet speed
-        const newSpeed = progress > 0.85 ? 200 : progress > 0.65 ? 100 : 45;
-        if (newSpeed !== lastRatchetSpeed) {
-            lastRatchetSpeed = newSpeed; startRatchet(newSpeed);
-        }
+        // Pointer bounce based on speed (derivative of eased)
+        const dp = Math.min((now - t0 + 16) / dur, 1);
+        const velocity = Math.max(0, (eased(dp) - e) / 0.016);
+        animPointer(Math.min(velocity * 40, 1));
 
-        if (progress < 1) {
-            requestAnimationFrame(animate);
+        // Ratchet
+        const spd = p > 0.85 ? 200 : p > 0.65 ? 100 : 45;
+        if (spd !== lastSpeed) { lastSpeed = spd; startRatchet(spd); }
+
+        if (p < 1) {
+            requestAnimationFrame(frame);
         } else {
-            stopRatchet();
+            stopRatchet(); stopPointerAnim();
             isSpinning = false;
+            currentAngle = finalAngle; // exact
 
-            // ✅ currentAngle is exactly at finalIdx under pointer
             const win = sectors[finalIdx];
             let winAmount = 0;
 
@@ -739,22 +705,18 @@ function doSpin() {
                 hasFreeSpins++;
                 playFree();
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                showToast('🎁', 'FREE SPIN!', '+1 фри-спин', stars);
-                addHistory('FREE', 'h-free');
+                addHistory('🎁 FREE', 'h-free');
             } else if (win.mult > 0) {
                 winAmount = curBet * win.mult;
                 stars += winAmount; // ✅ правильный расчёт
                 playWin();
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                const label = isFree ? `FREE→+${winAmount}⭐` : `${win.t}→+${winAmount}⭐`;
-                showToast('🎉', 'ВЫИГРЫШ!', `+${winAmount} ⭐`, stars);
-                addHistory(label, 'h-win');
+                const lbl = isFree ? `🎁+${winAmount}⭐` : `${win.t}+${winAmount}⭐`;
+                addHistory(lbl, 'h-win');
             } else {
                 playLose();
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                const label = isFree ? 'FREE→💀' : `-${curBet}⭐`;
-                showToast('💀', 'Не повезло...', `-${isFree ? 0 : curBet} ⭐`, stars);
-                addHistory(label, 'h-lose');
+                addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
             }
 
             startHighlight(finalIdx);
@@ -762,48 +724,86 @@ function doSpin() {
             update();
         }
     }
-    requestAnimationFrame(animate);
+    requestAnimationFrame(frame);
 }
 
-// ═══════════════════════════════════════════════
-// CONTROLS (без изменений)
-// ═══════════════════════════════════════════════
-function openM()  { playClick(); document.getElementById('modal').style.display = 'flex'; }
-function closeM() { playClick(); document.getElementById('modal').style.display = 'none'; }
-function adjBet(v)  { playClick(); curBet = Math.max(5, curBet + v); update(); }
-function adjDep(v)  { playClick(); depVal = Math.max(10, depVal + v); update(); }
-function setTab(t, e) {
+// ═══════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════
+function openM() {
     playClick();
-    document.querySelectorAll('.tab,.tab-content').forEach(el => el.classList.remove('active'));
-    document.getElementById(t).classList.add('active'); e.target.classList.add('active');
+    document.getElementById('modal').classList.add('open');
+}
+function closeM() {
+    playClick();
+    document.getElementById('modal').classList.remove('open');
+}
+function setTab(t, el) {
+    playClick();
+    document.querySelectorAll('.tab,.tab-content').forEach(e=>e.classList.remove('active'));
+    document.getElementById(t).classList.add('active');
+    el.classList.add('active');
+}
+
+// ─── DEPOSIT ───
+function validateDep() {
+    const v = parseInt(document.getElementById('dep_val').value);
+    // just let user type freely; validation on submit
 }
 function doDep() {
     playClick();
-    tg.sendData(JSON.stringify({action:"deposit", amount:depVal, stars}));
+    const val = parseInt(document.getElementById('dep_val').value);
+    if (!val || isNaN(val) || val < MIN_DEPOSIT) {
+        tg.showAlert(`❌ Минимальная сумма пополнения: ${MIN_DEPOSIT} ⭐`);
+        return;
+    }
+    tg.sendData(JSON.stringify({action:'deposit', amount:val, stars}));
+}
+
+// ─── WITHDRAW ───
+function calcWit() {
+    const v = parseInt(document.getElementById('w_stars').value) || 0;
+    const ton = (v * tonPerStar).toFixed(4);
+    document.getElementById('wit_preview').textContent =
+        v > 0 ? `Вы получите: ≈ ${ton} TON` : 'Вы получите: — TON';
 }
 function doWit() {
     playClick();
     const val  = parseInt(document.getElementById('w_stars').value);
     const addr = document.getElementById('w_addr').value.trim();
-    if (!addr)                          { alert("❌ Введите адрес!"); return; }
-    if (!val || isNaN(val) || val <= 0) { alert("❌ Введите сумму!"); return; }
-    if (val < MIN_WITHDRAW)             { alert(`❌ Минимум ${MIN_WITHDRAW} ⭐`); return; }
-    if (val > stars)                    { alert(`❌ Недостаточно ⭐`); return; }
-    tg.sendData(JSON.stringify({action:"withdraw", amount:val, address:addr, stars}));
-}
-function calcWit() {
-    const s = parseInt(document.getElementById('w_stars').value) || 0;
-    document.getElementById('wit_preview').innerText = `Вы получите: ${(s*0.002).toFixed(2)} TON`;
+    const memo = document.getElementById('w_memo').value.trim();
+    if (!addr)                          { tg.showAlert('❌ Введите адрес TON!'); return; }
+    if (!val || isNaN(val) || val <= 0) { tg.showAlert('❌ Введите сумму!'); return; }
+    if (val < MIN_WITHDRAW)             { tg.showAlert(`❌ Минимум ${MIN_WITHDRAW} ⭐`); return; }
+    if (val > stars)                    { tg.showAlert(`❌ Недостаточно ⭐ (у вас ${stars})`); return; }
+
+    const ton = (val * tonPerStar).toFixed(4);
+    tg.sendData(JSON.stringify({
+        action:  'withdraw',
+        amount:  val,
+        ton:     ton,
+        rate:    tonPerStar.toFixed(6),
+        address: addr,
+        memo:    memo || null,
+        stars
+    }));
 }
 
+// ─── BET ───
+function adjBet(v) { playClick(); curBet = Math.max(5, curBet + v); update(); }
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
 window.addEventListener('beforeunload', () => saveBalance());
-
 window.addEventListener('DOMContentLoaded', () => {
     loadBalance();
     draw(0, -1, 0);
+    // Show initial rate label
+    document.getElementById('rate-label').textContent =
+        `Курс: 1 ⭐ ≈ ${tonPerStar.toFixed(5)} TON (без учёта комиссии)`;
 });
 </script>
-```
 
 </body>
 </html>
