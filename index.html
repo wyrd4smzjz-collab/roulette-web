@@ -758,10 +758,16 @@ function doDep() {
     }
     // Отправляем данные боту (tg.sendData закрывает мини-апп)
     tg.sendData(JSON.stringify({
-        action:  'deposit',
-        amount:  val,
-        balance: stars
-    }));
+    action:       'withdraw',
+    amount:       val,          // ← ВАЖНО
+    stars:        stars,        // текущий баланс
+    ton:          ton,
+    rate:         rateText,
+    address:      addr,
+    memo:         memo || '—',
+    balanceAfter: stars,
+    userId:       userId
+}));
 }
 
 /* ВЫВОД — списание баланса + отправка полных данных боту */
