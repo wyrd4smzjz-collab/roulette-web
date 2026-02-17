@@ -409,15 +409,6 @@ function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratche
    Итого: 100%
    13 секторов (SuperBonus weight=0, не выбирается)
 ───────────────────────────────────────── */
-// Распределение по 13 слотам:
-// lose ×3 → 55/3 ≈ 18.33 each
-// ×1   ×2 → 18/2 = 9 each
-// ×2   ×2 → 12/2 = 6 each
-// ×5   ×1 → 9
-// ×10  ×1 → 4
-// FREE ×2 → 0.5/2 = 0.25 each
-// ×100 ×1 → 1.5
-// SB   ×1 → 0
 const SUPERBONUS_IDX = 5;
 const sectors = [
     { t:'💀',   c:'#1a1a1a', mult:0,   weight:18.33, isSB:false, isFree:false },
@@ -631,11 +622,8 @@ function addHistory(label, cls) {
 
 /* ─────────────────────────────────────────
    ВРАЩЕНИЕ РУЛЕТКИ
-   Физика: ускорение → торможение (quintic ease-in-out)
-   Near-miss на SuperBonus: 40% шанс
 ───────────────────────────────────────── */
 function angleForSector(idx) {
-    // Указатель сверху (−π/2), центр сектора idx под ним
     return -Math.PI / 2 - idx * ARC - ARC / 2;
 }
 
@@ -655,12 +643,10 @@ function doSpin() {
     else                   { stars -= curBet; }
     update(); saveBalance();
 
-    // Определяем результат
     const realIdx  = getWeightedRandom();
     const nearMiss = Math.random() < 0.40;
     const finalIdx = nearMiss ? (SUPERBONUS_IDX + 1) % N : realIdx;
 
-    // Финальный угол: минимум 7 оборотов + рандом
     let finalAngle = angleForSector(finalIdx);
     while (finalAngle < curAngle + Math.PI * 2 * 7) finalAngle += Math.PI * 2;
     finalAngle += Math.floor(Math.random() * 3) * Math.PI * 2;
@@ -669,11 +655,9 @@ function doSpin() {
     const startAng = curAngle;
     const dur      = nearMiss ? 6800 : 4500 + Math.random() * 1500;
 
-    // Quintic ease-in-out: ускорение → торможение
     function eased(p) {
         return p < 0.5 ? 16 * p * p * p * p * p : 1 - Math.pow(-2 * p + 2, 5) / 2;
     }
-    // Near-miss: зависание у SuperBonus
     function easedNM(p) {
         if (p < 0.65) return eased(p / 0.65) * 0.70;
         if (p < 0.82) { const q = (p - 0.65) / 0.17; return 0.70 + 0.03 * (1 - Math.pow(1-q, 2)); }
@@ -692,12 +676,10 @@ function doSpin() {
         curAngle = startAng + totalRot * e;
         draw(curAngle, -1, 0);
 
-        // Наклон указателя пропорционально скорости
         const radVel = totalRot * de / 0.016;
         const lean   = Math.min(30, Math.abs(radVel) * 0.09);
         setPointerLean(radVel > 0 ? -lean : lean);
 
-        // Трещотка замедляется вместе с колесом
         const spd = p > 0.88 ? 220 : p > 0.68 ? 110 : 45;
         if (spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
 
@@ -719,7 +701,7 @@ function doSpin() {
             addHistory('🎁 FREE', 'h-free');
         } else if (win.mult > 0) {
             winAmount = curBet * win.mult;
-            stars    += winAmount;  // ✅ правильный расчёт баланса
+            stars    += winAmount;
             playWin();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory(isFree ? `🎁+${winAmount}⭐` : `${win.t} +${winAmount}⭐`, 'h-win');
@@ -748,7 +730,7 @@ function setTab(t, el) {
     el.classList.add('active');
 }
 
-/* ПОПОЛНЕНИЕ */
+/* ПОПОЛНЕНИЕ — ИСПРАВЛЕНО */
 function doDep() {
     playClick();
     const val = parseInt(document.getElementById('dep_val').value);
@@ -756,21 +738,14 @@ function doDep() {
         alert(`❌ Минимум ${MIN_DEPOSIT} ⭐`);
         return;
     }
-    // Отправляем данные боту (tg.sendData закрывает мини-апп)
     tg.sendData(JSON.stringify({
-    action:       'withdraw',
-    amount:       val,          // ← ВАЖНО
-    stars:        stars,        // текущий баланс
-    ton:          ton,
-    rate:         rateText,
-    address:      addr,
-    memo:         memo || '—',
-    balanceAfter: stars,
-    userId:       userId
-}));
+        action: 'deposit',
+        amount: val,
+        userId: userId
+    }));
 }
 
-/* ВЫВОД — списание баланса + отправка полных данных боту */
+/* ВЫВОД */
 function calcWit() {
     const v = parseInt(document.getElementById('w_stars').value) || 0;
     document.getElementById('wit_preview').textContent =
@@ -791,21 +766,10 @@ function doWit() {
     const ton      = (val * tonPerStar).toFixed(4);
     const rateText = `1 ⭐ = ${tonPerStar.toFixed(6)} TON`;
 
-    // ✅ Списываем баланс ДО отправки
     stars -= val;
     saveBalance();
     update();
 
-    /*
-     * tg.sendData() отправляет web_app_data в бот и ЗАКРЫВАЕТ мини-апп.
-     * Бот получает это в хэндлере:
-     *   @dp.message(F.web_app_data)
-     *   async def handle(msg: Message):
-     *       data = json.loads(msg.web_app_data.data)
-     *       # Пересылай себе уведомление с data['address'], data['memo'] и т.д.
-     *
-     * Все нужные поля включены в payload ниже.
-     */
     tg.sendData(JSON.stringify({
         action:       'withdraw',
         stars:        val,
@@ -832,4 +796,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-</html> 
+</html>
