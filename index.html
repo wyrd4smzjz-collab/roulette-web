@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <meta charset="UTF-8">
@@ -28,434 +29,496 @@
         .tab-content.active { display: flex; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; font-size: 1.1em; box-sizing: border-box; }
         .min-withdraw-warning { color: #e74c3c; font-size: 0.9em; margin-top: 10px; text-align: center; }
-    </style>
+
+```
+    /* ── SUPERBONUS BANNER top-left ── */
+    #sb-banner {
+        position: fixed;
+        top: calc(env(safe-area-inset-top) + 8px);
+        left: 10px;
+        z-index: 200;
+        background: linear-gradient(135deg, #1a0f00 0%, #2d1a00 60%, #1a0f00 100%);
+        border: 1.5px solid #ffd700;
+        border-radius: 10px;
+        padding: 5px 12px 5px 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 0 8px #ffd700, 0 0 20px #ffaa00, 0 0 35px rgba(255,136,0,0.4);
+        animation: sbPulse 2.2s ease-in-out infinite;
+        pointer-events: none;
+    }
+    @keyframes sbPulse {
+        0%,100% { box-shadow: 0 0 8px #ffd700, 0 0 20px #ffaa00, 0 0 35px rgba(255,136,0,0.4); }
+        50%      { box-shadow: 0 0 16px #ffd700, 0 0 36px #ffaa00, 0 0 65px rgba(255,136,0,0.7); }
+    }
+    #sb-banner .sb-crown { font-size: 20px; filter: drop-shadow(0 0 6px #ffd700); }
+    #sb-banner .sb-text  { display: flex; flex-direction: column; line-height: 1.2; }
+    #sb-banner .sb-label {
+        font-size: 8px; font-weight: 900; letter-spacing: 2px;
+        color: #ffd700; text-transform: uppercase;
+    }
+    #sb-banner .sb-amount {
+        font-size: 14px; font-weight: 900; color: #fff;
+        text-shadow: 0 0 8px #ffd700, 0 0 18px #ffaa00;
+    }
+</style>
+```
+
 </head>
 <body>
-    <div class="top-bar">
-        <div class="bal-display">⭐ <span id="s_bal">0</span></div>
-        <button class="wallet-btn" onclick="openM()">Кошелек</button>
-    </div>
 
-    <div class="wheel-container">
-        <div class="pointer"></div>
-        <canvas id="canvas" width="600" height="600"></canvas>
+```
+<!-- ★ SuperBonus Banner (top-left, всегда виден) -->
+<div id="sb-banner">
+    <span class="sb-crown">👑</span>
+    <div class="sb-text">
+        <span class="sb-label">SuperBonus</span>
+        <span class="sb-amount">500 TON</span>
     </div>
+</div>
 
-    <div class="controls">
+<div class="top-bar">
+    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
+    <button class="wallet-btn" onclick="openM()">Кошелек</button>
+</div>
+
+<div class="wheel-container">
+    <div class="pointer"></div>
+    <canvas id="canvas" width="600" height="600"></canvas>
+</div>
+
+<div class="controls">
+    <div class="bet-box">
+        <button class="btn-adj" onclick="adjBet(-5)">-</button>
+        <div>Ставка<br><b id="cur_bet">5</b> ⭐</div>
+        <button class="btn-adj" onclick="adjBet(5)">+</button>
+    </div>
+    <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+</div>
+
+<div id="modal">
+    <div class="tabs">
+        <div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div>
+        <div class="tab" onclick="setTab('wit', event)">ВЫВОД</div>
+    </div>
+    <div id="dep" class="tab-content active">
+        <h2 style="color: gold;">Сумма звезд</h2>
         <div class="bet-box">
-            <button class="btn-adj" onclick="adjBet(-5)">-</button>
-            <div>Ставка<br><b id="cur_bet">5</b> ⭐</div>
-            <button class="btn-adj" onclick="adjBet(5)">+</button>
+            <button class="btn-adj" onclick="adjDep(-100)">-</button>
+            <span id="dep_val" style="font-size: 2.5em; margin: 0 20px;">100</span>
+            <button class="btn-adj" onclick="adjDep(100)">+</button>
         </div>
-        <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+        <button class="spin-btn" onclick="doDep()">КУПИТЬ ⭐</button>
+        <p onclick="closeM()" style="margin-top:30px; color:#777;">← Назад</p>
     </div>
-
-    <div id="modal">
-        <div class="tabs">
-            <div class="tab active" onclick="setTab('dep', event)">ПОПОЛНИТЬ</div>
-            <div class="tab" onclick="setTab('wit', event)">ВЫВОД</div>
-        </div>
-        <div id="dep" class="tab-content active">
-            <h2 style="color: gold;">Сумма звезд</h2>
-            <div class="bet-box">
-                <button class="btn-adj" onclick="adjDep(-100)">-</button>
-                <span id="dep_val" style="font-size: 2.5em; margin: 0 20px;">100</span>
-                <button class="btn-adj" onclick="adjDep(100)">+</button>
-            </div>
-            <button class="spin-btn" onclick="doDep()">КУПИТЬ ⭐</button>
-            <p onclick="closeM()" style="margin-top:30px; color:#777;">← Назад</p>
-        </div>
-        <div id="wit" class="tab-content">
-            <h2 style="color: #0088cc;">Вывод TON</h2>
-            <p class="min-withdraw-warning">⚠️ Минимальная сумма вывода: 500 ⭐</p>
-            <input type="number" id="w_stars" placeholder="Сумма звезд (мин. 500)" oninput="calcWit()">
-            <input type="text" id="w_addr" placeholder="Адрес (UQ...)">
-            <p id="wit_preview">Вы получите: 0.00 TON</p>
-            <button class="spin-btn" onclick="doWit()">ВЫВЕСТИ</button>
-            <p onclick="closeM()" style="margin-top:30px; color:#777;">Назад</p>
-        </div>
+    <div id="wit" class="tab-content">
+        <h2 style="color: #0088cc;">Вывод TON</h2>
+        <p class="min-withdraw-warning">⚠️ Минимальная сумма вывода: 500 ⭐</p>
+        <input type="number" id="w_stars" placeholder="Сумма звезд (мин. 500)" oninput="calcWit()">
+        <input type="text" id="w_addr" placeholder="Адрес (UQ...)">
+        <p id="wit_preview">Вы получите: 0.00 TON</p>
+        <button class="spin-btn" onclick="doWit()">ВЫВЕСТИ</button>
+        <p onclick="closeM()" style="margin-top:30px; color:#777;">Назад</p>
     </div>
+</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        let stars = 0;
-        let curBet = 5, depVal = 100, isSpinning = false;
-        let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
-        let hasFreeSpins = 0;
-        
-        const MIN_WITHDRAW = 500;
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        // 🎵 ЗВУКИ
-        const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
-        const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
-        const sndLose = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
-        
-        sndClick.volume = 0.3; 
-        sndWin.volume = 0.5;
-        sndLose.volume = 0.3;
+    let stars = 0;
+    let curBet = 5, depVal = 100, isSpinning = false;
+    let userId = new URLSearchParams(location.search).get('uid') || 'unknown';
+    let hasFreeSpins = 0;
 
-        // 🎰 СЕКТОРЫ
-        const sectors = [
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 25},
-            {t: "×1", c: "#555555", mult: 1, weight: 20},
-            {t: "FREE", c: "#27ae60", mult: 0, weight: 15},
-            {t: "×2", c: "#3498db", mult: 2, weight: 18},
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 10},
-            {t: "×5", c: "#9b59b6", mult: 5, weight: 8},
-            {t: "×1", c: "#555555", mult: 1, weight: 10},
-            {t: "×10", c: "#f39c12", mult: 10, weight: 3},
-            {t: "FREE", c: "#27ae60", mult: 0, weight: 5},
-            {t: "×100", c: "#e74c3c", mult: 100, weight: 0.5},
-            {t: "💀", c: "#1a1a1a", mult: 0, weight: 5},
-            {t: "×2", c: "#3498db", mult: 2, weight: 10}
-        ];
+    const MIN_WITHDRAW = 500;
 
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let currentAngle = 0;
+    // 🎵 ЗВУКИ
+    const sndClick = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
+    const sndWin   = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+    const sndLose  = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3');
+    sndClick.volume = 0.3;
+    sndWin.volume   = 0.5;
+    sndLose.volume  = 0.3;
 
-        function getWeightedRandomSector() {
-            const totalWeight = sectors.reduce((sum, s) => sum + s.weight, 0);
-            let random = Math.random() * totalWeight;
-            
-            for (let i = 0; i < sectors.length; i++) {
-                random -= sectors[i].weight;
-                if (random <= 0) return i;
-            }
-            return 0;
-        }
+    // ─────────────────────────────────────────────
+    // 🎰 СЕКТОРЫ
+    // SuperBonus: weight=0 → никогда не выбирается random'ом,
+    //             isSuperBonus=true → рисуется золотым
+    // ─────────────────────────────────────────────
+    const SUPERBONUS_INDEX = 5; // индекс в массиве
 
-        function draw(angle = 0) {
-            const arc = (Math.PI * 2) / sectors.length;
-            ctx.clearRect(0, 0, 600, 600);
-            sectors.forEach((s, i) => {
-                const a = i * arc + angle;
-                ctx.beginPath(); 
-                ctx.fillStyle = s.c; 
+    const sectors = [
+        {t: "💀",     c: "#1a1a1a", mult: 0,   weight: 25,  isSuperBonus: false},
+        {t: "×1",     c: "#555555", mult: 1,   weight: 20,  isSuperBonus: false},
+        {t: "FREE",   c: "#27ae60", mult: 0,   weight: 15,  isSuperBonus: false},
+        {t: "×2",     c: "#3498db", mult: 2,   weight: 18,  isSuperBonus: false},
+        {t: "💀",     c: "#1a1a1a", mult: 0,   weight: 10,  isSuperBonus: false},
+        // ★ SuperBonus — всегда виден, никогда не выпадает
+        {t: "⭐500",  c: "#7a4800", mult: 0,   weight: 0,   isSuperBonus: true },
+        {t: "×5",     c: "#9b59b6", mult: 5,   weight: 8,   isSuperBonus: false},
+        {t: "×1",     c: "#555555", mult: 1,   weight: 10,  isSuperBonus: false},
+        {t: "×10",    c: "#f39c12", mult: 10,  weight: 3,   isSuperBonus: false},
+        {t: "FREE",   c: "#27ae60", mult: 0,   weight: 5,   isSuperBonus: false},
+        {t: "×100",   c: "#e74c3c", mult: 100, weight: 0.5, isSuperBonus: false},
+        {t: "💀",     c: "#1a1a1a", mult: 0,   weight: 5,   isSuperBonus: false},
+        {t: "×2",     c: "#3498db", mult: 2,   weight: 10,  isSuperBonus: false}
+    ];
+
+    const canvas = document.getElementById('canvas');
+    const ctx    = canvas.getContext('2d');
+    let currentAngle = 0;
+
+    // ─────────────────────────────────────────────
+    // Рисуем колесо
+    // ─────────────────────────────────────────────
+    function draw(angle = 0) {
+        const arc = (Math.PI * 2) / sectors.length;
+        ctx.clearRect(0, 0, 600, 600);
+
+        sectors.forEach((s, i) => {
+            const a = i * arc + angle;
+
+            if (s.isSuperBonus) {
+                // Золотой градиент
+                const grad = ctx.createRadialGradient(300, 300, 60, 300, 300, 280);
+                grad.addColorStop(0,   '#fff3a0');
+                grad.addColorStop(0.3, '#ffd700');
+                grad.addColorStop(0.7, '#cc8800');
+                grad.addColorStop(1,   '#7a4800');
+                ctx.beginPath();
+                ctx.fillStyle = grad;
                 ctx.moveTo(300, 300);
-                ctx.arc(300, 300, 280, a, a + arc); 
+                ctx.arc(300, 300, 280, a, a + arc);
                 ctx.fill();
-                ctx.save(); 
-                ctx.translate(300, 300); 
-                ctx.rotate(a + arc/2);
-                ctx.fillStyle = "white"; 
-                ctx.font = "bold 30px Arial";
-                ctx.fillText(s.t, 150, 10); 
+
+                // Золотая обводка
+                ctx.beginPath();
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth   = 4;
+                ctx.moveTo(300, 300);
+                ctx.arc(300, 300, 278, a, a + arc);
+                ctx.lineTo(300, 300);
+                ctx.stroke();
+
+                // Свечение
+                ctx.save();
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur  = 28;
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+                ctx.lineWidth   = 8;
+                ctx.arc(300, 300, 258, a, a + arc);
+                ctx.stroke();
                 ctx.restore();
+
+            } else {
+                ctx.beginPath();
+                ctx.fillStyle = s.c;
+                ctx.moveTo(300, 300);
+                ctx.arc(300, 300, 280, a, a + arc);
+                ctx.fill();
+            }
+
+            // Разделитель
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth   = 1;
+            ctx.moveTo(300, 300);
+            ctx.arc(300, 300, 280, a, a + arc);
+            ctx.lineTo(300, 300);
+            ctx.stroke();
+
+            // Текст
+            ctx.save();
+            ctx.translate(300, 300);
+            ctx.rotate(a + arc / 2);
+
+            if (s.isSuperBonus) {
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur  = 16;
+                ctx.fillStyle   = '#fff';
+                ctx.font        = 'bold 16px Arial';
+                ctx.fillText('SUPER',   118, -10);
+                ctx.fillText('BONUS',   118,  10);
+                ctx.font        = 'bold 13px Arial';
+                ctx.fillStyle   = '#ffe066';
+                ctx.fillText('500 TON', 116,  28);
+                ctx.shadowBlur  = 0;
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.font      = 'bold 30px Arial';
+                ctx.fillText(s.t, 150, 10);
+            }
+            ctx.restore();
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // Взвешенный рандом — SuperBonus всегда исключён
+    // ─────────────────────────────────────────────
+    function getWeightedRandomSector() {
+        const available   = sectors.map((s, i) => ({...s, idx: i})).filter(s => !s.isSuperBonus);
+        const totalWeight = available.reduce((sum, s) => sum + s.weight, 0);
+        let   random      = Math.random() * totalWeight;
+        for (const s of available) {
+            random -= s.weight;
+            if (random <= 0) return s.idx;
+        }
+        return available[0].idx;
+    }
+
+    // ─────────────────────────────────────────────
+    // БАЛАНС — CloudStorage приоритет, URL только при пополнении
+    // ─────────────────────────────────────────────
+    function loadBalance() {
+        const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
+
+        if (tg.CloudStorage) {
+            tg.CloudStorage.getItem(`balance_${userId}`, function(err, value) {
+                const saved = (!err && value) ? parseInt(value) : NaN;
+
+                if (!isNaN(saved) && saved >= 0) {
+                    // Если URL-баланс БОЛЬШЕ сохранённого — значит пришло пополнение
+                    if (!isNaN(urlBalance) && urlBalance > saved) {
+                        stars = urlBalance;
+                        console.log('✅ Баланс пополнен через URL:', stars);
+                        saveBalance();
+                    } else {
+                        stars = saved;
+                        console.log('📦 Баланс из CloudStorage:', stars);
+                    }
+                } else if (!isNaN(urlBalance) && urlBalance >= 0) {
+                    stars = urlBalance;
+                    console.log('✅ Первый запуск, баланс из URL:', stars);
+                    saveBalance();
+                } else {
+                    stars = 0;
+                }
+                update();
             });
+        } else {
+            stars = (!isNaN(urlBalance) && urlBalance >= 0) ? urlBalance : 0;
+            update();
+        }
+    }
+
+    function saveBalance(callback) {
+        if (tg.CloudStorage) {
+            tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
+                if (!err) console.log('💾 Сохранено в CloudStorage:', stars);
+                if (callback) callback();
+            });
+        } else {
+            if (callback) callback();
+        }
+    }
+
+    function update() {
+        document.getElementById('s_bal').innerText   = stars;
+        document.getElementById('cur_bet').innerText = curBet;
+        document.getElementById('dep_val').innerText = depVal;
+        const btn = document.getElementById('spinBtn');
+        if (hasFreeSpins > 0) {
+            btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
+            btn.classList.remove('dep-mode'); btn.classList.add('free-mode');
+        } else if (stars < curBet) {
+            btn.innerText = "ПОПОЛНИТЬ";
+            btn.classList.add('dep-mode'); btn.classList.remove('free-mode');
+        } else {
+            btn.innerText = "КРУТИТЬ";
+            btn.classList.remove('dep-mode', 'free-mode');
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // Звук трещотки
+    // ─────────────────────────────────────────────
+    const audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
+    let   clickInterval = null;
+
+    function playRatchetSound() {
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    // ─────────────────────────────────────────────
+    // СПИН + near-miss на SuperBonus
+    // ─────────────────────────────────────────────
+    function handleSpin() {
+        if (isSpinning) return;
+        if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
+
+        playClick();
+        isSpinning = true;
+
+        let isFreeSpinUsed = false;
+        if (hasFreeSpins > 0) { hasFreeSpins--; isFreeSpinUsed = true; }
+        else                   { stars -= curBet; }
+
+        update();
+        saveBalance(); // сохраняем списание сразу
+
+        // Реальный результат (без SuperBonus)
+        const realIdx     = getWeightedRandomSector();
+        const totalSectors = sectors.length;
+        const arcDeg      = 360 / totalSectors;
+
+        // Near-miss: с вероятностью 55% финальный сектор = следующий после SuperBonus,
+        // при замедлении указатель пройдёт прямо над SuperBonus и "соскользнёт"
+        let finalIdx   = realIdx;
+        let isNearMiss = false;
+        if (Math.random() < 0.55) {
+            finalIdx   = (SUPERBONUS_INDEX + 1) % totalSectors;
+            isNearMiss = true;
         }
 
-        function loadBalance() {
-            const urlBalance = parseInt(new URLSearchParams(location.search).get('balance'));
-            
-            if (!isNaN(urlBalance) && urlBalance >= 0) {
-                stars = urlBalance;
-                console.log('✅ Баланс из URL:', stars);
+        // Угол: указатель сверху (12 ч) → нужный сектор встаёт под него
+        const targetAngleDeg = 360 - (finalIdx * arcDeg) + (arcDeg / 2);
+        const rotation       = targetAngleDeg + 360 * 10; // 10 оборотов
+
+        let start        = null;
+        let ratchetSpeed = 50;
+        clickInterval    = setInterval(() => playRatchetSound(), ratchetSpeed);
+
+        const duration = isNearMiss ? 7000 : 5200;
+
+        function animate(now) {
+            if (!start) start = now;
+            const elapsed  = now - start;
+            let   progress = Math.min(elapsed / duration, 1);
+
+            // Кастомный easing: при near-miss замедляемся у SuperBonus
+            let eased;
+            if (isNearMiss) {
+                if (progress < 0.70) {
+                    // Разгон/равномерно
+                    eased = progress * 0.72;
+                } else if (progress < 0.86) {
+                    // «Зависание» рядом с SuperBonus — почти стоит
+                    const p = (progress - 0.70) / 0.16;
+                    eased   = 0.504 + 0.035 * (1 - Math.pow(1 - p, 2));
+                } else {
+                    // Уходим к следующему сектору
+                    const p = (progress - 0.86) / 0.14;
+                    eased   = 0.539 + 0.461 * (1 - Math.pow(1 - p, 3));
+                }
+            } else {
+                // Стандартный ease-out
+                eased = 1 - Math.pow(1 - progress, 3);
+            }
+
+            const currentPos = rotation * eased;
+            currentAngle     = (currentPos * Math.PI) / 180;
+
+            // Скорость трещотки
+            const newSpeed = progress > 0.82 ? 180 : progress > 0.62 ? 90 : 50;
+            if (newSpeed !== ratchetSpeed) {
+                ratchetSpeed = newSpeed;
+                clearInterval(clickInterval);
+                clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
+            }
+
+            draw(currentAngle);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                clearInterval(clickInterval); clickInterval = null;
+                isSpinning = false;
+
+                const win = sectors[finalIdx];
+                let winAmount = 0;
+
+                if (win.t === "FREE") {
+                    hasFreeSpins++;
+                    sndWin.currentTime = 0; sndWin.play().catch(() => {});
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    setTimeout(() => alert(`🎁 БЕСПЛАТНЫЙ ПРОКРУТ!\n\nУ вас ${hasFreeSpins} фри-спин(ов)`), 200);
+
+                } else if (win.mult > 0) {
+                    winAmount = curBet * win.mult;
+                    stars    += winAmount; // ✅ обновляем баланс
+
+                    sndWin.currentTime = 0; sndWin.play().catch(() => {});
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                    const msg = isFreeSpinUsed
+                        ? `🎉 ВЫИГРЫШ на FREE SPIN!\n\n${win.t} = ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`
+                        : `🎉 ВЫИГРЫШ!\n\n${win.t} от ставки ${curBet} ⭐\n= ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`;
+                    setTimeout(() => alert(msg), 200);
+
+                } else {
+                    sndLose.currentTime = 0; sndLose.play().catch(() => {});
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+
+                    const msg = isFreeSpinUsed
+                        ? `💀 FREE SPIN не сыграл...\n\nБаланс: ${stars} ⭐`
+                        : `💀 Не повезло...\n\nБаланс: ${stars} ⭐`;
+                    setTimeout(() => alert(msg), 200);
+                }
+
+                // ✅ ВСЕГДА сохраняем актуальный баланс после каждого спина
                 saveBalance();
                 update();
-                return;
-            }
-            
-            if (tg.CloudStorage) {
-                tg.CloudStorage.getItem(`balance_${userId}`, function(err, value) {
-                    if (!err && value) {
-                        stars = parseInt(value) || 0;
-                        console.log('📦 Баланс из CloudStorage:', stars);
-                    } else {
-                        stars = 0;
-                    }
-                    update();
-                });
-            } else {
-                stars = 0;
-                update();
             }
         }
 
-        function saveBalance(callback) {
-            if (tg.CloudStorage) {
-                tg.CloudStorage.setItem(`balance_${userId}`, stars.toString(), function(err) {
-                    if (!err) console.log('💾 Сохранено:', stars);
-                    if (callback) callback();
-                });
-            } else {
-                if (callback) callback();
-            }
-        }
+        requestAnimationFrame(animate);
+    }
 
-        function update() {
-            document.getElementById('s_bal').innerText = stars;
-            document.getElementById('cur_bet').innerText = curBet;
-            document.getElementById('dep_val').innerText = depVal;
-            const btn = document.getElementById('spinBtn');
-            
-            if (hasFreeSpins > 0) {
-                btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
-                btn.classList.remove('dep-mode');
-                btn.classList.add('free-mode');
-            } else if (stars < curBet) { 
-                btn.innerText = "ПОПОЛНИТЬ"; 
-                btn.classList.add('dep-mode');
-                btn.classList.remove('free-mode');
-            } else { 
-                btn.innerText = "КРУТИТЬ"; 
-                btn.classList.remove('dep-mode', 'free-mode'); 
-            }
-        }
+    // ─────────────────────────────────────────────
+    // Вспомогательные функции (без изменений)
+    // ─────────────────────────────────────────────
+    function playClick() {
+        sndClick.currentTime = 0; sndClick.play().catch(() => {});
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+    function openM()  { playClick(); document.getElementById('modal').style.display = 'flex'; }
+    function closeM() { playClick(); document.getElementById('modal').style.display = 'none'; }
+    function adjBet(v) { playClick(); curBet = Math.max(5, curBet + v); update(); }
+    function adjDep(v) { playClick(); depVal = Math.max(10, depVal + v); update(); }
+    function setTab(t, e) {
+        playClick();
+        document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(t).classList.add('active');
+        e.target.classList.add('active');
+    }
+    function doDep() {
+        playClick();
+        tg.sendData(JSON.stringify({ action: "deposit", amount: depVal, stars: stars }));
+    }
+    function doWit() {
+        playClick();
+        const val  = parseInt(document.getElementById('w_stars').value);
+        const addr = document.getElementById('w_addr').value.trim();
+        if (!addr)                               { alert("❌ Введите адрес кошелька TON!"); return; }
+        if (!val || isNaN(val) || val <= 0)      { alert("❌ Введите корректную сумму!"); return; }
+        if (val < MIN_WITHDRAW)                  { alert(`❌ Минимум: ${MIN_WITHDRAW} ⭐\nВы ввели: ${val} ⭐`); return; }
+        if (val > stars)                         { alert(`❌ Недостаточно звезд!\n\nВывести: ${val} ⭐\nБаланс: ${stars} ⭐\nНужно: ${val - stars} ⭐`); return; }
+        tg.sendData(JSON.stringify({ action: "withdraw", amount: val, address: addr, stars: stars }));
+    }
+    function calcWit() {
+        const s = parseInt(document.getElementById('w_stars').value) || 0;
+        document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`;
+    }
 
-        // ✅ ЗВУК ТРЕЩОТКИ
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        let clickInterval = null;
+    window.addEventListener('beforeunload', () => saveBalance());
 
-        function playRatchetSound() {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.05);
-        }
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Приложение запущено');
+        loadBalance();
+        draw();
+    });
+</script>
+```
 
-        function handleSpin() {
-            if (isSpinning) return;
-            
-            if (hasFreeSpins === 0 && stars < curBet) { 
-                openM(); 
-                return; 
-            }
-            
-            playClick();
-            isSpinning = true;
-            
-            let isFreeSpinUsed = false;
-            if (hasFreeSpins > 0) {
-                hasFreeSpins--;
-                isFreeSpinUsed = true;
-            } else {
-                stars -= curBet;
-            }
-            
-            update();
-            saveBalance();
-            
-            const targetIdx = getWeightedRandomSector();
-            const targetSector = sectors[targetIdx];
-            
-            const isNearMiss = (targetSector.mult <= 2 && Math.random() < 0.3);
-            let finalIdx = targetIdx;
-            
-            if (isNearMiss) {
-                for (let i = 0; i < sectors.length; i++) {
-                    if (sectors[i].mult >= 10) {
-                        finalIdx = (i + 1) % sectors.length;
-                        break;
-                    }
-                }
-            }
-            
-            const arc = (360 / sectors.length);
-            const targetAngle = 360 - (finalIdx * arc) + (arc / 2);
-            let rotation = targetAngle + 360 * 10;
-            
-            let start = null;
-
-            // ✅ ЗАПУСК ТРЕЩОТКИ
-            let ratchetSpeed = 50;
-            clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
-
-            function animate(now) {
-                if (!start) start = now;
-                let elapsed = now - start;
-                
-                let duration = isNearMiss ? 6500 : 5000;
-                let progress = Math.min(elapsed / duration, 1);
-                
-                let easeOut;
-                if (progress < 0.7) {
-                    easeOut = progress;
-                } else {
-                    const slowProgress = (progress - 0.7) / 0.3;
-                    easeOut = 0.7 + 0.3 * (1 - Math.pow(1 - slowProgress, 3));
-                }
-                
-                let currentPos = rotation * easeOut;
-                currentAngle = (currentPos * Math.PI) / 180;
-                
-                // Обновляем скорость трещотки
-                if (progress > 0.8) {
-                    ratchetSpeed = 150;
-                } else if (progress > 0.6) {
-                    ratchetSpeed = 80;
-                }
-                
-                if (clickInterval) {
-                    clearInterval(clickInterval);
-                    clickInterval = setInterval(() => playRatchetSound(), ratchetSpeed);
-                }
-
-                draw(currentAngle);
-                if (progress < 1) requestAnimationFrame(animate);
-                else {
-                    if (clickInterval) {
-                        clearInterval(clickInterval);
-                        clickInterval = null;
-                    }
-                    
-                    isSpinning = false;
-                    let idx = Math.floor((360 - (rotation % 360) + 270) % 360 / (360/sectors.length)) % sectors.length;
-                    let win = sectors[idx];
-                    
-                    let winAmount = 0;
-                    
-                    if (win.t === "FREE") {
-                        hasFreeSpins++;
-                        sndWin.currentTime = 0;
-                        sndWin.play().catch(()=>{});
-                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                        setTimeout(() => alert(`🎁 БЕСПЛАТНЫЙ ПРОКРУТ!\n\nУ вас ${hasFreeSpins} фри-спин(ов)`), 200);
-                    } else if (win.mult > 0) {
-                        winAmount = curBet * win.mult;
-                        stars += winAmount;
-                        
-                        sndWin.currentTime = 0;
-                        sndWin.play().catch(()=>{});
-                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                        
-                        let msg = isFreeSpinUsed 
-                            ? `🎉 ВЫИГРЫШ на FREE SPIN!\n\n${win.t} = ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`
-                            : `🎉 ВЫИГРЫШ!\n\n${win.t} от ставки ${curBet} ⭐\n= ${winAmount} ⭐\n\nБаланс: ${stars} ⭐`;
-                        
-                        setTimeout(() => alert(msg), 200);
-                    } else {
-                        sndLose.currentTime = 0;
-                        sndLose.play().catch(()=>{});
-                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                        
-                        let msg = isFreeSpinUsed
-                            ? `💀 FREE SPIN не сыграл...\n\nБаланс: ${stars} ⭐`
-                            : `💀 Не повезло...\n\nБаланс: ${stars} ⭐`;
-                        
-                        setTimeout(() => alert(msg), 200);
-                    }
-                    
-                    saveBalance();
-                    update();
-                }
-            }
-            requestAnimationFrame(animate);
-        }
-
-        function playClick() { 
-            sndClick.currentTime = 0; 
-            sndClick.play().catch(()=>{}); 
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
-        }
-        
-        function openM() { 
-            playClick(); 
-            document.getElementById('modal').style.display = 'flex';
-        }
-        
-        function closeM() { 
-            playClick(); 
-            document.getElementById('modal').style.display = 'none'; 
-        }
-        
-        function adjBet(v) { 
-            playClick(); 
-            curBet = Math.max(5, curBet + v); 
-            update(); 
-        }
-        
-        function adjDep(v) { 
-            playClick(); 
-            depVal = Math.max(10, depVal + v); 
-            update(); 
-        }
-        
-        function setTab(t, e) { 
-            playClick(); 
-            document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); 
-            document.getElementById(t).classList.add('active'); 
-            e.target.classList.add('active'); 
-        }
-        
-        // ✅ ПОПОЛНЕНИЕ БЕЗ sendData (не закрывает приложение!)
-        function doDep() { 
-            playClick();
-            
-            // Просто отправляем запрос на инвойс
-            // Telegram сам откроет окно оплаты, приложение НЕ закроется
-            const invoice = JSON.stringify({
-                action: "deposit", 
-                amount: depVal, 
-                stars: stars
-            });
-            
-            // Отправляем через sendData (это норм для инвойса)
-            tg.sendData(invoice);
-        }
-        
-        function doWit() { 
-            playClick(); 
-            
-            let val = parseInt(document.getElementById('w_stars').value);
-            let addr = document.getElementById('w_addr').value.trim();
-            
-            if (!addr) {
-                alert("❌ Введите адрес кошелька TON!");
-                return;
-            }
-            
-            if (!val || isNaN(val) || val <= 0) {
-                alert("❌ Введите корректную сумму!");
-                return;
-            }
-            
-            if (val < MIN_WITHDRAW) {
-                alert(`❌ Минимум: ${MIN_WITHDRAW} ⭐\nВы ввели: ${val} ⭐`);
-                return;
-            }
-            
-            if (val > stars) {
-                alert(`❌ Недостаточно звезд!\n\nВывести: ${val} ⭐\nБаланс: ${stars} ⭐\nНужно: ${val - stars} ⭐`);
-                return;
-            }
-            
-            // Вывод закрывает приложение - это нормально
-            tg.sendData(JSON.stringify({
-                action: "withdraw", 
-                amount: val, 
-                address: addr, 
-                stars: stars
-            }));
-        }
-        
-        function calcWit() { 
-            let s = parseInt(document.getElementById('w_stars').value) || 0; 
-            document.getElementById('wit_preview').innerText = `Вы получите: ${(s * 0.002).toFixed(2)} TON`; 
-        }
-
-        // ✅ СИНХРОНИЗАЦИЯ ПРИ ЗАКРЫТИИ ПРИЛОЖЕНИЯ
-        window.addEventListener('beforeunload', function() {
-            saveBalance();
-        });
-
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Приложение запущено');
-            loadBalance();
-            draw();
-        });
-    </script>
 </body>
 </html>
