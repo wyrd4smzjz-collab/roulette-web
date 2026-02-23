@@ -16,6 +16,24 @@
             align-items: center; justify-content: space-between;
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
+
+        /* ЧАСТИЦЫ НА ФОНЕ */
+        #particles {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden;
+        }
+        .particle {
+            position: absolute; bottom: -30px;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(0) scale(1);   opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 0.6; }
+            100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+        }
+
         .top-bar {
             width: 100%; padding: 10px 0 4px;
             display: flex; justify-content: center; position: relative;
@@ -31,13 +49,12 @@
             font-size: 0.8em; cursor: pointer;
         }
 
-        /* ИЗМЕНЕНО: баланс теперь fixed в левом нижнем углу */
+        /* БАЛАНС — под рулеткой, левый угол */
         #bal-block {
-            position: fixed;
-            left: 15px;
-            bottom: calc(env(safe-area-inset-bottom) + 90px);
-            z-index: 150;
+            width: 90%; max-width: 310px;
             display: flex; flex-direction: column; align-items: flex-start;
+            flex-shrink: 0; z-index: 2;
+            margin-top: 4px;
         }
         #bal-label {
             font-size: 0.62em; font-weight: 700; letter-spacing: 1.5px;
@@ -73,9 +90,9 @@
             position: relative;
             width: 80vw; max-width: 310px;
             aspect-ratio: 1/1;
-            flex-shrink: 0;
+            flex-shrink: 0; z-index: 2;
         }
-        canvas {
+        canvas#canvas {
             width: 100%; height: 100%;
             filter: drop-shadow(0 0 15px #8e44ad);
             display: block;
@@ -94,7 +111,7 @@
         #history-bar {
             width: 90%; max-width: 310px;
             display: flex; gap: 5px; overflow-x: auto;
-            padding: 2px 0; scrollbar-width: none; flex-shrink: 0;
+            padding: 2px 0; scrollbar-width: none; flex-shrink: 0; z-index: 2;
         }
         #history-bar::-webkit-scrollbar { display: none; }
         .h-chip {
@@ -108,7 +125,7 @@
         .h-free { background: rgba(52,152,219,.22);  border: 1px solid #3498db; color: #74b9ff; }
         .controls {
             width: 100%; text-align: center;
-            padding-bottom: 18px; flex-shrink: 0;
+            padding-bottom: 18px; flex-shrink: 0; z-index: 2;
         }
         .bet-box {
             display: flex; align-items: center;
@@ -128,9 +145,7 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
-        .btn-adj:disabled {
-            opacity: 0.4; cursor: not-allowed;
-        }
+        .btn-adj:disabled { opacity: 0.4; cursor: not-allowed; }
         #fast-btn {
             background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
             color: white; border-radius: 50%;
@@ -187,6 +202,9 @@
 </head>
 <body>
 
+<!-- ЧАСТИЦЫ -->
+<div id="particles"></div>
+
 <div id="sb-banner">
     <span class="sb-crown">👑</span>
     <div class="sb-text">
@@ -197,17 +215,17 @@
 
 <button class="wallet-btn" onclick="openM()">Кошелек</button>
 
-<!-- ИЗМЕНЕНО: баланс перенесён сюда, top-bar оставлен пустым для отступа -->
-<div id="bal-block">
-    <span id="bal-label">БАЛАНС</span>
-    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
-</div>
-
 <div class="top-bar"></div>
 
 <div class="wheel-container">
     <div id="ptr"></div>
     <canvas id="canvas" width="600" height="600"></canvas>
+</div>
+
+<!-- БАЛАНС ПОД РУЛЕТКОЙ СЛЕВА -->
+<div id="bal-block">
+    <span id="bal-label">БАЛАНС</span>
+    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
 </div>
 
 <div id="history-bar"></div>
@@ -288,6 +306,32 @@ let tonPerStar = 0.013333;
     } catch (_) {}
     document.getElementById('rate-label').textContent =
         `Курс: 1 ⭐ = ${tonPerStar.toFixed(5)} TON`;
+})();
+
+/* ── ЧАСТИЦЫ ── */
+(function spawnParticles() {
+    const container = document.getElementById('particles');
+    const items = ['⭐','💫','✨','🌟','⭐','💎','⭐','✨'];
+    function spawn() {
+        const el = document.createElement('div');
+        el.className = 'particle';
+        el.textContent = items[Math.floor(Math.random() * items.length)];
+        const size = 10 + Math.random() * 18;
+        const dur  = 6 + Math.random() * 10;
+        const delay = Math.random() * 8;
+        el.style.cssText = `
+            left: ${Math.random() * 100}%;
+            font-size: ${size}px;
+            animation-duration: ${dur}s;
+            animation-delay: ${delay}s;
+            filter: blur(${Math.random() < 0.4 ? 1 : 0}px)
+                    drop-shadow(0 0 4px gold);
+        `;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), (dur + delay) * 1000);
+    }
+    for (let i = 0; i < 18; i++) spawn();
+    setInterval(spawn, 1200);
 })();
 
 let soundEnabled = true;
@@ -389,28 +433,29 @@ function startRatchet(ms) {
 }
 function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
 
-// ИЗМЕНЕНО: веса по новым вероятностям
-// Проигрыш 50% / 3 сектора = 16.67 каждый
-// ×1 25% / 2 сектора = 12.5 каждый
+// ИЗМЕНЕНО: добавлен 1 проигрыш и 2 ×1 (итого 4 💀 и 4 ×1)
+// 💀 50% / 4 сектора = 12.5 каждый
+// ×1 25% / 4 сектора = 6.25 каждый
 // ×2 15% / 2 сектора = 7.5 каждый
-// ×5 6%, ×10 3%, ×100 0.99%
-// FREE 0.01% / 2 сектора = 0.005 каждый
-// SB 0%
-const SUPERBONUS_IDX = 5;
+// ×5 6%, ×10 3%, ×100 0.99%, FREE 0.005 каждый, SB 0%
+const SUPERBONUS_IDX = 7;
 const sectors = [
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.67, isSB:false, isFree:false },
-    { t:'×1',   c:'#555555', mult:1,   weight:12.5,  isSB:false, isFree:false },
-    { t:'FREE', c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true  },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false },
+    { t:'×1',   c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false },
     { t:'×2',   c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false },
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.67, isSB:false, isFree:false },
-    { t:'★SB',  c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false },
+    { t:'×1',   c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false },
     { t:'×5',   c:'#9b59b6', mult:5,   weight:6,     isSB:false, isFree:false },
-    { t:'×1',   c:'#555555', mult:1,   weight:12.5,  isSB:false, isFree:false },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false },
+    { t:'★SB',  c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false },
+    { t:'×1',   c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false },
     { t:'×10',  c:'#f39c12', mult:10,  weight:3,     isSB:false, isFree:false },
     { t:'FREE', c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true  },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false },
     { t:'×100', c:'#e74c3c', mult:100, weight:0.99,  isSB:false, isFree:false },
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.66, isSB:false, isFree:false },
-    { t:'×2',   c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false }
+    { t:'×1',   c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false },
+    { t:'×2',   c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false },
+    { t:'FREE', c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true  }
 ];
 
 const N   = sectors.length;
@@ -463,15 +508,15 @@ function draw(angle, hi, phase) {
         ctx.save(); ctx.translate(300,300); ctx.rotate(a + ARC/2);
         if (s.isSB) {
             ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 16;
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Arial';
-            ctx.fillText('SUPER', 118, -10);
-            ctx.fillText('BONUS', 118,  10);
-            ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#ffe066';
-            ctx.fillText('500 TON', 116, 28);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial';
+            ctx.fillText('SUPER', 118, -8);
+            ctx.fillText('BONUS', 118,  8);
+            ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#ffe066';
+            ctx.fillText('500 TON', 116, 24);
             ctx.shadowBlur = 0;
         } else {
-            ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial';
-            ctx.fillText(s.t, 148, 10);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial';
+            ctx.fillText(s.t, 148, 8);
         }
         ctx.restore();
     });
@@ -592,8 +637,7 @@ function angleForSector(idx) {
 function toggleFast() {
     playClick();
     fastMode = !fastMode;
-    const btn = document.getElementById('fast-btn');
-    btn.classList.toggle('active', fastMode);
+    document.getElementById('fast-btn').classList.toggle('active', fastMode);
 }
 
 function handleSpin() {
@@ -697,11 +741,7 @@ function doDep() {
         alert(`Минимум ${MIN_DEPOSIT} звезд`);
         return;
     }
-    tg.sendData(JSON.stringify({
-        action: 'deposit',
-        amount: val,
-        userId: userId
-    }));
+    tg.sendData(JSON.stringify({ action: 'deposit', amount: val, userId: userId }));
 }
 
 function calcWit() {
@@ -723,20 +763,13 @@ function doWit() {
 
     const ton      = (val * tonPerStar).toFixed(4);
     const rateText = `1 zvezda = ${tonPerStar.toFixed(6)} TON`;
-
     stars -= val;
     saveBalance();
     update();
 
     tg.sendData(JSON.stringify({
-        action:       'withdraw',
-        stars:        val,
-        ton:          ton,
-        rate:         rateText,
-        address:      addr,
-        memo:         memo || '-',
-        balanceAfter: stars,
-        userId:       userId
+        action: 'withdraw', stars: val, ton: ton, rate: rateText,
+        address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
     }));
 }
 
