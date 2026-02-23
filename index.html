@@ -21,10 +21,6 @@
             display: flex; justify-content: center; position: relative;
             flex-shrink: 0; z-index: 2;
         }
-        .bal-display {
-            font-size: 2.2em; font-weight: bold; color: gold;
-            text-shadow: 0 0 15px rgba(255,215,0,0.6);
-        }
         .wallet-btn {
             position: fixed;
             right: 15px;
@@ -34,6 +30,26 @@
             color: white; border-radius: 8px; padding: 6px 12px;
             font-size: 0.8em; cursor: pointer;
         }
+
+        /* ИЗМЕНЕНО: баланс теперь fixed в левом нижнем углу */
+        #bal-block {
+            position: fixed;
+            left: 15px;
+            bottom: calc(env(safe-area-inset-bottom) + 90px);
+            z-index: 150;
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+        #bal-label {
+            font-size: 0.62em; font-weight: 700; letter-spacing: 1.5px;
+            color: rgba(255,215,0,0.7); text-transform: uppercase; line-height: 1;
+            margin-bottom: 2px;
+        }
+        .bal-display {
+            font-size: 1.5em; font-weight: bold; color: gold;
+            text-shadow: 0 0 12px rgba(255,215,0,0.6);
+            line-height: 1;
+        }
+
         #sb-banner {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 8px);
@@ -115,7 +131,6 @@
         .btn-adj:disabled {
             opacity: 0.4; cursor: not-allowed;
         }
-        /* НОВАЯ кнопка зайца */
         #fast-btn {
             background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
             color: white; border-radius: 50%;
@@ -182,9 +197,13 @@
 
 <button class="wallet-btn" onclick="openM()">Кошелек</button>
 
-<div class="top-bar">
+<!-- ИЗМЕНЕНО: баланс перенесён сюда, top-bar оставлен пустым для отступа -->
+<div id="bal-block">
+    <span id="bal-label">БАЛАНС</span>
     <div class="bal-display">⭐ <span id="s_bal">0</span></div>
 </div>
+
+<div class="top-bar"></div>
 
 <div class="wheel-container">
     <div id="ptr"></div>
@@ -370,21 +389,28 @@ function startRatchet(ms) {
 }
 function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
 
+// ИЗМЕНЕНО: веса по новым вероятностям
+// Проигрыш 50% / 3 сектора = 16.67 каждый
+// ×1 25% / 2 сектора = 12.5 каждый
+// ×2 15% / 2 сектора = 7.5 каждый
+// ×5 6%, ×10 3%, ×100 0.99%
+// FREE 0.01% / 2 сектора = 0.005 каждый
+// SB 0%
 const SUPERBONUS_IDX = 5;
 const sectors = [
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:18.33, isSB:false, isFree:false },
-    { t:'×1',   c:'#555555', mult:1,   weight:9,     isSB:false, isFree:false },
-    { t:'FREE', c:'#27ae60', mult:0,   weight:0.25,  isSB:false, isFree:true  },
-    { t:'×2',   c:'#3498db', mult:2,   weight:6,     isSB:false, isFree:false },
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:18.33, isSB:false, isFree:false },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.67, isSB:false, isFree:false },
+    { t:'×1',   c:'#555555', mult:1,   weight:12.5,  isSB:false, isFree:false },
+    { t:'FREE', c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true  },
+    { t:'×2',   c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.67, isSB:false, isFree:false },
     { t:'★SB',  c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false },
-    { t:'×5',   c:'#9b59b6', mult:5,   weight:9,     isSB:false, isFree:false },
-    { t:'×1',   c:'#555555', mult:1,   weight:9,     isSB:false, isFree:false },
-    { t:'×10',  c:'#f39c12', mult:10,  weight:4,     isSB:false, isFree:false },
-    { t:'FREE', c:'#27ae60', mult:0,   weight:0.25,  isSB:false, isFree:true  },
-    { t:'×100', c:'#e74c3c', mult:100, weight:1.5,   isSB:false, isFree:false },
-    { t:'💀',   c:'#1a1a1a', mult:0,   weight:18.34, isSB:false, isFree:false },
-    { t:'×2',   c:'#3498db', mult:2,   weight:6,     isSB:false, isFree:false }
+    { t:'×5',   c:'#9b59b6', mult:5,   weight:6,     isSB:false, isFree:false },
+    { t:'×1',   c:'#555555', mult:1,   weight:12.5,  isSB:false, isFree:false },
+    { t:'×10',  c:'#f39c12', mult:10,  weight:3,     isSB:false, isFree:false },
+    { t:'FREE', c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true  },
+    { t:'×100', c:'#e74c3c', mult:100, weight:0.99,  isSB:false, isFree:false },
+    { t:'💀',   c:'#1a1a1a', mult:0,   weight:16.66, isSB:false, isFree:false },
+    { t:'×2',   c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false }
 ];
 
 const N   = sectors.length;
@@ -541,7 +567,6 @@ function update() {
         btn.innerText = 'КРУТИТЬ';
         btn.classList.remove('dep-mode', 'free-mode');
     }
-    // Блокировка ставок во время вращения
     document.getElementById('btn-minus').disabled = isSpinning;
     document.getElementById('btn-plus').disabled  = isSpinning;
 }
@@ -564,7 +589,6 @@ function angleForSector(idx) {
     return -Math.PI / 2 - idx * ARC - ARC / 2;
 }
 
-// Переключение режима быстрого вращения
 function toggleFast() {
     playClick();
     fastMode = !fastMode;
@@ -597,7 +621,6 @@ function doSpin() {
 
     const totalRot = finalAngle - curAngle;
     const startAng = curAngle;
-    // В быстром режиме - 800мс, обычный - 4000-5500мс
     const dur = fastMode ? 800 : 4000 + Math.random() * 1500;
 
     function eased(p) {
@@ -717,7 +740,6 @@ function doWit() {
     }));
 }
 
-// Шаг +20/-20, минимум 5
 function adjBet(v) {
     if (isSpinning) return;
     playClick();
