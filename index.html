@@ -44,8 +44,6 @@
             color: white; border-radius: 8px; padding: 6px 12px;
             font-size: 0.8em; cursor: pointer;
         }
-
-        /* СТРОКА: баланс слева, персонаж справа */
         #bal-row {
             width: 90%; max-width: 310px;
             display: flex; align-items: center;
@@ -66,13 +64,12 @@
             text-shadow: 0 0 12px rgba(255,215,0,0.6);
             line-height: 1;
         }
-        /* ПЕРСОНАЖ */
+        /* ПЕРСОНАЖ — увеличен */
         #char-canvas {
-            width: 72px; height: 72px;
+            width: 100px; height: 100px;
             flex-shrink: 0;
-            filter: drop-shadow(0 0 6px rgba(142,68,173,0.5));
+            filter: drop-shadow(0 0 8px rgba(142,68,173,0.6));
         }
-
         #sb-banner {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 8px);
@@ -224,13 +221,12 @@
     <canvas id="canvas" width="600" height="600"></canvas>
 </div>
 
-<!-- СТРОКА: баланс слева + персонаж справа -->
 <div id="bal-row">
     <div id="bal-block">
         <span id="bal-label">БАЛАНС</span>
         <div class="bal-display">⭐ <span id="s_bal">0</span></div>
     </div>
-    <canvas id="char-canvas" width="144" height="144"></canvas>
+    <canvas id="char-canvas" width="200" height="200"></canvas>
 </div>
 
 <div id="history-bar"></div>
@@ -329,299 +325,523 @@ let tonPerStar = 0.013333;
     setInterval(spawn, 1200);
 })();
 
-/* ══════════════════════════════════════
-   ПЕРСОНАЖ — canvas 144×144
-══════════════════════════════════════ */
-const cc  = document.getElementById('char-canvas');
+/* ══════════════════════════════════════════════════════
+   КОРОЛЬ — canvas 200×200
+   Состояния: idle | anticipation | watching | win | lose
+══════════════════════════════════════════════════════ */
+const cc   = document.getElementById('char-canvas');
 const cctx = cc.getContext('2d');
 
-// Состояния: 'idle' | 'watching' | 'win' | 'lose'
-let charMood = 'idle';
+const CW = 200, CH = 200;
+
+// ── State ──
+let charMood       = 'idle';
 let charStateTimer = null;
+let moodT          = 0;       // время в текущем состоянии (сек)
 
-// Внутреннее состояние анимации
-let blinkT      = 0;   // время до следующего моргания
-let blinkOpen   = 1;   // 0=закрыт, 1=открыт
-let blinkClose  = 0;   // фаза закрытия
-let lookX       = 0;   // смещение зрачков -1..1
-let lookY       = 0;
-let lookTargX   = 0;
-let lookTargY   = 0;
-let lookTimer   = 0;
-let bouncePhase = 0;   // лёгкое подпрыгивание
-let winBounce   = 0;   // прыжок при выигрыше
-let winStars    = [];  // летящие звёздочки при выигрыше
+// ── Дыхание / покачивание (не зависит от fastMode) ──
+let breathT   = 0;
+let weightT   = 0;   // перенос веса (watching)
 
-function setCharMood(mood, duration) {
+// ── Моргание ──
+let blinkOpen  = 1.0;   // 1=открыт, 0=закрыт
+let blinkPhase = 'wait';// wait | closing | opening
+let blinkWait  = 3.5 + Math.random() * 2.5;  // медленное моргание
+
+// ── Взгляд ──
+let eyeX = 0, eyeY = 0;          // текущее смещение зрачка
+let eyeTargX = 0, eyeTargY = 0;
+let eyeChangeT = 2 + Math.random() * 3;
+
+// ── Меч ──
+let swordAngle    = 0;   // 0=опущен, 1=поднят
+let swordAngleCur = 0;   // плавное
+
+// ── Голова (наклон) ──
+let headTiltCur = 0;     // -1=влево (к рулетке), 0=прямо
+let headTiltTrg = 0;
+
+// ── Плечи (опускание при проигрыше) ──
+let shoulderDrop = 0;    // 0=норм, 1=опущены
+
+// ── Win-эффекты ──
+let winParticles = [];
+let swordGlow    = 0;
+
+// ── Темное облако (lose) ──
+let cloudAlpha = 0;
+
+// ── Переход / анимированная фаза ──
+let transitionT = 0;
+
+function setCharMood(mood, dur) {
     charMood = mood;
+    moodT    = 0;
+    transitionT = 0;
     if (charStateTimer) clearTimeout(charStateTimer);
-    if (duration) charStateTimer = setTimeout(() => { charMood = 'idle'; }, duration);
+    if (dur) charStateTimer = setTimeout(() => { setCharMood('idle'); }, dur);
 }
 
-function drawChar(ts) {
-    const W = 144, H = 144;
-    cctx.clearRect(0, 0, W, H);
+// ─────────────────────────────────────────
+// Вспомогательные функции рисования
+// ─────────────────────────────────────────
 
-    // Параметры в зависимости от настроения
-    const watching = charMood === 'watching';
-    const win      = charMood === 'win';
-    const lose     = charMood === 'lose';
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
 
-    // Подпрыгивание
-    bouncePhase += 0.04;
-    let bobY = Math.sin(bouncePhase) * (win ? 5 : 1.5);
-    if (win) { winBounce = Math.max(0, winBounce - 0.08); bobY += Math.sin(winBounce * 8) * winBounce * 18; }
-
-    const cx = W / 2, cy = H / 2 - 4 + bobY;
-
-    // --- Тело ---
-    // Тело (туловище)
+function drawCrown(x, y, scale) {
+    cctx.save();
+    cctx.translate(x, y);
+    cctx.scale(scale, scale);
+    // Основа
     cctx.beginPath();
-    cctx.ellipse(cx, cy + 34, 22, 18, 0, 0, Math.PI * 2);
-    cctx.fillStyle = win ? '#a855f7' : lose ? '#6b21a8' : '#8e44ad';
+    cctx.rect(-22, 0, 44, 14);
+    cctx.fillStyle = '#ffd700';
     cctx.fill();
+    // Зубцы
+    const teeth = [[-22,0],[-14,-18],[-6,0],[0,-22],[6,0],[14,-18],[22,0]];
+    cctx.beginPath();
+    cctx.moveTo(-22, 0);
+    for (let i = 0; i < teeth.length; i++) cctx.lineTo(teeth[i][0], teeth[i][1]);
+    cctx.lineTo(22, 0);
+    cctx.fillStyle = '#ffd700'; cctx.fill();
+    cctx.strokeStyle = '#b8860b'; cctx.lineWidth = 1.5; cctx.stroke();
+    // Камни
+    [[0,-8],[−10,4],[10,4]].forEach(([rx,ry]) => {
+        cctx.beginPath(); cctx.arc(rx, ry, 3.5, 0, Math.PI*2);
+        cctx.fillStyle = rx===0?'#e74c3c':'#3498db'; cctx.fill();
+    });
+    // Блеск
+    cctx.beginPath(); cctx.arc(0,-14,2.5,0,Math.PI*2);
+    cctx.fillStyle='rgba(255,255,255,0.7)'; cctx.fill();
+    cctx.restore();
+}
 
-    // Ручки
-    if (win) {
-        // Руки вверх
+function drawFace(cx, cy, headR, mood, blinkVal, ex, ey) {
+    // Голова
+    const skinG = cctx.createRadialGradient(cx-5,cy-6,3,cx,cy,headR);
+    skinG.addColorStop(0,'#ffe0b2');
+    skinG.addColorStop(1,'#d4916a');
+    cctx.beginPath(); cctx.arc(cx,cy,headR,0,Math.PI*2);
+    cctx.fillStyle = skinG; cctx.fill();
+    cctx.strokeStyle='rgba(0,0,0,0.12)'; cctx.lineWidth=1.5; cctx.stroke();
+
+    // Борода
+    cctx.beginPath();
+    cctx.moveTo(cx-headR*0.7, cy+headR*0.3);
+    cctx.quadraticCurveTo(cx-headR*0.85, cy+headR*1.1, cx-headR*0.2, cy+headR*1.2);
+    cctx.quadraticCurveTo(cx, cy+headR*1.35, cx+headR*0.2, cy+headR*1.2);
+    cctx.quadraticCurveTo(cx+headR*0.85, cy+headR*1.1, cx+headR*0.7, cy+headR*0.3);
+    cctx.fillStyle='#8B6914'; cctx.fill();
+    // Полосы бороды
+    for(let i=-1;i<=1;i++) {
         cctx.beginPath();
-        cctx.moveTo(cx - 20, cy + 28);
-        cctx.quadraticCurveTo(cx - 38, cy + 10, cx - 32, cy - 2);
-        cctx.strokeStyle = '#a855f7'; cctx.lineWidth = 7; cctx.lineCap = 'round'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(cx + 20, cy + 28);
-        cctx.quadraticCurveTo(cx + 38, cy + 10, cx + 32, cy - 2);
-        cctx.strokeStyle = '#a855f7'; cctx.lineWidth = 7; cctx.stroke();
-    } else if (lose) {
-        // Руки вниз
-        cctx.beginPath();
-        cctx.moveTo(cx - 20, cy + 30);
-        cctx.quadraticCurveTo(cx - 34, cy + 46, cx - 28, cy + 52);
-        cctx.strokeStyle = '#6b21a8'; cctx.lineWidth = 7; cctx.lineCap = 'round'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(cx + 20, cy + 30);
-        cctx.quadraticCurveTo(cx + 34, cy + 46, cx + 28, cy + 52);
-        cctx.strokeStyle = '#6b21a8'; cctx.lineWidth = 7; cctx.stroke();
-    } else {
-        // Обычные руки
-        cctx.beginPath();
-        cctx.moveTo(cx - 20, cy + 28);
-        cctx.quadraticCurveTo(cx - 36, cy + 34, cx - 30, cy + 44);
-        cctx.strokeStyle = '#8e44ad'; cctx.lineWidth = 7; cctx.lineCap = 'round'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(cx + 20, cy + 28);
-        cctx.quadraticCurveTo(cx + 36, cy + 34, cx + 30, cy + 44);
-        cctx.strokeStyle = '#8e44ad'; cctx.lineWidth = 7; cctx.stroke();
+        cctx.moveTo(cx+i*7, cy+headR*0.6);
+        cctx.quadraticCurveTo(cx+i*9, cy+headR*1.0, cx+i*6, cy+headR*1.25);
+        cctx.strokeStyle='rgba(0,0,0,0.12)'; cctx.lineWidth=1.2; cctx.stroke();
     }
 
-    // --- Голова ---
-    const headR = 26;
+    // Усы
     cctx.beginPath();
-    cctx.arc(cx, cy, headR, 0, Math.PI * 2);
-    const headGrad = cctx.createRadialGradient(cx - 6, cy - 6, 4, cx, cy, headR);
-    headGrad.addColorStop(0, '#fde68a');
-    headGrad.addColorStop(1, '#f59e0b');
-    cctx.fillStyle = headGrad;
-    cctx.fill();
-    cctx.strokeStyle = 'rgba(0,0,0,0.15)'; cctx.lineWidth = 1.5; cctx.stroke();
+    cctx.moveTo(cx-15, cy+headR*0.18);
+    cctx.quadraticCurveTo(cx-8, cy+headR*0.3, cx, cy+headR*0.22);
+    cctx.quadraticCurveTo(cx+8, cy+headR*0.3, cx+15, cy+headR*0.18);
+    cctx.fillStyle='#6b4f12'; cctx.fill();
 
-    // Румянец
-    if (win) {
+    // Глаза
+    const eyePositions = [[cx-11, cy-5],[cx+11, cy-5]];
+    eyePositions.forEach(([ex0,ey0]) => {
+        // Белок
+        const eyeHalf = 5.5 * blinkVal;
         cctx.beginPath();
-        cctx.ellipse(cx - 16, cy + 8, 7, 4, -0.3, 0, Math.PI * 2);
-        cctx.fillStyle = 'rgba(255,100,100,0.35)'; cctx.fill();
-        cctx.beginPath();
-        cctx.ellipse(cx + 16, cy + 8, 7, 4, 0.3, 0, Math.PI * 2);
-        cctx.fill();
-    }
-
-    // --- Глаза ---
-    // Направление взгляда
-    let pupilOffX = lookX * 3.5;
-    let pupilOffY = lookY * 2.5;
-    if (watching) { pupilOffX = -7; pupilOffY = -3; } // смотрит влево-вверх (на рулетку)
-    if (lose)     { pupilOffX = 0;  pupilOffY = 3; }  // смотрит вниз
-
-    const eyeLY = cy - 6, eyeRY = cy - 6;
-    const eyeLX = cx - 10, eyeRX = cx + 10;
-
-    // Открытость глаз
-    let eyeH = 8 * blinkOpen;
-    if (eyeH < 0.5) eyeH = 0.5;
-
-    // Белки
-    cctx.beginPath();
-    cctx.ellipse(eyeLX, eyeLY, 7, eyeH, 0, 0, Math.PI * 2);
-    cctx.fillStyle = 'white'; cctx.fill();
-    cctx.beginPath();
-    cctx.ellipse(eyeRX, eyeRY, 7, eyeH, 0, 0, Math.PI * 2);
-    cctx.fill();
-
-    // Зрачки (только если глаза открыты)
-    if (blinkOpen > 0.3) {
-        cctx.beginPath();
-        cctx.arc(eyeLX + pupilOffX, eyeLY + pupilOffY, 3.5, 0, Math.PI * 2);
-        cctx.fillStyle = '#1a0a2e'; cctx.fill();
-        cctx.beginPath();
-        cctx.arc(eyeRX + pupilOffX, eyeRY + pupilOffY, 3.5, 0, Math.PI * 2);
-        cctx.fill();
-        // Блик
-        cctx.beginPath();
-        cctx.arc(eyeLX + pupilOffX + 1.2, eyeLY + pupilOffY - 1.2, 1.2, 0, Math.PI * 2);
-        cctx.fillStyle = 'rgba(255,255,255,0.9)'; cctx.fill();
-        cctx.beginPath();
-        cctx.arc(eyeRX + pupilOffX + 1.2, eyeRY + pupilOffY - 1.2, 1.2, 0, Math.PI * 2);
-        cctx.fill();
-    }
+        cctx.ellipse(ex0, ey0, 6, Math.max(0.5, eyeHalf), 0, 0, Math.PI*2);
+        cctx.fillStyle='white'; cctx.fill();
+        // Зрачок
+        if (blinkVal > 0.25) {
+            cctx.beginPath();
+            cctx.arc(ex0+ex*3.5, ey0+ey*2, 3, 0, Math.PI*2);
+            cctx.fillStyle='#1a0a2e'; cctx.fill();
+            // Блик
+            cctx.beginPath();
+            cctx.arc(ex0+ex*3.5+1, ey0+ey*2-1, 1.1, 0, Math.PI*2);
+            cctx.fillStyle='rgba(255,255,255,0.85)'; cctx.fill();
+        }
+    });
 
     // Брови
-    cctx.lineWidth = 2.5; cctx.lineCap = 'round';
-    if (lose) {
-        // Грустные — изогнуты вниз к центру
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeLY - 12);
-        cctx.quadraticCurveTo(eyeLX, eyeLY - 9, eyeLX + 5, eyeLY - 13);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 5, eyeRY - 13);
-        cctx.quadraticCurveTo(eyeRX, eyeRY - 9, eyeRX + 7, eyeRY - 12);
-        cctx.stroke();
-    } else if (win) {
-        // Радостные — высоко приподняты
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeLY - 14);
-        cctx.quadraticCurveTo(eyeLX, eyeLY - 18, eyeLX + 6, eyeLY - 14);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 6, eyeRY - 14);
-        cctx.quadraticCurveTo(eyeRX, eyeRY - 18, eyeRX + 7, eyeRY - 14);
-        cctx.stroke();
+    cctx.lineWidth=2.8; cctx.lineCap='round';
+    if (mood==='win') {
+        // Высоко и радостно
+        [[-11,-20],[11,-20]].forEach(([bx,by],i) => {
+            cctx.beginPath();
+            cctx.moveTo(cx+bx-8+i*2, cy+by-3);
+            cctx.quadraticCurveTo(cx+bx, cy+by-7, cx+bx+7-i*2, cy+by-3);
+            cctx.strokeStyle='#5c3a0a'; cctx.stroke();
+        });
+    } else if (mood==='lose') {
+        // Грустно — внутренние углы вниз
+        [[-11,-18],[11,-18]].forEach(([bx,by],i) => {
+            const sign = i===0?1:-1;
+            cctx.beginPath();
+            cctx.moveTo(cx+bx-8, cy+by);
+            cctx.quadraticCurveTo(cx+bx+sign*3, cy+by+5, cx+bx+8, cy+by);
+            cctx.strokeStyle='#5c3a0a'; cctx.stroke();
+        });
     } else {
-        // Обычные
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeLY - 12);
-        cctx.quadraticCurveTo(eyeLX, eyeLY - 14, eyeLX + 6, eyeLY - 12);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 6, eyeRY - 12);
-        cctx.quadraticCurveTo(eyeRX, eyeRY - 14, eyeRX + 7, eyeRY - 12);
-        cctx.stroke();
+        // Нейтральные / внимательные
+        [[-11,-18],[11,-18]].forEach(([bx,by]) => {
+            cctx.beginPath();
+            cctx.moveTo(cx+bx-7, cy+by+(mood==='watching'?-2:0));
+            cctx.quadraticCurveTo(cx+bx, cy+by-3+(mood==='watching'?-2:0), cx+bx+7, cy+by+(mood==='watching'?-2:0));
+            cctx.strokeStyle='#5c3a0a'; cctx.stroke();
+        });
     }
 
-    // --- Рот ---
-    const mouthY = cy + 11;
-    cctx.beginPath();
-    cctx.lineWidth = 2.8; cctx.lineCap = 'round';
-    if (win) {
-        // Широкая улыбка
-        cctx.moveTo(cx - 12, mouthY - 2);
-        cctx.quadraticCurveTo(cx, mouthY + 11, cx + 12, mouthY - 2);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
-        // Зубы
+    // Рот
+    const mY = cy + headR*0.1;
+    cctx.beginPath(); cctx.lineWidth=2.5; cctx.lineCap='round';
+    if (mood==='win') {
+        cctx.moveTo(cx-13, mY-1);
+        cctx.quadraticCurveTo(cx, mY+12, cx+13, mY-1);
+        cctx.strokeStyle='#5c3a0a'; cctx.stroke();
         cctx.beginPath();
-        cctx.ellipse(cx, mouthY + 3, 8, 4, 0, 0, Math.PI);
-        cctx.fillStyle = 'white'; cctx.fill();
-    } else if (lose) {
-        // Дужка вниз (грусть)
-        cctx.moveTo(cx - 10, mouthY + 4);
-        cctx.quadraticCurveTo(cx, mouthY - 4, cx + 10, mouthY + 4);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
+        cctx.ellipse(cx, mY+4, 8, 4.5, 0, 0, Math.PI);
+        cctx.fillStyle='white'; cctx.fill();
+        // Румянец
+        [[cx-16,mY],[cx+16,mY]].forEach(([rx,ry])=>{
+            cctx.beginPath();
+            cctx.ellipse(rx,ry,7,4,0,0,Math.PI*2);
+            cctx.fillStyle='rgba(255,100,80,0.28)'; cctx.fill();
+        });
+    } else if (mood==='lose') {
+        cctx.moveTo(cx-11, mY+5);
+        cctx.quadraticCurveTo(cx, mY-3, cx+11, mY+5);
+        cctx.strokeStyle='#5c3a0a'; cctx.stroke();
         // Слеза
         cctx.beginPath();
-        cctx.moveTo(eyeRX + 2, eyeRY + 8);
-        cctx.bezierCurveTo(eyeRX + 5, eyeRY + 14, eyeRX + 2, eyeRY + 18, eyeRX, eyeRY + 20);
-        cctx.bezierCurveTo(eyeRX - 3, eyeRY + 18, eyeRX - 3, eyeRY + 14, eyeRX + 2, eyeRY + 8);
-        cctx.fillStyle = 'rgba(100,180,255,0.85)'; cctx.fill();
-    } else if (watching) {
-        // Приоткрытый рот — напряжение
-        cctx.moveTo(cx - 8, mouthY);
-        cctx.quadraticCurveTo(cx, mouthY + 5, cx + 8, mouthY);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
+        cctx.moveTo(cx+12, cy-1);
+        cctx.bezierCurveTo(cx+15,cy+5, cx+14,cy+11, cx+11,cy+13);
+        cctx.bezierCurveTo(cx+8,cy+11, cx+9,cy+5, cx+12,cy-1);
+        cctx.fillStyle='rgba(100,180,255,0.8)'; cctx.fill();
+    } else if (mood==='watching'||mood==='anticipation') {
+        // Приоткрытый рот
+        cctx.moveTo(cx-8, mY+1);
+        cctx.quadraticCurveTo(cx, mY+6, cx+8, mY+1);
+        cctx.strokeStyle='#5c3a0a'; cctx.stroke();
     } else {
-        // Лёгкая улыбка
-        cctx.moveTo(cx - 9, mouthY);
-        cctx.quadraticCurveTo(cx, mouthY + 7, cx + 9, mouthY);
-        cctx.strokeStyle = '#92400e'; cctx.stroke();
-    }
-
-    // Звёздочки при выигрыше
-    if (win) {
-        winStars.forEach(s => {
-            cctx.font = `${s.size}px serif`;
-            cctx.globalAlpha = s.alpha;
-            cctx.fillText('⭐', s.x, s.y);
-            cctx.globalAlpha = 1;
-        });
+        // Нейтральная лёгкая улыбка
+        cctx.moveTo(cx-9, mY+1);
+        cctx.quadraticCurveTo(cx, mY+6, cx+9, mY+1);
+        cctx.strokeStyle='#5c3a0a'; cctx.stroke();
     }
 }
 
-/* Обновление логики персонажа */
+function drawKing(now) {
+    cctx.clearRect(0, 0, CW, CH);
+
+    const isWin  = charMood==='win';
+    const isLose = charMood==='lose';
+    const isWatch= charMood==='watching'||charMood==='anticipation';
+
+    // ── Якоря персонажа ──
+    const baseX = CW/2;
+    // Дыхание — фиксированная скорость, НЕ зависит от fastMode
+    breathT += 0.016;
+    const breathY = Math.sin(breathT * 0.9) * 2.2;
+
+    // Перенос веса при watching
+    if (isWatch) weightT += 0.016;
+    else         weightT *= 0.92;
+    const sway = Math.sin(weightT * 1.1) * (isWatch ? 2.5 : 0);
+
+    const baseY = CH - 18 + breathY;
+    const bodyH = 54;
+    const bodyW = 32;
+    const neckY = baseY - bodyH;
+    const headR = 22;
+    const headCY = neckY - headR - 4;
+
+    // ── Наклон головы ──
+    const headTilt = headTiltCur * 0.22; // радианы
+
+    // ── Мантия / тело ──
+    // Тень
+    cctx.beginPath();
+    cctx.ellipse(baseX+sway, baseY+4, bodyW*0.85, 7, 0, 0, Math.PI*2);
+    cctx.fillStyle='rgba(0,0,0,0.25)'; cctx.fill();
+
+    // Мантия (красная)
+    const mantleFlap = Math.sin(breathT*0.7)*3;
+    cctx.beginPath();
+    cctx.moveTo(baseX+sway-bodyW-10, neckY+10);
+    cctx.quadraticCurveTo(baseX+sway-bodyW-18, baseY-10, baseX+sway-bodyW-8+mantleFlap, baseY+2);
+    cctx.lineTo(baseX+sway+bodyW+8-mantleFlap, baseY+2);
+    cctx.quadraticCurveTo(baseX+sway+bodyW+18, baseY-10, baseX+sway+bodyW+10, neckY+10);
+    cctx.closePath();
+    const mantleG = cctx.createLinearGradient(baseX-bodyW-18, neckY, baseX+bodyW+18, neckY);
+    mantleG.addColorStop(0,'#8b0000');
+    mantleG.addColorStop(0.5,'#c0392b');
+    mantleG.addColorStop(1,'#8b0000');
+    cctx.fillStyle=mantleG; cctx.fill();
+    // Меховая оторочка мантии
+    cctx.beginPath();
+    cctx.moveTo(baseX+sway-bodyW-12, neckY+8);
+    cctx.quadraticCurveTo(baseX+sway-bodyW-20, baseY-12, baseX+sway-bodyW-10+mantleFlap, baseY);
+    cctx.strokeStyle='rgba(255,255,255,0.55)'; cctx.lineWidth=5; cctx.stroke();
+    cctx.beginPath();
+    cctx.moveTo(baseX+sway+bodyW+12, neckY+8);
+    cctx.quadraticCurveTo(baseX+sway+bodyW+20, baseY-12, baseX+sway+bodyW+10-mantleFlap, baseY);
+    cctx.stroke();
+
+    // Туловище (камзол)
+    const bodyG = cctx.createLinearGradient(baseX+sway-bodyW, neckY, baseX+sway+bodyW, baseY);
+    bodyG.addColorStop(0,'#4a148c');
+    bodyG.addColorStop(0.5,'#7b1fa2');
+    bodyG.addColorStop(1,'#4a148c');
+    cctx.beginPath();
+    cctx.moveTo(baseX+sway-bodyW+4, neckY+6);
+    cctx.bezierCurveTo(baseX+sway-bodyW-2,neckY+20, baseX+sway-bodyW+2,baseY-10, baseX+sway-bodyW+8,baseY);
+    cctx.lineTo(baseX+sway+bodyW-8, baseY);
+    cctx.bezierCurveTo(baseX+sway+bodyW-2,baseY-10, baseX+sway+bodyW+2,neckY+20, baseX+sway+bodyW-4,neckY+6);
+    cctx.closePath();
+    cctx.fillStyle=bodyG; cctx.fill();
+
+    // Пояс
+    cctx.beginPath();
+    cctx.rect(baseX+sway-bodyW+5, neckY+bodyH*0.55, (bodyW-5)*2, 7);
+    cctx.fillStyle='#ffd700'; cctx.fill();
+    cctx.beginPath(); cctx.arc(baseX+sway, neckY+bodyH*0.55+3.5, 5, 0, Math.PI*2);
+    cctx.fillStyle='#f39c12'; cctx.fill();
+
+    // ── Ноги ──
+    const legSway = Math.sin(weightT*1.1)*4;
+    [[baseX+sway-12, baseY],[baseX+sway+12, baseY]].forEach(([lx,ly],i) => {
+        const ls = i===0 ? legSway : -legSway;
+        // Штанина
+        cctx.beginPath();
+        cctx.roundRect(lx-7+ls*0.5, ly-2, 14, 20, 3);
+        cctx.fillStyle='#2c1654'; cctx.fill();
+        // Сапог
+        cctx.beginPath();
+        cctx.roundRect(lx-8+ls*0.5, ly+16, 16, 10, [0,0,4,4]);
+        cctx.fillStyle='#3d1a00'; cctx.fill();
+        cctx.beginPath();
+        cctx.ellipse(lx+ls*0.5, ly+26, 9, 4, 0, 0, Math.PI*2);
+        cctx.fillStyle='#5c2800'; cctx.fill();
+    });
+
+    // ── Руки ──
+    // Левая рука (обычная)
+    const lArmDrop = isLose ? 8 : 0;
+    cctx.beginPath();
+    cctx.moveTo(baseX+sway-bodyW+4, neckY+14);
+    cctx.quadraticCurveTo(baseX+sway-bodyW-18, neckY+30+lArmDrop, baseX+sway-bodyW-14, neckY+52+lArmDrop);
+    cctx.strokeStyle='#4a148c'; cctx.lineWidth=11; cctx.lineCap='round'; cctx.stroke();
+    cctx.strokeStyle='#6a1fa2'; cctx.lineWidth=8; cctx.stroke();
+
+    // Правая рука + меч
+    // swordAngleCur: 0=меч вниз, 1=вверх над головой
+    const rArmX = baseX+sway+bodyW-4;
+    const rArmY = neckY+14;
+    const sA    = swordAngleCur;
+
+    // Рука
+    const rElbowX = rArmX + lerp(20, 18, sA);
+    const rElbowY = rArmY + lerp(24, -8, sA);
+    const rHandX  = rArmX + lerp(16, 8, sA);
+    const rHandY  = rArmY + lerp(52, -30, sA);
+
+    cctx.beginPath();
+    cctx.moveTo(rArmX, rArmY);
+    cctx.quadraticCurveTo(rElbowX, rElbowY, rHandX, rHandY);
+    cctx.strokeStyle='#4a148c'; cctx.lineWidth=11; cctx.lineCap='round'; cctx.stroke();
+    cctx.strokeStyle='#6a1fa2'; cctx.lineWidth=8; cctx.stroke();
+
+    // Меч
+    cctx.save();
+    cctx.translate(rHandX, rHandY);
+    // Угол меча в зависимости от состояния
+    const swordRot = lerp(1.1, -0.3, sA);
+    cctx.rotate(swordRot);
+
+    // Свечение меча при победе
+    if (isWin && swordGlow > 0) {
+        cctx.shadowColor = '#ffd700';
+        cctx.shadowBlur  = 18 * swordGlow;
+    }
+
+    // Рукоять (крестовина)
+    cctx.beginPath();
+    cctx.rect(-9, -3, 18, 6);
+    cctx.fillStyle='#b8860b'; cctx.fill();
+    // Рукоять-хват
+    cctx.beginPath();
+    cctx.roundRect(-4, 3, 8, 22, 2);
+    cctx.fillStyle='#8B6914'; cctx.fill();
+    cctx.beginPath(); cctx.arc(0, 26, 5, 0, Math.PI*2);
+    cctx.fillStyle='#b8860b'; cctx.fill();
+    // Клинок
+    const bladeG = cctx.createLinearGradient(-3,-3,-3,-50);
+    bladeG.addColorStop(0, isWin?'#fffde7':'#dce8f0');
+    bladeG.addColorStop(0.5, isWin?'#ffd700':'#b0c8d8');
+    bladeG.addColorStop(1, isWin?'#ffc107':'#8aabb8');
+    cctx.beginPath();
+    cctx.moveTo(-3, -3);
+    cctx.lineTo(3, -3);
+    cctx.lineTo(1, -54);
+    cctx.lineTo(-1, -54);
+    cctx.closePath();
+    cctx.fillStyle=bladeG; cctx.fill();
+    cctx.shadowBlur=0;
+    cctx.restore();
+
+    // ── Шея ──
+    cctx.beginPath();
+    cctx.roundRect(baseX+sway-8, headCY+headR-4, 16, 14, 3);
+    cctx.fillStyle='#d4916a'; cctx.fill();
+
+    // ── Голова (с наклоном) ──
+    cctx.save();
+    cctx.translate(baseX+sway, headCY);
+    cctx.rotate(headTilt);
+
+    // Воротник
+    cctx.beginPath();
+    cctx.moveTo(-headR-6, headR-2);
+    cctx.quadraticCurveTo(0, headR+12, headR+6, headR-2);
+    cctx.fillStyle='white'; cctx.fill();
+    cctx.strokeStyle='rgba(0,0,0,0.1)'; cctx.lineWidth=1; cctx.stroke();
+
+    drawFace(0, 0, headR, charMood, blinkOpen, eyeX, eyeY);
+    drawCrown(0, -headR+2, 0.95);
+    cctx.restore();
+
+    // ── Тёмное облако (lose) ──
+    if (cloudAlpha > 0) {
+        cctx.save();
+        cctx.globalAlpha = cloudAlpha * 0.7;
+        const cx2 = baseX+sway, cy2 = headCY - headR - 28;
+        [[0,-8],[12,0],[-12,0],[6,-18],[-6,-18]].forEach(([ox,oy])=>{
+            cctx.beginPath();
+            cctx.arc(cx2+ox, cy2+oy, 13, 0, Math.PI*2);
+            cctx.fillStyle='#37474f'; cctx.fill();
+        });
+        // Капли дождя
+        for(let d=0;d<3;d++) {
+            cctx.beginPath();
+            cctx.moveTo(cx2-10+d*10, cy2+10);
+            cctx.lineTo(cx2-12+d*10, cy2+20);
+            cctx.strokeStyle='rgba(100,180,255,0.6)';
+            cctx.lineWidth=1.5; cctx.stroke();
+        }
+        cctx.restore();
+    }
+
+    // ── Win-частицы ──
+    winParticles.forEach(p => {
+        cctx.save();
+        cctx.globalAlpha = p.a;
+        cctx.font = `${p.s}px serif`;
+        cctx.fillText(p.t, p.x, p.y);
+        cctx.restore();
+    });
+}
+
+/* ── Обновление логики (НЕ зависит от fastMode) ── */
 let lastCharTs = 0;
 function updateChar(ts) {
-    const dt = Math.min((ts - lastCharTs) / 1000, 0.05);
+    // Фиксированный dt — анимация персонажа всегда одинаковая
+    const dt = 0.016;
     lastCharTs = ts;
 
-    // Моргание
-    blinkT -= dt;
-    if (blinkT <= 0) {
-        if (blinkOpen > 0.5) {
-            // Начинаем закрывать
-            blinkOpen = Math.max(0, blinkOpen - dt * 18);
-            if (blinkOpen <= 0) { blinkOpen = 0; blinkT = 0.08; }
-        } else {
-            // Открываем
-            blinkOpen = Math.min(1, blinkOpen + dt * 18);
-            if (blinkOpen >= 1) { blinkOpen = 1; blinkT = 2.5 + Math.random() * 3; }
+    moodT += dt;
+
+    // ── Моргание: медленное, реалистичное ──
+    if (blinkPhase === 'wait') {
+        blinkWait -= dt;
+        if (blinkWait <= 0) { blinkPhase = 'closing'; }
+    } else if (blinkPhase === 'closing') {
+        blinkOpen = Math.max(0, blinkOpen - dt * 7);  // медленнее
+        if (blinkOpen <= 0) { blinkPhase = 'hold'; blinkWait = 0.07; }
+    } else if (blinkPhase === 'hold') {
+        blinkWait -= dt;
+        if (blinkWait <= 0) { blinkPhase = 'opening'; }
+    } else if (blinkPhase === 'opening') {
+        blinkOpen = Math.min(1, blinkOpen + dt * 8);
+        if (blinkOpen >= 1) {
+            blinkPhase = 'wait';
+            blinkWait = 3.0 + Math.random() * 3.5; // 3–6.5 сек между морганиями
         }
     }
 
-    // Взгляд (только в idle)
-    if (charMood === 'idle') {
-        lookTimer -= dt;
-        if (lookTimer <= 0) {
-            lookTargX = (Math.random() * 2 - 1);
-            lookTargY = (Math.random() * 2 - 1) * 0.6;
-            lookTimer = 1.5 + Math.random() * 2.5;
+    // ── Взгляд ──
+    eyeChangeT -= dt;
+    if (eyeChangeT <= 0) {
+        if (charMood === 'idle') {
+            eyeTargX = (Math.random() * 2 - 1) * 0.8;
+            eyeTargY = (Math.random() * 2 - 1) * 0.5;
+        } else if (charMood === 'watching' || charMood === 'anticipation') {
+            eyeTargX = -0.9; eyeTargY = -0.3; // на рулетку
+        } else if (charMood === 'win') {
+            eyeTargX = 0; eyeTargY = -0.4;
+        } else if (charMood === 'lose') {
+            eyeTargX = 0; eyeTargY = 0.6;
         }
-        lookX += (lookTargX - lookX) * dt * 4;
-        lookY += (lookTargY - lookY) * dt * 4;
+        eyeChangeT = charMood==='idle' ? 2+Math.random()*3 : 0.3;
     }
+    eyeX += (eyeTargX - eyeX) * dt * 3;
+    eyeY += (eyeTargY - eyeY) * dt * 3;
 
-    // Звёзды при выигрыше
-    if (charMood === 'win') {
-        winStars = winStars.filter(s => s.alpha > 0);
-        winStars.forEach(s => {
-            s.y -= dt * 30;
-            s.x += s.vx * dt;
-            s.alpha -= dt * 0.6;
-        });
-        if (Math.random() < 0.25) {
-            winStars.push({
-                x: 20 + Math.random() * 104,
-                y: 60 + Math.random() * 30,
-                vx: (Math.random() - 0.5) * 40,
-                size: 10 + Math.random() * 10,
-                alpha: 1
+    // ── Наклон головы ──
+    if (charMood==='watching'||charMood==='anticipation') headTiltTrg = -0.18;
+    else if (charMood==='lose') headTiltTrg = 0.12;
+    else headTiltTrg = 0;
+    headTiltCur += (headTiltTrg - headTiltCur) * dt * 2.5;
+
+    // ── Меч ──
+    let swordTarget = 0;
+    if (charMood==='win') swordTarget = 1;
+    else if (charMood==='lose') swordTarget = -0.15; // чуть ниже
+    swordAngleCur += (swordTarget - swordAngleCur) * dt * (charMood==='win' ? 1.8 : 1.2);
+
+    // ── Плечи при проигрыше ──
+    shoulderDrop += ((charMood==='lose'?1:0) - shoulderDrop) * dt * 1.5;
+
+    // ── Win-свечение меча ──
+    swordGlow += ((charMood==='win'?1:0) - swordGlow) * dt * 2;
+
+    // ── Тёмное облако ──
+    cloudAlpha += ((charMood==='lose'?1:0) - cloudAlpha) * dt * 1.2;
+
+    // ── Win-частицы ──
+    if (charMood==='win') {
+        winParticles = winParticles.filter(p=>p.a>0);
+        winParticles.forEach(p=>{ p.y-=dt*35; p.x+=p.vx*dt; p.a-=dt*0.55; });
+        if (Math.random()<0.2) {
+            const items=['✨','⭐','💛','🌟'];
+            winParticles.push({
+                t:items[Math.floor(Math.random()*items.length)],
+                x:30+Math.random()*140, y:80+Math.random()*40,
+                vx:(Math.random()-0.5)*45,
+                s:11+Math.random()*11, a:1
             });
         }
-    } else {
-        winStars = [];
-    }
+    } else winParticles=[];
 }
 
 function charLoop(ts) {
     updateChar(ts);
-    drawChar(ts);
+    drawKing(ts);
     requestAnimationFrame(charLoop);
 }
 requestAnimationFrame(charLoop);
 
-/* Публичные функции смены настроения */
-function charSpin()  { setCharMood('watching'); winBounce = 0; }
-function charWin()   { setCharMood('win', 4000); winBounce = Math.PI; }
-function charLose()  { setCharMood('lose', 3500); }
-function charFree()  { setCharMood('win', 3000); winBounce = Math.PI * 0.7; }
-/* ══════════════════════════════════════ */
+function charSpin()  { setCharMood('anticipation'); }
+function charWin()   { setCharMood('win',  4200); }
+function charLose()  { setCharMood('lose', 3800); }
+function charFree()  { setCharMood('win',  3200); }
+/* ═══════════════════════════════════════════════════ */
 
 let soundEnabled = true;
 let bgLoopTimer  = null;
@@ -698,29 +918,29 @@ function playTone(freq, type, dur, vol) {
     g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
     o.start(); o.stop(actx.currentTime + dur);
 }
-function playWin()  { [523,659,783,1046].forEach((f,i) => setTimeout(() => playTone(f,'triangle',0.3,0.3), i*80)); }
-function playLose() { [300,220,160].forEach((f,i) => setTimeout(() => playTone(f,'sawtooth',0.2,0.2), i*100)); }
-function playFree() { [659,880,1108].forEach((f,i) => setTimeout(() => playTone(f,'sine',0.25,0.25), i*90)); }
+function playWin()  { [523,659,783,1046].forEach((f,i)=>setTimeout(()=>playTone(f,'triangle',0.3,0.3),i*80)); }
+function playLose() { [300,220,160].forEach((f,i)=>setTimeout(()=>playTone(f,'sawtooth',0.2,0.2),i*100)); }
+function playFree() { [659,880,1108].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',0.25,0.25),i*90)); }
 function playClick() {
     if (!soundEnabled) return;
-    playTone(800, 'square', 0.05, 0.1);
+    playTone(800,'square',0.05,0.1);
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
 let ratchetTimer = null;
 function startRatchet(ms) {
     stopRatchet();
-    ratchetTimer = setInterval(() => {
-        if (!soundEnabled || actx.state === 'suspended') return;
-        const o = actx.createOscillator(), g = actx.createGain();
+    ratchetTimer = setInterval(()=>{
+        if (!soundEnabled||actx.state==='suspended') return;
+        const o=actx.createOscillator(),g=actx.createGain();
         o.connect(g); g.connect(actx.destination);
-        o.type = 'square'; o.frequency.value = 900;
-        g.gain.setValueAtTime(0.07, actx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
-        o.start(); o.stop(actx.currentTime + 0.04);
-    }, ms);
+        o.type='square'; o.frequency.value=900;
+        g.gain.setValueAtTime(0.07,actx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.04);
+        o.start(); o.stop(actx.currentTime+0.04);
+    },ms);
 }
-function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
+function stopRatchet(){ if(ratchetTimer){clearInterval(ratchetTimer);ratchetTimer=null;} }
 
 const SUPERBONUS_IDX = 7;
 const sectors = [
@@ -749,319 +969,230 @@ const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 let curAngle = 0;
 
-let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
+let hlIdx=-1,hlPhase=0,hlRemain=0,hlRAF=null;
 
-function draw(angle, hi, phase) {
-    ctx.clearRect(0, 0, 600, 600);
-    sectors.forEach((s, i) => {
-        const a = i * ARC + angle;
-        if (s.isSB) {
-            const gr = ctx.createRadialGradient(300,300,60,300,300,280);
-            gr.addColorStop(0,'#fff3a0'); gr.addColorStop(0.3,'#ffd700');
-            gr.addColorStop(0.7,'#cc8800'); gr.addColorStop(1,'#7a4800');
-            ctx.beginPath(); ctx.fillStyle = gr;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            ctx.save();
-            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 28;
-            ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4;
-            ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+function draw(angle,hi,phase){
+    ctx.clearRect(0,0,600,600);
+    sectors.forEach((s,i)=>{
+        const a=i*ARC+angle;
+        if(s.isSB){
+            const gr=ctx.createRadialGradient(300,300,60,300,300,280);
+            gr.addColorStop(0,'#fff3a0');gr.addColorStop(0.3,'#ffd700');
+            gr.addColorStop(0.7,'#cc8800');gr.addColorStop(1,'#7a4800');
+            ctx.beginPath();ctx.fillStyle=gr;
+            ctx.moveTo(300,300);ctx.arc(300,300,280,a,a+ARC);ctx.fill();
+            ctx.save();ctx.shadowColor='#ffd700';ctx.shadowBlur=28;
+            ctx.beginPath();ctx.strokeStyle='#ffd700';ctx.lineWidth=4;
+            ctx.moveTo(300,300);ctx.arc(300,300,278,a,a+ARC);ctx.lineTo(300,300);ctx.stroke();
             ctx.restore();
         } else {
-            ctx.beginPath(); ctx.fillStyle = s.c;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
+            ctx.beginPath();ctx.fillStyle=s.c;
+            ctx.moveTo(300,300);ctx.arc(300,300,280,a,a+ARC);ctx.fill();
         }
-        if (i === hi && hlRemain > 0) {
-            const pulse = 0.45 + 0.55 * Math.abs(Math.sin(phase * 0.009));
+        if(i===hi&&hlRemain>0){
+            const pulse=0.45+0.55*Math.abs(Math.sin(phase*0.009));
             ctx.save();
-            const hg = ctx.createRadialGradient(300,300,80,300,300,280);
+            const hg=ctx.createRadialGradient(300,300,80,300,300,280);
             hg.addColorStop(0,`rgba(255,255,180,${0.22*pulse})`);
             hg.addColorStop(0.6,`rgba(255,210,0,${0.4*pulse})`);
             hg.addColorStop(1,`rgba(255,160,0,0)`);
-            ctx.beginPath(); ctx.fillStyle = hg;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            ctx.shadowColor = `rgba(255,220,50,${pulse})`; ctx.shadowBlur = 32;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(255,230,60,${0.95*pulse})`; ctx.lineWidth = 9;
-            ctx.moveTo(300,300); ctx.arc(300,300,274,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+            ctx.beginPath();ctx.fillStyle=hg;
+            ctx.moveTo(300,300);ctx.arc(300,300,280,a,a+ARC);ctx.fill();
+            ctx.shadowColor=`rgba(255,220,50,${pulse})`;ctx.shadowBlur=32;
+            ctx.beginPath();ctx.strokeStyle=`rgba(255,230,60,${0.95*pulse})`;ctx.lineWidth=9;
+            ctx.moveTo(300,300);ctx.arc(300,300,274,a,a+ARC);ctx.lineTo(300,300);ctx.stroke();
             ctx.restore();
         }
-        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
-        ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
-        ctx.save(); ctx.translate(300,300); ctx.rotate(a + ARC/2);
-        if (s.isSB) {
-            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 16;
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial';
-            ctx.fillText('SUPER', 118, -8); ctx.fillText('BONUS', 118, 8);
-            ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#ffe066';
-            ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
+        ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+        ctx.moveTo(300,300);ctx.arc(300,300,280,a,a+ARC);ctx.lineTo(300,300);ctx.stroke();
+        ctx.save();ctx.translate(300,300);ctx.rotate(a+ARC/2);
+        if(s.isSB){
+            ctx.shadowColor='#ffd700';ctx.shadowBlur=16;
+            ctx.fillStyle='#fff';ctx.font='bold 13px Arial';
+            ctx.fillText('SUPER',118,-8);ctx.fillText('BONUS',118,8);
+            ctx.font='bold 10px Arial';ctx.fillStyle='#ffe066';
+            ctx.fillText('500 TON',116,24);ctx.shadowBlur=0;
         } else {
-            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial';
-            ctx.fillText(s.t, 148, 8);
+            ctx.fillStyle='white';ctx.font='bold 24px Arial';
+            ctx.fillText(s.t,148,8);
         }
         ctx.restore();
     });
 }
 
-function startHighlight(idx) {
-    hlIdx = idx; hlRemain = 4000; hlPhase = 0;
-    let last = null;
-    function loop(now) {
-        if (!last) last = now;
-        const dt = now - last; last = now;
-        hlRemain -= dt; hlPhase += dt;
-        draw(curAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
-        if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
-        else { hlIdx = -1; draw(curAngle, -1, 0); }
+function startHighlight(idx){
+    hlIdx=idx;hlRemain=4000;hlPhase=0;
+    let last=null;
+    function loop(now){
+        if(!last)last=now;
+        const dt=now-last;last=now;
+        hlRemain-=dt;hlPhase+=dt;
+        draw(curAngle,hlRemain>0?hlIdx:-1,hlPhase);
+        if(hlRemain>0)hlRAF=requestAnimationFrame(loop);
+        else{hlIdx=-1;draw(curAngle,-1,0);}
     }
-    if (hlRAF) cancelAnimationFrame(hlRAF);
-    hlRAF = requestAnimationFrame(loop);
+    if(hlRAF)cancelAnimationFrame(hlRAF);
+    hlRAF=requestAnimationFrame(loop);
 }
 
-const ptrEl = document.getElementById('ptr');
-let ptrAngle = 0, ptrVel = 0, ptrTarget = 0;
-let ptrRAF = null, ptrLast = null;
+const ptrEl=document.getElementById('ptr');
+let ptrAngle=0,ptrVel=0,ptrTarget=0,ptrRAF=null,ptrLast=null;
 
-function animPointer(now) {
-    if (!ptrLast) ptrLast = now;
-    const dt = Math.min(now - ptrLast, 50) / 1000;
-    ptrLast = now;
-    const err = ptrTarget - ptrAngle;
-    ptrVel += (20 * err - 7 * ptrVel) * dt;
-    ptrAngle += ptrVel * dt;
-    ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle.toFixed(2)}deg)`;
-    if (Math.abs(err) > 0.05 || Math.abs(ptrVel) > 0.05) {
-        ptrRAF = requestAnimationFrame(animPointer);
-    } else {
-        ptrAngle = ptrTarget; ptrVel = 0;
-        ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle}deg)`;
-        ptrRAF = null; ptrLast = null;
-    }
+function animPointer(now){
+    if(!ptrLast)ptrLast=now;
+    const dt=Math.min(now-ptrLast,50)/1000;ptrLast=now;
+    const err=ptrTarget-ptrAngle;
+    ptrVel+=(20*err-7*ptrVel)*dt;ptrAngle+=ptrVel*dt;
+    ptrEl.style.transform=`translateX(-50%) rotate(${ptrAngle.toFixed(2)}deg)`;
+    if(Math.abs(err)>0.05||Math.abs(ptrVel)>0.05){ptrRAF=requestAnimationFrame(animPointer);}
+    else{ptrAngle=ptrTarget;ptrVel=0;ptrEl.style.transform=`translateX(-50%) rotate(${ptrAngle}deg)`;ptrRAF=null;ptrLast=null;}
 }
-function setPointerLean(deg) {
-    ptrTarget = Math.max(-30, Math.min(30, deg));
-    if (!ptrRAF) { ptrLast = null; ptrRAF = requestAnimationFrame(animPointer); }
+function setPointerLean(deg){
+    ptrTarget=Math.max(-30,Math.min(30,deg));
+    if(!ptrRAF){ptrLast=null;ptrRAF=requestAnimationFrame(animPointer);}
 }
 
-function getWeightedRandom() {
-    const avail = sectors.map((s,i) => ({...s, idx:i})).filter(s => !s.isSB);
-    const total = avail.reduce((sum, s) => sum + s.weight, 0);
-    let r = Math.random() * total;
-    for (const s of avail) { r -= s.weight; if (r <= 0) return s.idx; }
+function getWeightedRandom(){
+    const avail=sectors.map((s,i)=>({...s,idx:i})).filter(s=>!s.isSB);
+    const total=avail.reduce((sum,s)=>sum+s.weight,0);
+    let r=Math.random()*total;
+    for(const s of avail){r-=s.weight;if(r<=0)return s.idx;}
     return avail[0].idx;
 }
 
-function loadBalance() {
-    const urlBal = parseInt(new URLSearchParams(location.search).get('balance'));
-    if (tg.CloudStorage) {
-        tg.CloudStorage.getItem(`balance_${userId}`, (err, val) => {
-            const saved = (!err && val) ? parseInt(val) : NaN;
-            if (!isNaN(saved) && saved >= 0) {
-                stars = (!isNaN(urlBal) && urlBal > saved) ? urlBal : saved;
-            } else {
-                stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
-            }
-            if (!isNaN(urlBal) && urlBal > (isNaN(saved) ? -1 : saved)) saveBalance();
+function loadBalance(){
+    const urlBal=parseInt(new URLSearchParams(location.search).get('balance'));
+    if(tg.CloudStorage){
+        tg.CloudStorage.getItem(`balance_${userId}`,(err,val)=>{
+            const saved=(!err&&val)?parseInt(val):NaN;
+            if(!isNaN(saved)&&saved>=0){stars=(!isNaN(urlBal)&&urlBal>saved)?urlBal:saved;}
+            else{stars=(!isNaN(urlBal)&&urlBal>=0)?urlBal:0;}
+            if(!isNaN(urlBal)&&urlBal>(isNaN(saved)?-1:saved))saveBalance();
             update();
         });
-    } else {
-        stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
-        update();
-    }
+    } else {stars=(!isNaN(parseInt(new URLSearchParams(location.search).get('balance')))&&parseInt(new URLSearchParams(location.search).get('balance'))>=0)?parseInt(new URLSearchParams(location.search).get('balance')):0;update();}
 }
 
-function saveBalance(cb) {
-    if (tg.CloudStorage) {
-        tg.CloudStorage.setItem(`balance_${userId}`, String(stars), err => {
-            if (!err) console.log('saved:', stars);
-            if (cb) cb();
-        });
-    } else if (cb) cb();
+function saveBalance(cb){
+    if(tg.CloudStorage){tg.CloudStorage.setItem(`balance_${userId}`,String(stars),err=>{if(!err)console.log('saved:',stars);if(cb)cb();});}
+    else if(cb)cb();
 }
 
-function update() {
-    document.getElementById('s_bal').innerText   = stars;
-    document.getElementById('cur_bet').innerText = curBet;
-    const btn = document.getElementById('spinBtn');
-    if (hasFreeSpins > 0) {
-        btn.innerText = `🎁 FREE SPIN (${hasFreeSpins})`;
-        btn.classList.remove('dep-mode'); btn.classList.add('free-mode');
-    } else if (stars < curBet) {
-        btn.innerText = 'ПОПОЛНИТЬ';
-        btn.classList.add('dep-mode'); btn.classList.remove('free-mode');
-    } else {
-        btn.innerText = 'КРУТИТЬ';
-        btn.classList.remove('dep-mode', 'free-mode');
-    }
-    document.getElementById('btn-minus').disabled = isSpinning;
-    document.getElementById('btn-plus').disabled  = isSpinning;
+function update(){
+    document.getElementById('s_bal').innerText=stars;
+    document.getElementById('cur_bet').innerText=curBet;
+    const btn=document.getElementById('spinBtn');
+    if(hasFreeSpins>0){btn.innerText=`🎁 FREE SPIN (${hasFreeSpins})`;btn.classList.remove('dep-mode');btn.classList.add('free-mode');}
+    else if(stars<curBet){btn.innerText='ПОПОЛНИТЬ';btn.classList.add('dep-mode');btn.classList.remove('free-mode');}
+    else{btn.innerText='КРУТИТЬ';btn.classList.remove('dep-mode','free-mode');}
+    document.getElementById('btn-minus').disabled=isSpinning;
+    document.getElementById('btn-plus').disabled=isSpinning;
 }
 
-const histArr = [];
-function addHistory(label, cls) {
-    histArr.unshift({ label, cls });
-    if (histArr.length > 12) histArr.pop();
-    const bar = document.getElementById('history-bar');
-    bar.innerHTML = '';
-    histArr.forEach(item => {
-        const c = document.createElement('div');
-        c.className = `h-chip ${item.cls}`;
-        c.textContent = item.label;
-        bar.appendChild(c);
-    });
+const histArr=[];
+function addHistory(label,cls){
+    histArr.unshift({label,cls});
+    if(histArr.length>12)histArr.pop();
+    const bar=document.getElementById('history-bar');
+    bar.innerHTML='';
+    histArr.forEach(item=>{const c=document.createElement('div');c.className=`h-chip ${item.cls}`;c.textContent=item.label;bar.appendChild(c);});
 }
 
-function angleForSector(idx) {
-    return -Math.PI / 2 - idx * ARC - ARC / 2;
+function angleForSector(idx){return -Math.PI/2-idx*ARC-ARC/2;}
+
+function toggleFast(){
+    playClick();fastMode=!fastMode;
+    document.getElementById('fast-btn').classList.toggle('active',fastMode);
 }
 
-function toggleFast() {
+function handleSpin(){
+    if(isSpinning)return;
+    if(hasFreeSpins===0&&stars<curBet){openM();return;}
+    if(hlRAF){cancelAnimationFrame(hlRAF);hlRAF=null;hlIdx=-1;}
+    resumeAudio().then(()=>{startBgMusic();doSpin();});
+}
+
+function doSpin(){
     playClick();
-    fastMode = !fastMode;
-    document.getElementById('fast-btn').classList.toggle('active', fastMode);
-}
-
-function handleSpin() {
-    if (isSpinning) return;
-    if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
-    if (hlRAF) { cancelAnimationFrame(hlRAF); hlRAF = null; hlIdx = -1; }
-    resumeAudio().then(() => { startBgMusic(); doSpin(); });
-}
-
-function doSpin() {
-    playClick();
-    charSpin(); // ← персонаж смотрит на рулетку
-    isSpinning = true;
-    update();
-
-    let isFree = false;
-    if (hasFreeSpins > 0) { hasFreeSpins--; isFree = true; }
-    else                   { stars -= curBet; }
+    charSpin();
+    isSpinning=true;update();
+    let isFree=false;
+    if(hasFreeSpins>0){hasFreeSpins--;isFree=true;}
+    else{stars-=curBet;}
     saveBalance();
-
-    const finalIdx = getWeightedRandom();
-
-    let finalAngle = angleForSector(finalIdx);
-    while (finalAngle < curAngle + Math.PI * 2 * 6) finalAngle += Math.PI * 2;
-    finalAngle += Math.floor(Math.random() * 3) * Math.PI * 2;
-
-    const totalRot = finalAngle - curAngle;
-    const startAng = curAngle;
-    const dur = fastMode ? 800 : 4000 + Math.random() * 1500;
-
-    function eased(p) {
-        return p < 0.5 ? 16 * p * p * p * p * p : 1 - Math.pow(-2 * p + 2, 5) / 2;
-    }
-
-    let t0 = null, lastSpd = 45, prevE = 0;
-    startRatchet(fastMode ? 15 : 45);
-
-    function frame(now) {
-        if (!t0) t0 = now;
-        const p  = Math.min((now - t0) / dur, 1);
-        const e  = eased(p);
-        const de = e - prevE; prevE = e;
-
-        curAngle = startAng + totalRot * e;
-        draw(curAngle, -1, 0);
-
-        const radVel = totalRot * de / 0.016;
-        const lean   = Math.min(30, Math.abs(radVel) * 0.09);
-        setPointerLean(radVel > 0 ? -lean : lean);
-
-        const spd = p > 0.88 ? 220 : p > 0.68 ? 110 : 45;
-        if (!fastMode && spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
-
-        if (p < 1) { requestAnimationFrame(frame); return; }
-
-        stopRatchet();
-        setPointerLean(0);
-        isSpinning = false;
-        curAngle   = finalAngle;
-        update();
-
-        const win = sectors[finalIdx];
-        let winAmount = 0;
-
-        if (win.isFree) {
-            hasFreeSpins++;
-            playFree();
-            charFree(); // ← персонаж радуется фриспину
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            addHistory('🎁 FREE', 'h-free');
-        } else if (win.mult > 0) {
-            winAmount = curBet * win.mult;
-            stars    += winAmount;
-            playWin();
-            charWin(); // ← персонаж радуется
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            addHistory(isFree ? `🎁+${winAmount}⭐` : `${win.t} +${winAmount}⭐`, 'h-win');
-        } else {
-            playLose();
-            charLose(); // ← персонаж грустит
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
-        }
-
-        startHighlight(finalIdx);
-        saveBalance();
-        update();
+    const finalIdx=getWeightedRandom();
+    let finalAngle=angleForSector(finalIdx);
+    while(finalAngle<curAngle+Math.PI*2*6)finalAngle+=Math.PI*2;
+    finalAngle+=Math.floor(Math.random()*3)*Math.PI*2;
+    const totalRot=finalAngle-curAngle;
+    const startAng=curAngle;
+    const dur=fastMode?800:4000+Math.random()*1500;
+    function eased(p){return p<0.5?16*p*p*p*p*p:1-Math.pow(-2*p+2,5)/2;}
+    let t0=null,lastSpd=45,prevE=0;
+    startRatchet(fastMode?15:45);
+    function frame(now){
+        if(!t0)t0=now;
+        const p=Math.min((now-t0)/dur,1);
+        const e=eased(p);const de=e-prevE;prevE=e;
+        curAngle=startAng+totalRot*e;draw(curAngle,-1,0);
+        const radVel=totalRot*de/0.016;
+        const lean=Math.min(30,Math.abs(radVel)*0.09);
+        setPointerLean(radVel>0?-lean:lean);
+        const spd=p>0.88?220:p>0.68?110:45;
+        if(!fastMode&&spd!==lastSpd){lastSpd=spd;startRatchet(spd);}
+        if(p<1){requestAnimationFrame(frame);return;}
+        stopRatchet();setPointerLean(0);isSpinning=false;curAngle=finalAngle;update();
+        const win=sectors[finalIdx];let winAmount=0;
+        if(win.isFree){hasFreeSpins++;playFree();charFree();if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');addHistory('🎁 FREE','h-free');}
+        else if(win.mult>0){winAmount=curBet*win.mult;stars+=winAmount;playWin();charWin();if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');addHistory(isFree?`🎁+${winAmount}⭐`:`${win.t} +${winAmount}⭐`,'h-win');}
+        else{playLose();charLose();if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');addHistory(isFree?'🎁💀':`-${curBet}⭐`,'h-lose');}
+        startHighlight(finalIdx);saveBalance();update();
     }
     requestAnimationFrame(frame);
 }
 
-function openM()  { playClick(); document.getElementById('modal').classList.add('open'); }
-function closeM() { playClick(); document.getElementById('modal').classList.remove('open'); }
-function setTab(t, el) {
+function openM(){playClick();document.getElementById('modal').classList.add('open');}
+function closeM(){playClick();document.getElementById('modal').classList.remove('open');}
+function setTab(t,el){
     playClick();
-    document.querySelectorAll('.tab,.tab-content').forEach(e => e.classList.remove('active'));
-    document.getElementById(t).classList.add('active');
-    el.classList.add('active');
+    document.querySelectorAll('.tab,.tab-content').forEach(e=>e.classList.remove('active'));
+    document.getElementById(t).classList.add('active');el.classList.add('active');
 }
 
-function doDep() {
+function doDep(){
     playClick();
-    const val = parseInt(document.getElementById('dep_val').value);
-    if (!val || isNaN(val) || val < MIN_DEPOSIT) { alert(`Минимум ${MIN_DEPOSIT} звезд`); return; }
-    tg.sendData(JSON.stringify({ action: 'deposit', amount: val, userId: userId }));
+    const val=parseInt(document.getElementById('dep_val').value);
+    if(!val||isNaN(val)||val<MIN_DEPOSIT){alert(`Минимум ${MIN_DEPOSIT} звезд`);return;}
+    tg.sendData(JSON.stringify({action:'deposit',amount:val,userId:userId}));
 }
 
-function calcWit() {
-    const v = parseInt(document.getElementById('w_stars').value) || 0;
-    document.getElementById('wit_preview').textContent =
-        v > 0 ? `Вы получите: ${(v * tonPerStar).toFixed(4)} TON` : 'Вы получите: — TON';
+function calcWit(){
+    const v=parseInt(document.getElementById('w_stars').value)||0;
+    document.getElementById('wit_preview').textContent=v>0?`Вы получите: ${(v*tonPerStar).toFixed(4)} TON`:'Вы получите: — TON';
 }
 
-function doWit() {
+function doWit(){
     playClick();
-    const val  = parseInt(document.getElementById('w_stars').value);
-    const addr = document.getElementById('w_addr').value.trim();
-    const memo = document.getElementById('w_memo').value.trim();
-    if (!addr)                           { alert('Введите адрес TON'); return; }
-    if (!val || isNaN(val) || val <= 0)  { alert('Введите сумму'); return; }
-    if (val < MIN_WITHDRAW)              { alert(`Минимум ${MIN_WITHDRAW} звезд`); return; }
-    if (val > stars)                     { alert(`Недостаточно звезд (у вас ${stars})`); return; }
-    const ton = (val * tonPerStar).toFixed(4);
-    const rateText = `1 zvezda = ${tonPerStar.toFixed(6)} TON`;
-    stars -= val; saveBalance(); update();
-    tg.sendData(JSON.stringify({
-        action: 'withdraw', stars: val, ton: ton, rate: rateText,
-        address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
-    }));
+    const val=parseInt(document.getElementById('w_stars').value);
+    const addr=document.getElementById('w_addr').value.trim();
+    const memo=document.getElementById('w_memo').value.trim();
+    if(!addr){alert('Введите адрес TON');return;}
+    if(!val||isNaN(val)||val<=0){alert('Введите сумму');return;}
+    if(val<MIN_WITHDRAW){alert(`Минимум ${MIN_WITHDRAW} звезд`);return;}
+    if(val>stars){alert(`Недостаточно звезд (у вас ${stars})`);return;}
+    const ton=(val*tonPerStar).toFixed(4);
+    const rateText=`1 zvezda = ${tonPerStar.toFixed(6)} TON`;
+    stars-=val;saveBalance();update();
+    tg.sendData(JSON.stringify({action:'withdraw',stars:val,ton:ton,rate:rateText,address:addr,memo:memo||'-',balanceAfter:stars,userId:userId}));
 }
 
-function adjBet(v) {
-    if (isSpinning) return;
-    playClick();
-    curBet = Math.max(5, curBet + v);
-    update();
+function adjBet(v){
+    if(isSpinning)return;playClick();
+    curBet=Math.max(5,curBet+v);update();
 }
 
-window.addEventListener('beforeunload', () => saveBalance());
-window.addEventListener('DOMContentLoaded', () => {
-    loadBalance();
-    draw(0, -1, 0);
-});
+window.addEventListener('beforeunload',()=>saveBalance());
+window.addEventListener('DOMContentLoaded',()=>{loadBalance();draw(0,-1,0);});
 </script>
-
 </body>
 </html>
