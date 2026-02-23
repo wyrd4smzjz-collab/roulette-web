@@ -16,7 +16,6 @@
             align-items: center; justify-content: space-between;
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
-
         .top-bar {
             width: 100%; padding: 10px 0 4px;
             display: flex; justify-content: center; position: relative;
@@ -26,8 +25,6 @@
             font-size: 2.2em; font-weight: bold; color: gold;
             text-shadow: 0 0 15px rgba(255,215,0,0.6);
         }
-
-        /* ИСПРАВЛЕНО: кнопка теперь fixed поверх всего */
         .wallet-btn {
             position: fixed;
             right: 15px;
@@ -37,7 +34,6 @@
             color: white; border-radius: 8px; padding: 6px 12px;
             font-size: 0.8em; cursor: pointer;
         }
-
         #sb-banner {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 8px);
@@ -57,7 +53,6 @@
         .sb-text   { display: flex; flex-direction: column; line-height: 1.2; }
         .sb-label  { font-size: 8px; font-weight: 900; letter-spacing: 2px; color: #ffd700; text-transform: uppercase; }
         .sb-amount { font-size: 14px; font-weight: 900; color: #fff; text-shadow: 0 0 8px #ffd700; }
-
         .wheel-container {
             position: relative;
             width: 80vw; max-width: 310px;
@@ -80,7 +75,6 @@
             z-index: 10;
             filter: drop-shadow(0 0 8px rgba(241,196,15,0.8));
         }
-
         #history-bar {
             width: 90%; max-width: 310px;
             display: flex; gap: 5px; overflow-x: auto;
@@ -96,7 +90,6 @@
         .h-win  { background: rgba(39,174,96,.22);  border: 1px solid #27ae60; color: #2ecc71; }
         .h-lose { background: rgba(231,76,60,.22);   border: 1px solid #e74c3c; color: #e74c3c; }
         .h-free { background: rgba(52,152,219,.22);  border: 1px solid #3498db; color: #74b9ff; }
-
         .controls {
             width: 100%; text-align: center;
             padding-bottom: 18px; flex-shrink: 0;
@@ -119,6 +112,21 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
+        .btn-adj:disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        /* НОВАЯ кнопка зайца */
+        #fast-btn {
+            background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
+            color: white; border-radius: 50%;
+            width: 50px; height: 50px; font-size: 22px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all .2s;
+        }
+        #fast-btn.active {
+            background: rgba(241,196,15,0.4); border-color: #f1c40f;
+            box-shadow: 0 0 12px #f1c40f;
+        }
         .spin-btn {
             width: 85%; padding: 18px; border-radius: 50px; border: none;
             color: white; font-weight: bold; font-size: 1.4em;
@@ -127,7 +135,6 @@
         }
         .dep-mode  { background: #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; }
         .free-mode { background: #27ae60 !important; box-shadow: 0 0 25px #27ae60 !important; }
-
         #modal {
             display: none; position: fixed; inset: 0;
             background: #000; z-index: 300;
@@ -173,7 +180,6 @@
     </div>
 </div>
 
-<!-- Кнопка кошелька теперь fixed поверх всего -->
 <button class="wallet-btn" onclick="openM()">Кошелек</button>
 
 <div class="top-bar">
@@ -190,9 +196,10 @@
 <div class="controls">
     <div class="bet-box">
         <button id="sound-btn" onclick="toggleSound()">🔊</button>
-        <button class="btn-adj" onclick="adjBet(-5)">-</button>
+        <button class="btn-adj" id="btn-minus" onclick="adjBet(-20)">-</button>
         <div>Ставка<br><b id="cur_bet">5</b> ⭐</div>
-        <button class="btn-adj" onclick="adjBet(5)">+</button>
+        <button class="btn-adj" id="btn-plus" onclick="adjBet(20)">+</button>
+        <button id="fast-btn" onclick="toggleFast()">🐇</button>
     </div>
     <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
 </div>
@@ -202,7 +209,6 @@
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)">ПОПОЛНИТЬ</div>
         <div class="tab"        id="tab-wit" onclick="setTab('wit',this)">ВЫВОД</div>
     </div>
-
     <div id="dep" class="tab-content active">
         <h2 style="color:gold; margin-bottom:4px;">Пополнение ⭐</h2>
         <p class="m-warn">Минимум 10 ⭐</p>
@@ -212,7 +218,6 @@
         <button class="modal-btn green" onclick="doDep()">КУПИТЬ ⭐</button>
         <p class="back-link" onclick="closeM()">← Назад</p>
     </div>
-
     <div id="wit" class="tab-content">
         <h2 style="color:#0088cc; margin-bottom:4px;">Вывод TON</h2>
         <p class="m-warn">Минимум 500 ⭐</p>
@@ -236,6 +241,7 @@ let stars        = 0;
 let curBet       = 5;
 let isSpinning   = false;
 let hasFreeSpins = 0;
+let fastMode     = false;
 let userId       = new URLSearchParams(location.search).get('uid') || 'unknown';
 
 const MIN_WITHDRAW = 500;
@@ -535,6 +541,9 @@ function update() {
         btn.innerText = 'КРУТИТЬ';
         btn.classList.remove('dep-mode', 'free-mode');
     }
+    // Блокировка ставок во время вращения
+    document.getElementById('btn-minus').disabled = isSpinning;
+    document.getElementById('btn-plus').disabled  = isSpinning;
 }
 
 const histArr = [];
@@ -555,6 +564,14 @@ function angleForSector(idx) {
     return -Math.PI / 2 - idx * ARC - ARC / 2;
 }
 
+// Переключение режима быстрого вращения
+function toggleFast() {
+    playClick();
+    fastMode = !fastMode;
+    const btn = document.getElementById('fast-btn');
+    btn.classList.toggle('active', fastMode);
+}
+
 function handleSpin() {
     if (isSpinning) return;
     if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
@@ -565,40 +582,35 @@ function handleSpin() {
 function doSpin() {
     playClick();
     isSpinning = true;
+    update();
 
     let isFree = false;
     if (hasFreeSpins > 0) { hasFreeSpins--; isFree = true; }
     else                   { stars -= curBet; }
-    update(); saveBalance();
+    saveBalance();
 
-    const realIdx  = getWeightedRandom();
-    const nearMiss = Math.random() < 0.40;
-    const finalIdx = nearMiss ? (SUPERBONUS_IDX + 1) % N : realIdx;
+    const finalIdx = getWeightedRandom();
 
     let finalAngle = angleForSector(finalIdx);
-    while (finalAngle < curAngle + Math.PI * 2 * 7) finalAngle += Math.PI * 2;
+    while (finalAngle < curAngle + Math.PI * 2 * 6) finalAngle += Math.PI * 2;
     finalAngle += Math.floor(Math.random() * 3) * Math.PI * 2;
 
     const totalRot = finalAngle - curAngle;
     const startAng = curAngle;
-    const dur      = nearMiss ? 6800 : 4500 + Math.random() * 1500;
+    // В быстром режиме - 800мс, обычный - 4000-5500мс
+    const dur = fastMode ? 800 : 4000 + Math.random() * 1500;
 
     function eased(p) {
         return p < 0.5 ? 16 * p * p * p * p * p : 1 - Math.pow(-2 * p + 2, 5) / 2;
     }
-    function easedNM(p) {
-        if (p < 0.65) return eased(p / 0.65) * 0.70;
-        if (p < 0.82) { const q = (p - 0.65) / 0.17; return 0.70 + 0.03 * (1 - Math.pow(1-q, 2)); }
-        const q = (p - 0.82) / 0.18; return 0.73 + 0.27 * (1 - Math.pow(1-q, 3));
-    }
 
     let t0 = null, lastSpd = 45, prevE = 0;
-    startRatchet(45);
+    startRatchet(fastMode ? 15 : 45);
 
     function frame(now) {
         if (!t0) t0 = now;
         const p  = Math.min((now - t0) / dur, 1);
-        const e  = nearMiss ? easedNM(p) : eased(p);
+        const e  = eased(p);
         const de = e - prevE; prevE = e;
 
         curAngle = startAng + totalRot * e;
@@ -609,7 +621,7 @@ function doSpin() {
         setPointerLean(radVel > 0 ? -lean : lean);
 
         const spd = p > 0.88 ? 220 : p > 0.68 ? 110 : 45;
-        if (spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
+        if (!fastMode && spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
 
         if (p < 1) { requestAnimationFrame(frame); return; }
 
@@ -617,6 +629,7 @@ function doSpin() {
         setPointerLean(0);
         isSpinning = false;
         curAngle   = finalAngle;
+        update();
 
         const win = sectors[finalIdx];
         let winAmount = 0;
@@ -704,7 +717,13 @@ function doWit() {
     }));
 }
 
-function adjBet(v) { playClick(); curBet = Math.max(5, curBet + v); update(); }
+// Шаг +20/-20, минимум 5
+function adjBet(v) {
+    if (isSpinning) return;
+    playClick();
+    curBet = Math.max(5, curBet + v);
+    update();
+}
 
 window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
