@@ -23,11 +23,12 @@
        ЭКРАН ЗАГРУЗКИ
     ══════════════════════════════ */
     #loading-screen {
-        position: fixed; inset: 0; z-index: 9999;
+        position: fixed; inset: 0; z-index: 99999;
         background: #08001a;
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
         overflow: hidden;
+        /* always on top of everything */
     }
     #loading-screen.fade-out {
         animation: loadFadeOut 0.8s forwards;
@@ -479,122 +480,122 @@
 <div id="rules" class="tab-content">
     <div class="legal-text">
         <h2>📜 TERMS &amp; CONDITIONS</h2>
-        <p class="eff-date">Дата вступления в силу: 27.02.2026 · Imperial Roulette</p>
+        <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
 
-        <h3>1. Общие положения</h3>
-        <p>Imperial Roulette — цифровой развлекательный сервис, доступный через платформу Telegram.</p>
-        <p>Используя Сервис, пользователь подтверждает, что:</p>
+        <h3>1. General Provisions</h3>
+        <p>Imperial Roulette is a digital entertainment service available through the Telegram platform.</p>
+        <p>By accessing or using the Service, the user confirms that:</p>
         <ul>
-            <li>Пользователю исполнилось не менее 18 лет</li>
-            <li>Пользователь понимает случайный характер игры</li>
-            <li>Пользователь принимает настоящие Условия в полном объёме</li>
+            <li>The user is at least 18 years old</li>
+            <li>The user understands the random nature of the game</li>
+            <li>The user accepts these Terms in full</li>
         </ul>
-        <p>Если пользователь не согласен, он обязан немедленно прекратить использование Сервиса.</p>
+        <p>If the user does not agree, they must stop using the Service immediately.</p>
 
         <hr class="section-divider">
 
-        <h3>2. Характер Сервиса</h3>
-        <p>Сервис предоставляет интерактивную цифровую игровую механику, основанную на случайном алгоритме. Результаты генерируются автоматически системой рандомизации.</p>
-        <p>Сервис:</p>
+        <h3>2. Nature of the Service</h3>
+        <p>The Service provides an interactive digital game mechanic based on a random algorithm. Results are generated automatically using a randomization system.</p>
+        <p>The Service:</p>
         <ul>
-            <li>Не гарантирует выигрыш</li>
-            <li>Не обещает прибыль</li>
-            <li>Не является инвестиционной платформой</li>
-            <li>Не является финансовой услугой</li>
+            <li>Does not guarantee winnings</li>
+            <li>Does not promise profit</li>
+            <li>Is not an investment platform</li>
+            <li>Is not a financial service</li>
         </ul>
-        <p>Участие добровольно и осуществляется на риск пользователя.</p>
+        <p>Participation is voluntary and at the user's own risk.</p>
 
         <hr class="section-divider">
 
-        <h3>3. Внутриигровые единицы (Звёзды)</h3>
-        <p>Для участия в игре могут использоваться Telegram Stars. Звёзды — цифровые единицы платформы, предоставляемые Telegram, а не Сервисом. Администрация не контролирует платёжную систему Telegram и не несёт ответственности за внешнюю обработку платежей.</p>
+        <h3>3. In-Game Units (Stars)</h3>
+        <p>The Service may use Telegram Stars for participation in the game. Stars are digital platform units provided by Telegram and are not issued by the Service. The administration does not control Telegram's payment system and is not responsible for external payment processing.</p>
 
         <hr class="section-divider">
 
-        <h3>4. Цифровые вознаграждения и переводы TON</h3>
-        <p>Пользователи могут получать цифровые вознаграждения по результатам игры. При наличии оснований вознаграждения могут передаваться в цифровых активах TON.</p>
-        <p>Переводы TON:</p>
+        <h3>4. Digital Rewards and TON Transfers</h3>
+        <p>Users may receive digital rewards based on game results. Where applicable, rewards may be transferred in TON digital assets.</p>
+        <p>TON transfers:</p>
         <ul>
-            <li>Обрабатываются на адрес кошелька, указанный пользователем</li>
-            <li>Могут быть задержаны сетью</li>
-            <li>Необратимы после завершения</li>
+            <li>Are processed to the wallet address provided by the user</li>
+            <li>May be subject to network delays</li>
+            <li>Are irreversible once completed</li>
         </ul>
-        <p>Сервис не гарантирует скорость обработки блокчейном. Цифровые вознаграждения не являются зарплатой, дивидендами, финансовой отдачей или инвестиционным доходом.</p>
+        <p>The Service does not guarantee blockchain processing speed. Digital rewards do not constitute salary, dividends, financial returns, or investment income.</p>
 
         <hr class="section-divider">
 
-        <h3>5. Случайность</h3>
-        <p>Исходы игры определяются автоматизированным алгоритмом. Пользователь признаёт, что результаты непредсказуемы, убытки возможны, гарантированного выигрыша не существует. Участвуя, пользователь принимает механику, основанную на вероятности.</p>
+        <h3>5. Randomness</h3>
+        <p>Game outcomes are determined by an automated algorithm. The user acknowledges that results are unpredictable, losses are possible, and there is no guaranteed win. By participating, the user accepts the probability-based mechanics.</p>
 
         <hr class="section-divider">
 
-        <h3>6. Ответственность пользователя</h3>
-        <p>Пользователи соглашаются не использовать автоматические скрипты или боты, не эксплуатировать уязвимости системы, не создавать несколько аккаунтов для злоупотреблений, не пытаться манипулировать результатами. Нарушение может повлечь блокировку без компенсации.</p>
+        <h3>6. User Responsibilities</h3>
+        <p>Users agree not to use automated scripts or bots, exploit system vulnerabilities, create multiple accounts for abuse, or attempt to manipulate results. Violation may result in suspension without compensation.</p>
 
         <hr class="section-divider">
 
-        <h3>7. Ограничение ответственности</h3>
-        <p>Администрация не несёт ответственности за финансовые потери, неверное понимание механики, сбои платформы Telegram, задержки сети блокчейн, ошибки пользователя при указании адреса кошелька. Пользователь принимает все риски, связанные с участием.</p>
+        <h3>7. Limitation of Liability</h3>
+        <p>The Administration is not responsible for financial losses, incorrect understanding of the mechanics, Telegram platform failures, blockchain network delays, or user errors in wallet address submission. The user assumes all risks associated with participation.</p>
 
         <hr class="section-divider">
 
-        <h3>8. Приостановка и прекращение</h3>
-        <p>Сервис оставляет за собой право приостанавливать аккаунты, задерживать или отказывать в переводах при подозрении в злоупотреблении, изменять или прекращать функции.</p>
+        <h3>8. Suspension &amp; Termination</h3>
+        <p>The Service reserves the right to suspend accounts, delay or refuse transfers in case of suspected abuse, and modify or discontinue features.</p>
 
         <hr class="section-divider">
 
-        <h3>9. Изменения</h3>
-        <p>Настоящие Условия могут быть обновлены в любое время. Продолжение использования Сервиса означает принятие обновлённой версии.</p>
+        <h3>9. Amendments</h3>
+        <p>These Terms may be updated at any time. Continued use of the Service constitutes acceptance of the updated version.</p>
     </div>
-    <p class="back-link" onclick="closeM()">← Назад</p>
+    <p class="back-link" onclick="closeM()">← Back</p>
 </div>
 
 <div id="priv" class="tab-content">
     <div class="legal-text">
-        <h2>🔒 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</h2>
-        <p class="eff-date">Дата вступления в силу: 27.02.2026 · Imperial Roulette</p>
+        <h2>🔒 PRIVACY POLICY</h2>
+        <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
 
-        <h3>1. Информация, которую мы собираем</h3>
-        <p>Сервис может собирать ограниченные технические данные, необходимые для работы, в том числе:</p>
+        <h3>1. Information We Collect</h3>
+        <p>The Service may collect limited technical data necessary for operation, including:</p>
         <ul>
             <li>Telegram User ID</li>
-            <li>Telegram Username (при наличии)</li>
-            <li>Адрес кошелька, предоставленный пользователем</li>
-            <li>Данные игровых взаимодействий (ставки, вращения, результаты)</li>
+            <li>Telegram Username (if available)</li>
+            <li>Wallet address provided by the user</li>
+            <li>Game interaction data (bets, spins, results)</li>
         </ul>
-        <p>Сервис НЕ собирает: паспортные данные, банковские учётные данные, приватные ключи кошелька.</p>
+        <p>The Service does NOT collect: passport data, banking credentials, or private wallet keys.</p>
 
         <hr class="section-divider">
 
-        <h3>2. Цель сбора данных</h3>
-        <p>Данные собираются исключительно для: работы Сервиса, обработки игровой механики, управления переводами цифровых вознаграждений, предотвращения мошенничества или злоупотреблений, улучшения пользовательского опыта.</p>
+        <h3>2. Purpose of Data Collection</h3>
+        <p>Data is collected strictly for: operating the Service, processing game mechanics, managing digital reward transfers, preventing fraud or abuse, and improving user experience.</p>
 
         <hr class="section-divider">
 
-        <h3>3. Хранение данных</h3>
-        <p>Данные пользователей хранятся столько, сколько необходимо для работы Сервиса или соблюдения применимых обязательств. Пользователи могут запросить удаление своих данных с учётом технических ограничений.</p>
+        <h3>3. Data Storage</h3>
+        <p>User data is stored for as long as necessary to operate the Service or comply with applicable obligations. Users may request deletion of their data, subject to technical limitations.</p>
 
         <hr class="section-divider">
 
-        <h3>4. Передача данных</h3>
-        <p>Сервис не продаёт и не сдаёт в аренду данные пользователей. Данные могут быть переданы только если это требуется по закону, для предотвращения мошенничества или злоупотреблений, техническим провайдерам исключительно в операционных целях.</p>
+        <h3>4. Data Sharing</h3>
+        <p>The Service does not sell or rent user data. Data may only be shared if required by law, to prevent fraud or abuse, or with technical providers strictly for operational purposes.</p>
 
         <hr class="section-divider">
 
-        <h3>5. Безопасность</h3>
-        <p>Для защиты данных пользователей применяются разумные технические меры. Однако ни одна цифровая система не может гарантировать абсолютную безопасность.</p>
+        <h3>5. Security</h3>
+        <p>Reasonable technical measures are implemented to protect user data. However, no digital system can guarantee absolute security.</p>
 
         <hr class="section-divider">
 
-        <h3>6. Прозрачность блокчейна</h3>
-        <p>Транзакции TON общедоступны в блокчейне. Сервис не несёт ответственности за аналитику блокчейна третьих сторон.</p>
+        <h3>6. Blockchain Transparency</h3>
+        <p>TON transactions are publicly visible on the blockchain. The Service is not responsible for third-party blockchain analytics.</p>
 
         <hr class="section-divider">
 
-        <h3>7. Контакт</h3>
-        <p>По вопросам конфиденциальности пользователи могут обратиться в поддержку через официальный канал поддержки Telegram.</p>
+        <h3>7. Contact</h3>
+        <p>For privacy-related requests, users may contact support through the official Telegram support channel.</p>
     </div>
-    <p class="back-link" onclick="closeM()">← Назад</p>
+    <p class="back-link" onclick="closeM()">← Back</p>
 </div>
 ```
 
@@ -630,13 +631,13 @@ tg.expand();
     const stat = document.getElementById('load-status');
 
     const steps = [
-        { p:  8, t: 'Подключение к серверу…' },
-        { p: 22, t: 'Загрузка ресурсов…' },
-        { p: 41, t: 'Инициализация рулетки…' },
-        { p: 63, t: 'Проверка баланса…' },
-        { p: 78, t: 'Синхронизация…' },
-        { p: 91, t: 'Почти готово…' },
-        { p:100, t: 'Готово!' }
+        { p:  8, t: 'Connecting to server…' },
+        { p: 22, t: 'Loading resources…' },
+        { p: 41, t: 'Initializing roulette…' },
+        { p: 63, t: 'Checking balance…' },
+        { p: 78, t: 'Synchronizing…' },
+        { p: 91, t: 'Almost ready…' },
+        { p:100, t: 'Ready!' }
     ];
 
     let cur = 0;
