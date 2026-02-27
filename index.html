@@ -56,14 +56,11 @@
 
     /* Логотип на загрузке */
     .load-logo {
-        position: relative; z-index: 2;
+        position: relative;
         display: flex; flex-direction: column; align-items: center;
         gap: 6px;
         width: 100%;
-        max-width: 340px;
         text-align: center;
-        padding: 0 24px;
-        box-sizing: border-box;
     }
     .load-crown {
         font-size: 64px;
@@ -95,8 +92,8 @@
 
     /* Прогресс-бар */
     .load-bar-wrap {
-        position: relative; z-index: 2;
-        margin-top: 40px; width: 260px;
+        position: relative;
+        margin-top: 40px; width: 80%; max-width: 280px;
     }
     .load-bar-track {
         width: 100%; height: 6px; border-radius: 10px;
@@ -130,6 +127,22 @@
         min-height: 1em;
     }
 
+    /* Центральный блок загрузки */
+    .load-center-block {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        padding: 0 20px;
+        box-sizing: border-box;
+        z-index: 2;
+    }
+
     /* Орбитальные кольца */
     .orbit-ring {
         position: absolute; border-radius: 50%;
@@ -157,11 +170,14 @@
     #app-content {
         display: none;
         width: 100%;
-        flex: 1;
-        min-height: 0;
+        height: 100%;
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
+        position: fixed;
+        inset: 0;
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        box-sizing: border-box;
     }
     #app-content.ready {
         display: flex;
@@ -399,18 +415,20 @@
     <div class="orbit-dot" style="background:#e879f9;box-shadow:0 0 8px #e879f9;"></div>
 </div>
 
-<div class="load-logo">
-    <div class="load-crown">👑</div>
-    <div class="load-title">Imperial Roulette</div>
-    <div class="load-subtitle">Fortune Awaits</div>
-</div>
-
-<div class="load-bar-wrap">
-    <div class="load-bar-track">
-        <div class="load-bar-fill" id="load-fill"></div>
+<div class="load-center-block">
+    <div class="load-logo">
+        <div class="load-crown">👑</div>
+        <div class="load-title">Imperial Roulette</div>
+        <div class="load-subtitle">Fortune Awaits</div>
     </div>
-    <div class="load-pct" id="load-pct">0%</div>
-    <div class="load-status" id="load-status">Initializing…</div>
+
+    <div class="load-bar-wrap">
+        <div class="load-bar-track">
+            <div class="load-bar-fill" id="load-fill"></div>
+        </div>
+        <div class="load-pct" id="load-pct">0%</div>
+        <div class="load-status" id="load-status">Initializing…</div>
+    </div>
 </div>
 ```
 
