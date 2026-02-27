@@ -732,7 +732,7 @@ let fastMode     = false;
 let userId       = new URLSearchParams(location.search).get('uid') || 'unknown';
 
 const MIN_WITHDRAW = 500;
-const MIN_DEPOSIT  = 10;
+const MIN_DEPOSIT  = 100;
 let tonPerStar = 0.013333;
 
 (async function fetchTonRate() {
