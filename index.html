@@ -17,46 +17,170 @@
             align-items: center; justify-content: space-between;
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
-        #particles {
-            position: fixed; inset: 0; z-index: 0;
-            pointer-events: none; overflow: hidden;
-        }
-        .particle {
-            position: absolute; bottom: -30px;
-            animation: floatUp linear infinite;
-            opacity: 0;
-        }
-        @keyframes floatUp {
-            0%   { transform: translateY(0) scale(1);   opacity: 0; }
-            10%  { opacity: 1; }
-            90%  { opacity: 0.6; }
-            100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
-        }
-        .top-bar {
-            width: 100%; padding: 10px 0 4px;
-            display: flex; justify-content: center; position: relative;
-            flex-shrink: 0; z-index: 2;
-        }
-        .wallet-btn {
-            position: fixed; right: 15px;
-            top: calc(env(safe-area-inset-top) + 12px);
-            z-index: 200;
-            background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
-            color: white; border-radius: 8px; padding: 6px 12px;
-            font-size: 0.8em; cursor: pointer;
-        }
 
 ```
-    /* СТРОКА: баланс слева, персонаж справа */
-    #bal-row {
-        width: 90%; max-width: 310px;
-        display: flex; align-items: center;
-        justify-content: space-between;
-        flex-shrink: 0; z-index: 2;
-        margin-top: 4px;
+    /* ══════════════════════════════
+       ЭКРАН ЗАГРУЗКИ
+    ══════════════════════════════ */
+    #loading-screen {
+        position: fixed; inset: 0; z-index: 9999;
+        background: #08001a;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        overflow: hidden;
     }
-    #bal-block {
-        display: flex; flex-direction: column; align-items: flex-start;
+    #loading-screen.fade-out {
+        animation: loadFadeOut 0.8s forwards;
+    }
+    @keyframes loadFadeOut {
+        to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Звёзды фона */
+    #stars-bg {
+        position: absolute; inset: 0; overflow: hidden;
+    }
+    .star-dot {
+        position: absolute; border-radius: 50%;
+        background: white; animation: starTwinkle linear infinite;
+    }
+    @keyframes starTwinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* Туманность */
+    .nebula {
+        position: absolute; border-radius: 50%;
+        filter: blur(60px); pointer-events: none;
+    }
+
+    /* Логотип на загрузке */
+    .load-logo {
+        position: relative; z-index: 2;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 6px;
+    }
+    .load-crown {
+        font-size: 64px;
+        filter: drop-shadow(0 0 20px #c084fc) drop-shadow(0 0 40px #7c3aed);
+        animation: crownPulse 2s ease-in-out infinite;
+    }
+    @keyframes crownPulse {
+        0%, 100% { transform: scale(1) translateY(0); }
+        50% { transform: scale(1.06) translateY(-4px); }
+    }
+    .load-title {
+        font-size: 2em; font-weight: 900; letter-spacing: 4px;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #e879f9, #a855f7, #7c3aed, #c084fc);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+        filter: drop-shadow(0 0 12px rgba(168,85,247,0.6));
+        animation: titleGlow 2.5s ease-in-out infinite;
+    }
+    @keyframes titleGlow {
+        0%, 100% { filter: drop-shadow(0 0 8px rgba(168,85,247,0.5)); }
+        50% { filter: drop-shadow(0 0 20px rgba(192,132,252,0.9)); }
+    }
+    .load-subtitle {
+        font-size: 0.72em; letter-spacing: 6px; color: rgba(192,132,252,0.7);
+        text-transform: uppercase; margin-top: 2px;
+    }
+
+    /* Прогресс-бар */
+    .load-bar-wrap {
+        position: relative; z-index: 2;
+        margin-top: 40px; width: 260px;
+    }
+    .load-bar-track {
+        width: 100%; height: 6px; border-radius: 10px;
+        background: rgba(124,58,237,0.2);
+        border: 1px solid rgba(124,58,237,0.4);
+        overflow: hidden;
+    }
+    .load-bar-fill {
+        height: 100%; width: 0%; border-radius: 10px;
+        background: linear-gradient(90deg, #7c3aed, #c084fc, #e879f9);
+        box-shadow: 0 0 12px #c084fc, 0 0 24px #7c3aed;
+        transition: width 0.12s ease;
+        position: relative;
+    }
+    .load-bar-fill::after {
+        content: '';
+        position: absolute; right: 0; top: -2px;
+        width: 8px; height: 10px; border-radius: 50%;
+        background: #f0abfc;
+        box-shadow: 0 0 10px #f0abfc, 0 0 20px #c084fc;
+    }
+    .load-pct {
+        text-align: right; margin-top: 8px;
+        font-size: 0.78em; font-weight: 700;
+        color: #c084fc; letter-spacing: 2px;
+    }
+    .load-status {
+        text-align: center; margin-top: 10px;
+        font-size: 0.65em; color: rgba(192,132,252,0.5);
+        letter-spacing: 2px; text-transform: uppercase;
+        min-height: 1em;
+    }
+
+    /* Орбитальные кольца */
+    .orbit-ring {
+        position: absolute; border-radius: 50%;
+        border: 1px solid rgba(124,58,237,0.15);
+        animation: orbitSpin linear infinite;
+        pointer-events: none;
+    }
+    @keyframes orbitSpin {
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .orbit-dot {
+        position: absolute; width: 6px; height: 6px;
+        border-radius: 50%; top: -3px; left: calc(50% - 3px);
+        background: #c084fc;
+        box-shadow: 0 0 8px #c084fc, 0 0 16px #7c3aed;
+    }
+
+    /* ══════════════════════════════
+       ОСНОВНОЙ ИНТЕРФЕЙС
+    ══════════════════════════════ */
+    #particles {
+        position: fixed; inset: 0; z-index: 0;
+        pointer-events: none; overflow: hidden;
+    }
+    .particle {
+        position: absolute; bottom: -30px;
+        animation: floatUp linear infinite;
+        opacity: 0;
+    }
+    @keyframes floatUp {
+        0%   { transform: translateY(0) scale(1);   opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 0.6; }
+        100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+    }
+    .top-bar {
+        width: 100%; padding: 10px 0 4px;
+        display: flex; justify-content: center; position: relative;
+        flex-shrink: 0; z-index: 2;
+    }
+    .wallet-btn {
+        position: fixed; right: 15px;
+        top: calc(env(safe-area-inset-top) + 12px);
+        z-index: 200;
+        background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
+        color: white; border-radius: 8px; padding: 6px 12px;
+        font-size: 0.8em; cursor: pointer;
+    }
+
+    /* БАЛАНС — по центру под рулеткой */
+    #bal-center {
+        display: flex; flex-direction: column; align-items: center;
+        flex-shrink: 0; z-index: 2;
+        margin-top: 6px;
     }
     #bal-label {
         font-size: 0.62em; font-weight: 700; letter-spacing: 1.5px;
@@ -67,12 +191,6 @@
         font-size: 1.5em; font-weight: bold; color: gold;
         text-shadow: 0 0 12px rgba(255,215,0,0.6);
         line-height: 1;
-    }
-    /* ПЕРСОНАЖ */
-    #char-canvas {
-        width: 88px; height: 88px;
-        flex-shrink: 0;
-        filter: drop-shadow(0 0 8px rgba(142,68,173,0.6));
     }
 
     #sb-banner {
@@ -170,6 +288,10 @@
     }
     .dep-mode  { background: #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; }
     .free-mode { background: #27ae60 !important; box-shadow: 0 0 25px #27ae60 !important; }
+
+    /* ══════════════════════════════
+       МОДАЛЬНОЕ ОКНО
+    ══════════════════════════════ */
     #modal {
         display: none; position: fixed; inset: 0;
         background: #000; z-index: 300;
@@ -177,18 +299,20 @@
         -webkit-overflow-scrolling: touch;
     }
     #modal.open { display: flex; }
-    .tabs { display: flex; background: #1a1a1a; flex-shrink: 0; }
-    .tab { flex: 1; padding: 20px; text-align: center; font-weight: bold; cursor: pointer; }
+    .tabs { display: flex; background: #1a1a1a; flex-shrink: 0; flex-wrap: wrap; }
+    .tab { flex: 1; padding: 14px 6px; text-align: center; font-weight: bold; cursor: pointer; font-size: 0.78em; min-width: 0; }
     .tab.active { border-bottom: 3px solid #8e44ad; color: #8e44ad; }
     .tab-content {
         display: none; padding: 28px 20px 80px;
         flex-direction: column; align-items: center; width: 100%;
+        box-sizing: border-box;
     }
     .tab-content.active { display: flex; }
     .modal-input {
         width: 100%; padding: 15px; margin: 8px 0;
         border-radius: 12px; border: 1px solid #444;
         background: #111; color: white; font-size: 1.05em;
+        box-sizing: border-box;
     }
     .modal-input:focus { outline: none; border-color: #8e44ad; }
     .m-hint    { color: #666; font-size: .8em; text-align: center; margin: 2px 0 8px; line-height: 1.5; }
@@ -203,11 +327,78 @@
     }
     .modal-btn.green { background: #27ae60; box-shadow: 0 0 20px #27ae60; }
     .back-link { margin-top: 24px; color: #777; font-size: .9em; cursor: pointer; }
+
+    /* ══════════════════════════════
+       ТЕКСТ ПРАВИЛ / КОНФИДЕНЦИАЛЬНОСТЬ
+    ══════════════════════════════ */
+    .legal-text {
+        width: 100%; color: #ccc; font-size: 0.82em; line-height: 1.7;
+        text-align: left;
+    }
+    .legal-text h2 {
+        color: #c084fc; font-size: 1.1em; margin: 0 0 6px;
+        border-bottom: 1px solid rgba(192,132,252,0.2); padding-bottom: 6px;
+    }
+    .legal-text h3 {
+        color: #a78bfa; font-size: 0.95em; margin: 18px 0 6px;
+    }
+    .legal-text p { margin: 6px 0; }
+    .legal-text ul { margin: 6px 0; padding-left: 18px; }
+    .legal-text ul li { margin: 3px 0; }
+    .legal-text .eff-date {
+        color: #777; font-size: 0.85em; margin-bottom: 16px;
+    }
+    .legal-text .section-divider {
+        border: none; border-top: 1px solid rgba(255,255,255,0.06);
+        margin: 16px 0;
+    }
 </style>
 ```
 
 </head>
 <body>
+
+<!-- ══════════════════════════════════════
+     ЭКРАН ЗАГРУЗКИ
+══════════════════════════════════════ -->
+
+<div id="loading-screen">
+    <div id="stars-bg"></div>
+
+```
+<!-- Туманности -->
+<div class="nebula" style="width:300px;height:300px;left:10%;top:20%;background:radial-gradient(circle,rgba(124,58,237,0.18) 0%,transparent 70%);"></div>
+<div class="nebula" style="width:200px;height:200px;right:5%;bottom:25%;background:radial-gradient(circle,rgba(232,121,249,0.15) 0%,transparent 70%);"></div>
+<div class="nebula" style="width:250px;height:250px;left:30%;bottom:10%;background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%);"></div>
+
+<!-- Орбиты -->
+<div class="orbit-ring" style="width:200px;height:200px;left:50%;top:42%;animation-duration:8s;">
+    <div class="orbit-dot"></div>
+</div>
+<div class="orbit-ring" style="width:280px;height:280px;left:50%;top:42%;animation-duration:14s;animation-direction:reverse;border-color:rgba(232,121,249,0.12);">
+    <div class="orbit-dot" style="background:#e879f9;box-shadow:0 0 8px #e879f9;"></div>
+</div>
+
+<div class="load-logo">
+    <div class="load-crown">👑</div>
+    <div class="load-title">Imperial Roulette</div>
+    <div class="load-subtitle">Fortune Awaits</div>
+</div>
+
+<div class="load-bar-wrap">
+    <div class="load-bar-track">
+        <div class="load-bar-fill" id="load-fill"></div>
+    </div>
+    <div class="load-pct" id="load-pct">0%</div>
+    <div class="load-status" id="load-status">Инициализация…</div>
+</div>
+```
+
+</div>
+
+<!-- ══════════════════════════════════════
+     ОСНОВНОЙ ИНТЕРФЕЙС
+══════════════════════════════════════ -->
 
 <div id="particles"></div>
 
@@ -228,14 +419,11 @@
     <canvas id="canvas" width="600" height="600"></canvas>
 </div>
 
-<!-- СТРОКА: баланс слева + персонаж справа -->
+<!-- БАЛАНС — по центру под рулеткой -->
 
-<div id="bal-row">
-    <div id="bal-block">
-        <span id="bal-label">БАЛАНС</span>
-        <div class="bal-display">⭐ <span id="s_bal">0</span></div>
-    </div>
-    <canvas id="char-canvas" width="176" height="176"></canvas>
+<div id="bal-center">
+    <span id="bal-label">БАЛАНС</span>
+    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
 </div>
 
 <div id="history-bar"></div>
@@ -251,39 +439,240 @@
     <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
 </div>
 
+<!-- ══════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО
+══════════════════════════════════════ -->
+
 <div id="modal">
     <div class="tabs">
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)">ПОПОЛНИТЬ</div>
         <div class="tab"        id="tab-wit" onclick="setTab('wit',this)">ВЫВОД</div>
+        <div class="tab"        id="tab-rules" onclick="setTab('rules',this)">ПРАВИЛА</div>
+        <div class="tab"        id="tab-priv" onclick="setTab('priv',this)">КОНФИДЕНЦИАЛЬНОСТЬ</div>
     </div>
-    <div id="dep" class="tab-content active">
-        <h2 style="color:gold; margin-bottom:4px;">Пополнение ⭐</h2>
-        <p class="m-warn">Минимум 10 ⭐</p>
-        <input class="modal-input" type="number" id="dep_val"
-               placeholder="Введите количество звёзд" min="10" inputmode="numeric">
-        <p class="m-hint">Введите количество звёзд для пополнения баланса</p>
-        <button class="modal-btn green" onclick="doDep()">КУПИТЬ ⭐</button>
-        <p class="back-link" onclick="closeM()">← Назад</p>
+
+```
+<div id="dep" class="tab-content active">
+    <h2 style="color:gold; margin-bottom:4px;">Пополнение ⭐</h2>
+    <p class="m-warn">Минимум 10 ⭐</p>
+    <input class="modal-input" type="number" id="dep_val"
+           placeholder="Введите количество звёзд" min="10" inputmode="numeric">
+    <p class="m-hint">Введите количество звёзд для пополнения баланса</p>
+    <button class="modal-btn green" onclick="doDep()">КУПИТЬ ⭐</button>
+    <p class="back-link" onclick="closeM()">← Назад</p>
+</div>
+
+<div id="wit" class="tab-content">
+    <h2 style="color:#0088cc; margin-bottom:4px;">Вывод TON</h2>
+    <p class="m-warn">Минимум 500 ⭐</p>
+    <input class="modal-input" type="number" id="w_stars"
+           placeholder="Сумма звёзд (мин. 500)" inputmode="numeric" oninput="calcWit()">
+    <div class="m-preview" id="wit_preview">Вы получите: — TON</div>
+    <p class="m-rate" id="rate-label">Курс: загрузка…</p>
+    <input class="modal-input" type="text" id="w_addr" placeholder="Адрес TON (UQ...)">
+    <input class="modal-input" type="text" id="w_memo" placeholder="MEMO / Tag">
+    <p class="m-hint" style="font-size:.75em;">MEMO — если требуется биржей или кошельком</p>
+    <button class="modal-btn" onclick="doWit()">ВЫВЕСТИ</button>
+    <p class="back-link" onclick="closeM()">← Назад</p>
+</div>
+
+<div id="rules" class="tab-content">
+    <div class="legal-text">
+        <h2>📜 TERMS &amp; CONDITIONS</h2>
+        <p class="eff-date">Дата вступления в силу: 27.02.2026 · Imperial Roulette</p>
+
+        <h3>1. Общие положения</h3>
+        <p>Imperial Roulette — цифровой развлекательный сервис, доступный через платформу Telegram.</p>
+        <p>Используя Сервис, пользователь подтверждает, что:</p>
+        <ul>
+            <li>Пользователю исполнилось не менее 18 лет</li>
+            <li>Пользователь понимает случайный характер игры</li>
+            <li>Пользователь принимает настоящие Условия в полном объёме</li>
+        </ul>
+        <p>Если пользователь не согласен, он обязан немедленно прекратить использование Сервиса.</p>
+
+        <hr class="section-divider">
+
+        <h3>2. Характер Сервиса</h3>
+        <p>Сервис предоставляет интерактивную цифровую игровую механику, основанную на случайном алгоритме. Результаты генерируются автоматически системой рандомизации.</p>
+        <p>Сервис:</p>
+        <ul>
+            <li>Не гарантирует выигрыш</li>
+            <li>Не обещает прибыль</li>
+            <li>Не является инвестиционной платформой</li>
+            <li>Не является финансовой услугой</li>
+        </ul>
+        <p>Участие добровольно и осуществляется на риск пользователя.</p>
+
+        <hr class="section-divider">
+
+        <h3>3. Внутриигровые единицы (Звёзды)</h3>
+        <p>Для участия в игре могут использоваться Telegram Stars. Звёзды — цифровые единицы платформы, предоставляемые Telegram, а не Сервисом. Администрация не контролирует платёжную систему Telegram и не несёт ответственности за внешнюю обработку платежей.</p>
+
+        <hr class="section-divider">
+
+        <h3>4. Цифровые вознаграждения и переводы TON</h3>
+        <p>Пользователи могут получать цифровые вознаграждения по результатам игры. При наличии оснований вознаграждения могут передаваться в цифровых активах TON.</p>
+        <p>Переводы TON:</p>
+        <ul>
+            <li>Обрабатываются на адрес кошелька, указанный пользователем</li>
+            <li>Могут быть задержаны сетью</li>
+            <li>Необратимы после завершения</li>
+        </ul>
+        <p>Сервис не гарантирует скорость обработки блокчейном. Цифровые вознаграждения не являются зарплатой, дивидендами, финансовой отдачей или инвестиционным доходом.</p>
+
+        <hr class="section-divider">
+
+        <h3>5. Случайность</h3>
+        <p>Исходы игры определяются автоматизированным алгоритмом. Пользователь признаёт, что результаты непредсказуемы, убытки возможны, гарантированного выигрыша не существует. Участвуя, пользователь принимает механику, основанную на вероятности.</p>
+
+        <hr class="section-divider">
+
+        <h3>6. Ответственность пользователя</h3>
+        <p>Пользователи соглашаются не использовать автоматические скрипты или боты, не эксплуатировать уязвимости системы, не создавать несколько аккаунтов для злоупотреблений, не пытаться манипулировать результатами. Нарушение может повлечь блокировку без компенсации.</p>
+
+        <hr class="section-divider">
+
+        <h3>7. Ограничение ответственности</h3>
+        <p>Администрация не несёт ответственности за финансовые потери, неверное понимание механики, сбои платформы Telegram, задержки сети блокчейн, ошибки пользователя при указании адреса кошелька. Пользователь принимает все риски, связанные с участием.</p>
+
+        <hr class="section-divider">
+
+        <h3>8. Приостановка и прекращение</h3>
+        <p>Сервис оставляет за собой право приостанавливать аккаунты, задерживать или отказывать в переводах при подозрении в злоупотреблении, изменять или прекращать функции.</p>
+
+        <hr class="section-divider">
+
+        <h3>9. Изменения</h3>
+        <p>Настоящие Условия могут быть обновлены в любое время. Продолжение использования Сервиса означает принятие обновлённой версии.</p>
     </div>
-    <div id="wit" class="tab-content">
-        <h2 style="color:#0088cc; margin-bottom:4px;">Вывод TON</h2>
-        <p class="m-warn">Минимум 500 ⭐</p>
-        <input class="modal-input" type="number" id="w_stars"
-               placeholder="Сумма звёзд (мин. 500)" inputmode="numeric" oninput="calcWit()">
-        <div class="m-preview" id="wit_preview">Вы получите: — TON</div>
-        <p class="m-rate" id="rate-label">Курс: загрузка…</p>
-        <input class="modal-input" type="text" id="w_addr" placeholder="Адрес TON (UQ...)">
-        <input class="modal-input" type="text" id="w_memo" placeholder="MEMO / Tag">
-        <p class="m-hint" style="font-size:.75em;">MEMO — если требуется биржей или кошельком</p>
-        <button class="modal-btn" onclick="doWit()">ВЫВЕСТИ</button>
-        <p class="back-link" onclick="closeM()">← Назад</p>
+    <p class="back-link" onclick="closeM()">← Назад</p>
+</div>
+
+<div id="priv" class="tab-content">
+    <div class="legal-text">
+        <h2>🔒 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</h2>
+        <p class="eff-date">Дата вступления в силу: 27.02.2026 · Imperial Roulette</p>
+
+        <h3>1. Информация, которую мы собираем</h3>
+        <p>Сервис может собирать ограниченные технические данные, необходимые для работы, в том числе:</p>
+        <ul>
+            <li>Telegram User ID</li>
+            <li>Telegram Username (при наличии)</li>
+            <li>Адрес кошелька, предоставленный пользователем</li>
+            <li>Данные игровых взаимодействий (ставки, вращения, результаты)</li>
+        </ul>
+        <p>Сервис НЕ собирает: паспортные данные, банковские учётные данные, приватные ключи кошелька.</p>
+
+        <hr class="section-divider">
+
+        <h3>2. Цель сбора данных</h3>
+        <p>Данные собираются исключительно для: работы Сервиса, обработки игровой механики, управления переводами цифровых вознаграждений, предотвращения мошенничества или злоупотреблений, улучшения пользовательского опыта.</p>
+
+        <hr class="section-divider">
+
+        <h3>3. Хранение данных</h3>
+        <p>Данные пользователей хранятся столько, сколько необходимо для работы Сервиса или соблюдения применимых обязательств. Пользователи могут запросить удаление своих данных с учётом технических ограничений.</p>
+
+        <hr class="section-divider">
+
+        <h3>4. Передача данных</h3>
+        <p>Сервис не продаёт и не сдаёт в аренду данные пользователей. Данные могут быть переданы только если это требуется по закону, для предотвращения мошенничества или злоупотреблений, техническим провайдерам исключительно в операционных целях.</p>
+
+        <hr class="section-divider">
+
+        <h3>5. Безопасность</h3>
+        <p>Для защиты данных пользователей применяются разумные технические меры. Однако ни одна цифровая система не может гарантировать абсолютную безопасность.</p>
+
+        <hr class="section-divider">
+
+        <h3>6. Прозрачность блокчейна</h3>
+        <p>Транзакции TON общедоступны в блокчейне. Сервис не несёт ответственности за аналитику блокчейна третьих сторон.</p>
+
+        <hr class="section-divider">
+
+        <h3>7. Контакт</h3>
+        <p>По вопросам конфиденциальности пользователи могут обратиться в поддержку через официальный канал поддержки Telegram.</p>
     </div>
+    <p class="back-link" onclick="closeM()">← Назад</p>
+</div>
+```
+
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+/* ══════════════════════════════════════
+   ЭКРАН ЗАГРУЗКИ
+══════════════════════════════════════ */
+(function initLoadingScreen() {
+    // Генерация звёздного фона
+    const bg = document.getElementById('stars-bg');
+    for (let i = 0; i < 120; i++) {
+        const s = document.createElement('div');
+        s.className = 'star-dot';
+        const size = 0.8 + Math.random() * 2.2;
+        s.style.cssText = `
+            left:${Math.random()*100}%;
+            top:${Math.random()*100}%;
+            width:${size}px; height:${size}px;
+            animation-duration:${2+Math.random()*4}s;
+            animation-delay:${Math.random()*3}s;
+            opacity:${0.1+Math.random()*0.5};
+        `;
+        bg.appendChild(s);
+    }
+
+    const fill = document.getElementById('load-fill');
+    const pct  = document.getElementById('load-pct');
+    const stat = document.getElementById('load-status');
+
+    const steps = [
+        { p:  8, t: 'Подключение к серверу…' },
+        { p: 22, t: 'Загрузка ресурсов…' },
+        { p: 41, t: 'Инициализация рулетки…' },
+        { p: 63, t: 'Проверка баланса…' },
+        { p: 78, t: 'Синхронизация…' },
+        { p: 91, t: 'Почти готово…' },
+        { p:100, t: 'Готово!' }
+    ];
+
+    let cur = 0;
+    let val = 0;
+
+    function nextStep() {
+        if (cur >= steps.length) {
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('fade-out');
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                }, 800);
+            }, 300);
+            return;
+        }
+        const step = steps[cur++];
+        stat.textContent = step.t;
+
+        const target = step.p;
+        const interval = setInterval(() => {
+            val = Math.min(val + 1, target);
+            fill.style.width = val + '%';
+            pct.textContent  = val + '%';
+            if (val >= target) {
+                clearInterval(interval);
+                setTimeout(nextStep, 350 + Math.random() * 200);
+            }
+        }, 18);
+    }
+
+    setTimeout(nextStep, 400);
+})();
+
+/* ══════════════════════════════════════
+   ОСНОВНАЯ ЛОГИКА
+══════════════════════════════════════ */
 let stars        = 0;
 let curBet       = 5;
 let isSpinning   = false;
@@ -333,607 +722,6 @@ let tonPerStar = 0.013333;
     for (let i = 0; i < 18; i++) spawn();
     setInterval(spawn, 1200);
 })();
-
-/* ══════════════════════════════════════
-   ПЕРСОНАЖ — Король (canvas 176×176)
-   Анимация НИКОГДА не ускоряется от fastMode
-══════════════════════════════════════ */
-const cc   = document.getElementById('char-canvas');
-const cctx = cc.getContext('2d');
-
-let charMood      = 'idle';
-let charStateTimer = null;
-
-// Время
-let charLastTs = 0;
-let charTime   = 0;
-
-// Моргание — медленное, реалистичное
-let blinkOpenness  = 1;       // 1=открыт, 0=закрыт
-let blinkState     = 'wait';  // wait | closing | closed | opening
-let blinkWaitTimer = 3.5 + Math.random() * 3; // секунды до следующего моргания
-let blinkPhaseT    = 0;       // время внутри фазы
-
-// Взгляд
-let lookX = 0, lookY = 0;
-let lookTX = 0, lookTY = 0;
-let lookChangeT = 0;
-
-// Дыхание
-let breathPhase = 0;
-
-// Состояние анимации настроения
-let moodTime = 0;
-
-// Звёздочки победы
-let winStarsArr = [];
-
-// Helper: rounded rect
-function rrect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-}
-
-function setCharMood(mood, duration) {
-    charMood = mood;
-    moodTime = 0;
-    winStarsArr = [];
-    if (charStateTimer) clearTimeout(charStateTimer);
-    if (duration) charStateTimer = setTimeout(() => {
-        charMood = 'idle'; moodTime = 0;
-    }, duration);
-}
-
-function updateCharLogic(dt) {
-    // dt — реальное время, не зависит от fastMode
-    charTime += dt;
-    moodTime += dt;
-
-    // Дыхание
-    breathPhase += dt * 1.1; // ~1 вдох за 5.7 сек
-
-    // ── МОРГАНИЕ (медленное, реалистичное) ──
-    switch (blinkState) {
-        case 'wait':
-            blinkWaitTimer -= dt;
-            if (blinkWaitTimer <= 0) {
-                blinkState  = 'closing';
-                blinkPhaseT = 0;
-            }
-            break;
-        case 'closing':
-            blinkPhaseT += dt;
-            blinkOpenness = Math.max(0, 1 - blinkPhaseT / 0.10);
-            if (blinkOpenness <= 0) { blinkState = 'closed'; blinkPhaseT = 0; }
-            break;
-        case 'closed':
-            blinkPhaseT += dt;
-            if (blinkPhaseT >= 0.07) { blinkState = 'opening'; blinkPhaseT = 0; }
-            break;
-        case 'opening':
-            blinkPhaseT += dt;
-            blinkOpenness = Math.min(1, blinkPhaseT / 0.13);
-            if (blinkOpenness >= 1) {
-                blinkState     = 'wait';
-                blinkWaitTimer = 3 + Math.random() * 4.5; // следующее моргание через 3-7.5 сек
-            }
-            break;
-    }
-
-    // ── ВЗГЛЯД ──
-    const win  = charMood === 'win';
-    const lose = charMood === 'lose';
-    const watching = charMood === 'watching';
-
-    if (charMood === 'idle') {
-        lookChangeT -= dt;
-        if (lookChangeT <= 0) {
-            lookTX = (Math.random() * 2 - 1) * 0.75;
-            lookTY = (Math.random() * 2 - 1) * 0.45;
-            lookChangeT = 2 + Math.random() * 3.5;
-        }
-    } else if (watching) {
-        lookTX = -0.75; lookTY = -0.15;
-    } else if (lose) {
-        lookTX = 0; lookTY = 0.65;
-    } else if (win) {
-        lookTX = 0; lookTY = -0.25;
-    }
-    const lerpSpd = dt * 3.5;
-    lookX += (lookTX - lookX) * Math.min(1, lerpSpd);
-    lookY += (lookTY - lookY) * Math.min(1, lerpSpd);
-
-    // ── ПОБЕДНЫЕ ЗВЁЗДОЧКИ ──
-    if (win) {
-        winStarsArr = winStarsArr.filter(s => s.life > 0);
-        winStarsArr.forEach(s => {
-            s.x   += s.vx * dt;
-            s.y   += s.vy * dt;
-            s.vy  += 20 * dt; // лёгкая гравитация
-            s.life -= dt;
-        });
-        if (Math.random() < 0.28) {
-            winStarsArr.push({
-                x:    30 + Math.random() * 116,
-                y:    40 + Math.random() * 40,
-                vx:   (Math.random() - 0.5) * 55,
-                vy:   -35 - Math.random() * 25,
-                life: 0.7 + Math.random() * 0.7,
-                size: 9 + Math.random() * 11
-            });
-        }
-    } else {
-        winStarsArr = [];
-    }
-}
-
-function drawKingChar() {
-    const W = 176, H = 176;
-    cctx.clearRect(0, 0, W, H);
-
-    const win      = charMood === 'win';
-    const lose     = charMood === 'lose';
-    const watching = charMood === 'watching';
-
-    // Дыхание
-    const breath = Math.sin(breathPhase) * 1.8;
-
-    // Смещение тела по состоянию
-    let globalY = breath * 0.4;
-    if (lose) globalY += Math.min(moodTime * 9, 5);
-    if (win)  globalY -= Math.abs(Math.sin(moodTime * 2.8)) * 4;
-
-    // Покачивание плеч при проигрыше
-    const shoulderDroop = lose ? Math.min(moodTime / 0.8, 1) * 5 : 0;
-
-    const cx   = W / 2;
-    const headY = 50 + globalY;
-    const bodyY = headY + 29;
-    const headR = 26;
-
-    // ═══════════════════════════════
-    // МАНТИЯ (фон, рисуется первой)
-    // ═══════════════════════════════
-    const capeColor = win ? '#5b1695' : lose ? '#2d0d5e' : '#4a1080';
-    cctx.beginPath();
-    cctx.moveTo(cx - 26, headY + 18 + shoulderDroop);
-    cctx.bezierCurveTo(
-        cx - 42, bodyY + 18,
-        cx - 36, bodyY + 44,
-        cx - 28, bodyY + 60
-    );
-    cctx.lineTo(cx + 28, bodyY + 60);
-    cctx.bezierCurveTo(
-        cx + 36, bodyY + 44,
-        cx + 42, bodyY + 18,
-        cx + 26, headY + 18 + shoulderDroop
-    );
-    cctx.fillStyle = capeColor;
-    cctx.fill();
-    // Меховая опушка мантии
-    cctx.strokeStyle = '#ddd0c0';
-    cctx.lineWidth   = 7;
-    cctx.lineJoin    = 'round';
-    cctx.stroke();
-
-    // ═══════════════════════════════
-    // ТЕЛО (туловище)
-    // ═══════════════════════════════
-    const bodyColor = win ? '#7c3aed' : lose ? '#3d1a7a' : '#6d28d9';
-    rrect(cctx, cx - 22, bodyY - 2, 44, 38, 7);
-    cctx.fillStyle = bodyColor;
-    cctx.fill();
-
-    // Вертикальный орнамент на груди
-    cctx.fillStyle = 'rgba(255,215,0,0.25)';
-    rrect(cctx, cx - 5, bodyY, 10, 20, 3);
-    cctx.fill();
-
-    // Пояс
-    cctx.fillStyle = '#92640a';
-    cctx.fillRect(cx - 22, bodyY + 22, 44, 9);
-    // Пряжка
-    cctx.fillStyle = '#f6e05e';
-    rrect(cctx, cx - 6, bodyY + 21, 12, 11, 2);
-    cctx.fill();
-    cctx.strokeStyle = '#92640a'; cctx.lineWidth = 1.5; cctx.stroke();
-
-    // ═══════════════════════════════
-    // НОГИ
-    // ═══════════════════════════════
-    cctx.fillStyle = '#1e1b4b';
-    rrect(cctx, cx - 17, bodyY + 34, 14, 26, 4);
-    cctx.fill();
-    rrect(cctx, cx + 3,  bodyY + 34, 14, 26, 4);
-    cctx.fill();
-    // Ботинки
-    cctx.fillStyle = '#2d3748';
-    rrect(cctx, cx - 20, bodyY + 56, 17,  9, 4);
-    cctx.fill();
-    rrect(cctx, cx + 3,  bodyY + 56, 17,  9, 4);
-    cctx.fill();
-
-    // ═══════════════════════════════
-    // ЛЕВАЯ РУКА
-    // ═══════════════════════════════
-    const armColor = bodyColor;
-    cctx.lineWidth = 10; cctx.lineCap = 'round';
-    cctx.strokeStyle = armColor;
-    cctx.beginPath();
-    if (win) {
-        // Рука вверх при победе
-        const t = Math.min(moodTime / 0.7, 1);
-        cctx.moveTo(cx - 21, bodyY + 6 + shoulderDroop);
-        cctx.quadraticCurveTo(cx - 34, bodyY - 4 - t * 18, cx - 28, bodyY - 10 - t * 22);
-    } else if (lose) {
-        cctx.moveTo(cx - 21, bodyY + 6 + shoulderDroop);
-        cctx.quadraticCurveTo(cx - 34, bodyY + 28, cx - 26, bodyY + 40);
-    } else {
-        cctx.moveTo(cx - 21, bodyY + 6);
-        cctx.quadraticCurveTo(cx - 36, bodyY + 18, cx - 30, bodyY + 30);
-    }
-    cctx.stroke();
-
-    // ═══════════════════════════════
-    // ПРАВАЯ РУКА + МЕЧ
-    // ═══════════════════════════════
-    // Позиция конца руки (куда держит меч)
-    let handX, handY, swordAngle;
-
-    if (win) {
-        const t = Math.min(moodTime / 0.75, 1);
-        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
-        handX      = cx + 24 + ease * 4;
-        handY      = bodyY + 6 - ease * 32;
-        swordAngle = -Math.PI * 0.55 * ease; // поднимается вверх
-    } else if (lose) {
-        const t    = Math.min(moodTime / 0.9, 1);
-        handX      = cx + 22;
-        handY      = bodyY + 8 + shoulderDroop;
-        swordAngle = t * 0.25; // слегка опускается
-    } else {
-        handX      = cx + 22;
-        handY      = bodyY + 8;
-        swordAngle = 0;
-    }
-
-    // Рука
-    cctx.strokeStyle = armColor;
-    cctx.lineWidth = 10; cctx.lineCap = 'round';
-    cctx.beginPath();
-    cctx.moveTo(cx + 21, bodyY + 6 + shoulderDroop);
-    cctx.quadraticCurveTo(cx + 28, bodyY + 6, handX, handY);
-    cctx.stroke();
-
-    // МЕЧ
-    cctx.save();
-    cctx.translate(handX, handY);
-    cctx.rotate(swordAngle);
-
-    const bladeDir = win && moodTime > 0.3 ? -1 : 1; // вверх или вниз
-    const bladeLen = 46;
-
-    // Рукоять
-    cctx.fillStyle = '#92640a';
-    rrect(cctx, -5, -7, 10, 14, 2);
-    cctx.fill();
-
-    // Гарда (крестовина)
-    cctx.fillStyle = '#c9922b';
-    rrect(cctx, -13, -3, 26, 7, 2);
-    cctx.fill();
-    cctx.strokeStyle = '#7a4800'; cctx.lineWidth = 1; cctx.stroke();
-
-    // Кристалл на гарде
-    cctx.beginPath();
-    cctx.arc(0, 0, 4, 0, Math.PI * 2);
-    cctx.fillStyle = win ? '#93c5fd' : '#e2e8f0';
-    cctx.fill();
-
-    // Клинок
-    const bladeStartY = bladeDir * 7;
-    const bladeTipY   = bladeDir * (7 + bladeLen);
-    const bladeGrad   = cctx.createLinearGradient(-3, bladeStartY, 3, bladeTipY);
-    if (win && moodTime > 0.4) {
-        bladeGrad.addColorStop(0, '#e0f2ff');
-        bladeGrad.addColorStop(0.5, '#93c5fd');
-        bladeGrad.addColorStop(1, '#3b82f6');
-    } else {
-        bladeGrad.addColorStop(0, '#f0f4f8');
-        bladeGrad.addColorStop(0.6, '#cbd5e0');
-        bladeGrad.addColorStop(1, '#718096');
-    }
-    cctx.beginPath();
-    cctx.moveTo(-3.5, bladeStartY);
-    cctx.lineTo(3.5,  bladeStartY);
-    cctx.lineTo(0,    bladeTipY);
-    cctx.closePath();
-    cctx.fillStyle = bladeGrad;
-    cctx.fill();
-
-    // Свечение меча при победе
-    if (win && moodTime > 0.45) {
-        const glow = Math.sin(moodTime * 5) * 0.3 + 0.7;
-        cctx.save();
-        cctx.shadowColor = '#60a5fa';
-        cctx.shadowBlur  = 16 * glow;
-        cctx.beginPath();
-        cctx.moveTo(-2, bladeStartY);
-        cctx.lineTo(2,  bladeStartY);
-        cctx.lineTo(0,  bladeTipY);
-        cctx.closePath();
-        cctx.fillStyle = `rgba(147,197,253,${0.35 * glow})`;
-        cctx.fill();
-        cctx.restore();
-    }
-
-    cctx.restore(); // конец меча
-
-    // ═══════════════════════════════
-    // ГОЛОВА
-    // ═══════════════════════════════
-    // Небольшой наклон головы при наблюдении
-    const headTilt = watching ? -0.07 : lose ? 0.08 : 0;
-    cctx.save();
-    cctx.translate(cx, headY);
-    cctx.rotate(headTilt);
-
-    // Лицо
-    cctx.beginPath();
-    cctx.arc(0, 0, headR, 0, Math.PI * 2);
-    const faceGrad = cctx.createRadialGradient(-6, -7, 3, 0, 0, headR);
-    faceGrad.addColorStop(0, '#fde68a');
-    faceGrad.addColorStop(1, '#d97706');
-    cctx.fillStyle = faceGrad;
-    cctx.fill();
-    cctx.strokeStyle = 'rgba(0,0,0,0.12)'; cctx.lineWidth = 1.5; cctx.stroke();
-
-    // ═══════════════════════════════
-    // КОРОНА
-    // ═══════════════════════════════
-    const crownBase = -headR - 3;
-    const crownH    = 20;
-    cctx.fillStyle = '#f6e05e';
-    cctx.beginPath();
-    // Основа
-    cctx.rect(-21, crownBase - 10, 42, 13);
-    // Зубцы
-    cctx.moveTo(-21, crownBase - 10);
-    cctx.lineTo(-15, crownBase - 10 - crownH * 0.55);
-    cctx.lineTo(-8,  crownBase - 10 - crownH * 0.25);
-    cctx.lineTo(0,   crownBase - 10 - crownH);
-    cctx.lineTo(8,   crownBase - 10 - crownH * 0.25);
-    cctx.lineTo(15,  crownBase - 10 - crownH * 0.55);
-    cctx.lineTo(21,  crownBase - 10);
-    cctx.fill();
-    cctx.strokeStyle = '#b7791f'; cctx.lineWidth = 1.8; cctx.stroke();
-
-    // Камни на короне
-    const gemData = [
-        { x: -13, col: '#e53e3e' },
-        { x:   0, col: '#3182ce' },
-        { x:  13, col: '#e53e3e' }
-    ];
-    gemData.forEach(g => {
-        cctx.beginPath();
-        cctx.arc(g.x, crownBase - 5, 4, 0, Math.PI * 2);
-        cctx.fillStyle = g.col; cctx.fill();
-        // Блик на камне
-        cctx.beginPath();
-        cctx.arc(g.x - 1.2, crownBase - 6.2, 1.5, 0, Math.PI * 2);
-        cctx.fillStyle = 'rgba(255,255,255,0.65)'; cctx.fill();
-    });
-
-    // ═══════════════════════════════
-    // БОРОДА И УСЫ
-    // ═══════════════════════════════
-    // Борода
-    cctx.beginPath();
-    cctx.ellipse(0, 15, 15, 13, 0, 0, Math.PI);
-    cctx.fillStyle = '#9ca3af'; cctx.fill();
-
-    // Линии бороды (текстура)
-    cctx.strokeStyle = 'rgba(0,0,0,0.08)'; cctx.lineWidth = 1.2;
-    [-5, 0, 5].forEach(xOff => {
-        cctx.beginPath();
-        cctx.moveTo(xOff, 6);
-        cctx.quadraticCurveTo(xOff + 1, 14, xOff, 22);
-        cctx.stroke();
-    });
-
-    // Усы
-    cctx.beginPath();
-    cctx.ellipse(-9, 6, 9, 4.5, -0.18, 0, Math.PI * 2);
-    cctx.fillStyle = '#9ca3af'; cctx.fill();
-    cctx.beginPath();
-    cctx.ellipse(9,  6, 9, 4.5,  0.18, 0, Math.PI * 2);
-    cctx.fill();
-
-    // ═══════════════════════════════
-    // ГЛАЗА
-    // ═══════════════════════════════
-    const eyeY  = -7;
-    const eyeLX = -10, eyeRX = 10;
-    const pdx   = lookX * 3.2;
-    const pdy   = lookY * 2.2;
-    const eyeH  = 7.5 * blinkOpenness; // высота белков зависит от моргания
-
-    if (eyeH > 0.15) {
-        // Белки
-        cctx.beginPath();
-        cctx.ellipse(eyeLX, eyeY, 6.5, Math.max(0.15, eyeH), 0, 0, Math.PI * 2);
-        cctx.fillStyle = '#ffffff'; cctx.fill();
-        cctx.beginPath();
-        cctx.ellipse(eyeRX, eyeY, 6.5, Math.max(0.15, eyeH), 0, 0, Math.PI * 2);
-        cctx.fill();
-
-        if (blinkOpenness > 0.25) {
-            // Радужка + зрачок
-            cctx.beginPath();
-            cctx.arc(eyeLX + pdx, eyeY + pdy, 4, 0, Math.PI * 2);
-            cctx.fillStyle = '#1e3a5f'; cctx.fill();
-            cctx.beginPath();
-            cctx.arc(eyeRX + pdx, eyeY + pdy, 4, 0, Math.PI * 2);
-            cctx.fill();
-            // Блики
-            cctx.beginPath();
-            cctx.arc(eyeLX + pdx + 1.3, eyeY + pdy - 1.3, 1.4, 0, Math.PI * 2);
-            cctx.fillStyle = 'rgba(255,255,255,0.92)'; cctx.fill();
-            cctx.beginPath();
-            cctx.arc(eyeRX + pdx + 1.3, eyeY + pdy - 1.3, 1.4, 0, Math.PI * 2);
-            cctx.fill();
-        }
-    } else {
-        // Закрытые глаза — дуга ресниц
-        cctx.strokeStyle = '#7c5c2a'; cctx.lineWidth = 2.2; cctx.lineCap = 'round';
-        cctx.beginPath();
-        cctx.arc(eyeLX, eyeY, 6, Math.PI * 0.1, Math.PI * 0.9);
-        cctx.stroke();
-        cctx.beginPath();
-        cctx.arc(eyeRX, eyeY, 6, Math.PI * 0.1, Math.PI * 0.9);
-        cctx.stroke();
-    }
-
-    // Брови
-    cctx.lineWidth = 2.8; cctx.lineCap = 'round'; cctx.strokeStyle = '#7c5c2a';
-    if (lose) {
-        // Грустные — внутренние концы опущены
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeY - 12);
-        cctx.quadraticCurveTo(eyeLX, eyeY - 9, eyeLX + 6, eyeY - 13);
-        cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 6, eyeY - 13);
-        cctx.quadraticCurveTo(eyeRX, eyeY - 9, eyeRX + 7, eyeY - 12);
-        cctx.stroke();
-    } else if (win) {
-        // Приподнятые, радостные
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeY - 15);
-        cctx.quadraticCurveTo(eyeLX, eyeY - 19, eyeLX + 6, eyeY - 15);
-        cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 6, eyeY - 15);
-        cctx.quadraticCurveTo(eyeRX, eyeY - 19, eyeRX + 7, eyeY - 15);
-        cctx.stroke();
-    } else {
-        // Обычные
-        cctx.beginPath();
-        cctx.moveTo(eyeLX - 7, eyeY - 12);
-        cctx.quadraticCurveTo(eyeLX, eyeY - 14.5, eyeLX + 6, eyeY - 12);
-        cctx.stroke();
-        cctx.beginPath();
-        cctx.moveTo(eyeRX - 6, eyeY - 12);
-        cctx.quadraticCurveTo(eyeRX, eyeY - 14.5, eyeRX + 7, eyeY - 12);
-        cctx.stroke();
-    }
-
-    // ═══════════════════════════════
-    // РОТ
-    // ═══════════════════════════════
-    const mY = 11;
-    cctx.lineWidth = 2.8; cctx.lineCap = 'round'; cctx.strokeStyle = '#7c5c2a';
-    if (win) {
-        // Широкая улыбка
-        cctx.beginPath();
-        cctx.moveTo(-12, mY - 2);
-        cctx.quadraticCurveTo(0, mY + 12, 12, mY - 2);
-        cctx.stroke();
-        // Зубы
-        cctx.beginPath();
-        cctx.ellipse(0, mY + 3, 8, 5, 0, 0, Math.PI);
-        cctx.fillStyle = 'white'; cctx.fill();
-    } else if (lose) {
-        // Дуга вниз — грусть
-        cctx.beginPath();
-        cctx.moveTo(-10, mY + 5);
-        cctx.quadraticCurveTo(0, mY - 3, 10, mY + 5);
-        cctx.stroke();
-    } else if (watching) {
-        // Приоткрытый рот — напряжение
-        cctx.beginPath();
-        cctx.moveTo(-8, mY);
-        cctx.quadraticCurveTo(0, mY + 6, 8, mY);
-        cctx.stroke();
-    } else {
-        // Лёгкая улыбка
-        cctx.beginPath();
-        cctx.moveTo(-9, mY);
-        cctx.quadraticCurveTo(0, mY + 8, 9, mY);
-        cctx.stroke();
-    }
-
-    // Румянец при победе
-    if (win) {
-        cctx.beginPath();
-        cctx.ellipse(-17, 7, 8, 5, -0.2, 0, Math.PI * 2);
-        cctx.fillStyle = 'rgba(255,100,100,0.28)'; cctx.fill();
-        cctx.beginPath();
-        cctx.ellipse(17, 7, 8, 5, 0.2, 0, Math.PI * 2);
-        cctx.fill();
-    }
-
-    // Слеза при проигрыше
-    if (lose && moodTime > 0.6) {
-        const alpha = Math.min(1, (moodTime - 0.6) * 2.5);
-        const tearY = eyeRX + Math.min((moodTime - 0.6) * 40, 14);
-        cctx.beginPath();
-        cctx.arc(9, eyeY + tearY - eyeY + 8, 3.5, 0, Math.PI * 2);
-        cctx.fillStyle = `rgba(100,180,255,${alpha * 0.88})`;
-        cctx.fill();
-    }
-
-    cctx.restore(); // конец поворота головы
-
-    // ═══════════════════════════════
-    // ПОБЕДНЫЕ ЗВЁЗДОЧКИ
-    // ═══════════════════════════════
-    if (win) {
-        winStarsArr.forEach(s => {
-            const alpha = Math.min(1, s.life * 2.5);
-            cctx.globalAlpha = alpha;
-            cctx.font = `${Math.round(s.size)}px serif`;
-            cctx.fillText('⭐', s.x, s.y);
-        });
-        cctx.globalAlpha = 1;
-    }
-
-    // Тёмное облачко при проигрыше
-    if (lose && moodTime > 0.8) {
-        const alpha = Math.min(0.7, (moodTime - 0.8) * 1.5);
-        cctx.globalAlpha = alpha;
-        cctx.font = '20px serif';
-        cctx.fillText('💨', cx - 24, headY - headR - 30);
-        cctx.globalAlpha = 1;
-    }
-}
-
-function charLoop(ts) {
-    // dt всегда реальное время — fastMode не влияет
-    const dt = charLastTs ? Math.min((ts - charLastTs) / 1000, 0.05) : 0.016;
-    charLastTs = ts;
-
-    updateCharLogic(dt);
-    drawKingChar();
-    requestAnimationFrame(charLoop);
-}
-requestAnimationFrame(charLoop);
-
-/* Публичные функции смены настроения */
-function charSpin()  { setCharMood('watching'); }
-function charWin()   { setCharMood('win',  4000); }
-function charLose()  { setCharMood('lose', 3500); }
-function charFree()  { setCharMood('win',  3000); }
-/* ══════════════════════════════════════ */
 
 let soundEnabled = true;
 let bgLoopTimer  = null;
@@ -1241,7 +1029,6 @@ function handleSpin() {
 
 function doSpin() {
     playClick();
-    charSpin();
     isSpinning = true;
     update();
 
@@ -1297,19 +1084,16 @@ function doSpin() {
         if (win.isFree) {
             hasFreeSpins++;
             playFree();
-            charFree();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory('🎁 FREE', 'h-free');
         } else if (win.mult > 0) {
             winAmount = curBet * win.mult;
             stars    += winAmount;
             playWin();
-            charWin();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory(isFree ? `🎁+${winAmount}⭐` : `${win.t} +${winAmount}⭐`, 'h-win');
         } else {
             playLose();
-            charLose();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
             addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
         }
