@@ -28,13 +28,11 @@
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
         overflow: hidden;
-        /* always on top of everything */
+        transition: opacity 0.8s ease;
     }
-    #loading-screen.fade-out {
-        animation: loadFadeOut 0.8s forwards;
-    }
-    @keyframes loadFadeOut {
-        to { opacity: 0; pointer-events: none; }
+    #loading-screen.hide {
+        opacity: 0;
+        pointer-events: none;
     }
 
     /* Звёзды фона */
@@ -147,7 +145,18 @@
 
     /* ══════════════════════════════
        ОСНОВНОЙ ИНТЕРФЕЙС
+       Скрыт через visibility пока грузится.
+       display:contents — дочерние элементы
+       участвуют в flex body напрямую.
     ══════════════════════════════ */
+    #app-content {
+        display: contents;
+        visibility: hidden;
+    }
+    #app-content.ready {
+        visibility: visible;
+    }
+
     #particles {
         position: fixed; inset: 0; z-index: 0;
         pointer-events: none; overflow: hidden;
@@ -398,10 +407,14 @@
 </div>
 
 <!-- ══════════════════════════════════════
-     ОСНОВНОЙ ИНТЕРФЕЙС (скрыт до конца загрузки)
+     ОСНОВНОЙ ИНТЕРФЕЙС
+     visibility:hidden — не виден во время загрузки,
+     но участвует в layout (display:contents).
+     Класс .ready добавляется после загрузки.
 ══════════════════════════════════════ -->
 
-<div id="app-content" style="display:none;width:100%;min-height:0;flex:1;flex-direction:column;align-items:center;justify-content:space-between;">
+<div id="app-content">
+
 <div id="particles"></div>
 
 <div id="sb-banner">
@@ -440,6 +453,7 @@
     </div>
     <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
 </div>
+
 </div><!-- end #app-content -->
 
 <!-- ══════════════════════════════════════
@@ -609,9 +623,12 @@ tg.expand();
 
 /* ══════════════════════════════════════
    ЭКРАН ЗАГРУЗКИ
+   Ключевое исправление:
+   - #app-content скрыт через visibility:hidden (не display:none!)
+   - После 100% → добавляем класс .ready → visibility:visible
+   - Загрузочный экран плавно исчезает через opacity:0
 ══════════════════════════════════════ */
 (function initLoadingScreen() {
-    // Генерация звёздного фона
     const bg = document.getElementById('stars-bg');
     for (let i = 0; i < 120; i++) {
         const s = document.createElement('div');
@@ -648,14 +665,13 @@ tg.expand();
     function nextStep() {
         if (cur >= steps.length) {
             setTimeout(() => {
-                // Show the main app content
-                const app = document.getElementById('app-content');
-                app.style.display = 'flex';
-                // Fade out loading screen
-                document.getElementById('loading-screen').classList.add('fade-out');
-                setTimeout(() => {
-                    document.getElementById('loading-screen').style.display = 'none';
-                }, 800);
+                // 1. Показываем рулетку
+                document.getElementById('app-content').classList.add('ready');
+                // 2. Плавно скрываем экран загрузки
+                const ls = document.getElementById('loading-screen');
+                ls.classList.add('hide');
+                // 3. Через 0.8s убираем из DOM полностью
+                setTimeout(() => { ls.style.display = 'none'; }, 800);
             }, 300);
             return;
         }
