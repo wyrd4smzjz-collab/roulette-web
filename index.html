@@ -391,16 +391,17 @@
         <div class="load-bar-fill" id="load-fill"></div>
     </div>
     <div class="load-pct" id="load-pct">0%</div>
-    <div class="load-status" id="load-status">Инициализация…</div>
+    <div class="load-status" id="load-status">Initializing…</div>
 </div>
 ```
 
 </div>
 
 <!-- ══════════════════════════════════════
-     ОСНОВНОЙ ИНТЕРФЕЙС
+     ОСНОВНОЙ ИНТЕРФЕЙС (скрыт до конца загрузки)
 ══════════════════════════════════════ -->
 
+<div id="app-content" style="display:none;width:100%;min-height:0;flex:1;flex-direction:column;align-items:center;justify-content:space-between;">
 <div id="particles"></div>
 
 <div id="sb-banner">
@@ -439,6 +440,7 @@
     </div>
     <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
 </div>
+</div><!-- end #app-content -->
 
 <!-- ══════════════════════════════════════
      МОДАЛЬНОЕ ОКНО
@@ -646,6 +648,10 @@ tg.expand();
     function nextStep() {
         if (cur >= steps.length) {
             setTimeout(() => {
+                // Show the main app content
+                const app = document.getElementById('app-content');
+                app.style.display = 'flex';
+                // Fade out loading screen
                 document.getElementById('loading-screen').classList.add('fade-out');
                 setTimeout(() => {
                     document.getElementById('loading-screen').style.display = 'none';
