@@ -5,32 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magik Spin</title>
-    <script src="https://telegram.org/js/telegram-web-app.js">
-function showWelcomeToast() {
-    const toast = document.createElement('div');
-    toast.id = 'welcome-toast';
-    toast.style.cssText = `
-        position:fixed; top:50%; left:50%; transform:translate(-50%,-60%);
-        z-index:9999; background:linear-gradient(135deg,rgba(30,10,50,0.97),rgba(50,20,80,0.97));
-        border:2px solid #c084fc; border-radius:20px; padding:24px 32px;
-        text-align:center; box-shadow:0 0 40px rgba(192,132,252,0.5);
-        font-family:'Segoe UI',sans-serif; color:white;
-        opacity:0; transition:opacity 0.4s ease; pointer-events:none;
-        max-width:85vw;
-    `;
-    toast.innerHTML = `
-        <div style="font-size:2.2em;margin-bottom:8px">👑</div>
-        <div style="font-size:1.1em;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#e879f9,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px">Welcome!</div>
-        <div style="font-size:0.85em;color:rgba(255,255,255,0.75);line-height:1.5">Imperial Roulette<br><span style="color:#c084fc;font-size:0.9em">Fortune Awaits You</span></div>
-    `;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => { toast.style.opacity = '1'; });
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    }, 2200);
-}
-</script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         html, body {
             height: 100%; margin: 0; padding: 0; overflow: hidden;
@@ -48,15 +23,21 @@ function showWelcomeToast() {
    ЭКРАН ВЫБОРА ЯЗЫКА
 ══════════════════════════════ */
 #lang-screen {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100vw; height: 100vh;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    right: 0 !important; bottom: 0 !important;
+    width: 100% !important; height: 100% !important;
+    margin: 0 !important; padding: 0 !important;
     z-index: 999999;
     background: #08001a;
-    display: flex; flex-direction: column;
+    display: flex !important; flex-direction: column;
     align-items: center; justify-content: center;
     overflow: hidden;
     box-sizing: border-box;
+    text-align: center;
+}
+#lang-screen > * {
+    flex-shrink: 0;
 }
 #lang-screen.hide {
     display: none;
@@ -1816,4 +1797,4 @@ function showWelcomeToast() {
 </script>
 
 </body>
-</html> 
+</html>
