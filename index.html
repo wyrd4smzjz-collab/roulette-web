@@ -1012,9 +1012,8 @@ function applyLangToUI() {
 
 function selectLang(selectedLang) {
     lang = selectedLang;
-    // Скрываем экран языка
+    try { localStorage.setItem('imperial_lang', lang); } catch(_) {}
     document.getElementById('lang-screen').classList.add('hide');
-    // Запускаем загрузку
     startLoadingScreen();
 }
 
@@ -1768,6 +1767,14 @@ window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
     loadBalance();
     draw(0, -1, 0);
+    try {
+        const savedLang = localStorage.getItem('imperial_lang');
+        if (savedLang === 'ru' || savedLang === 'en') {
+            lang = savedLang;
+            document.getElementById('lang-screen').classList.add('hide');
+            startLoadingScreen();
+        }
+    } catch(_) {}
 });
 
 function showWelcomeToast() {
