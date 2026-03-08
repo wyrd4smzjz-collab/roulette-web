@@ -5,7 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magik Spin</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js">
+function showWelcomeToast() {
+    const toast = document.createElement('div');
+    toast.id = 'welcome-toast';
+    toast.style.cssText = `
+        position:fixed; top:50%; left:50%; transform:translate(-50%,-60%);
+        z-index:9999; background:linear-gradient(135deg,rgba(30,10,50,0.97),rgba(50,20,80,0.97));
+        border:2px solid #c084fc; border-radius:20px; padding:24px 32px;
+        text-align:center; box-shadow:0 0 40px rgba(192,132,252,0.5);
+        font-family:'Segoe UI',sans-serif; color:white;
+        opacity:0; transition:opacity 0.4s ease; pointer-events:none;
+        max-width:85vw;
+    `;
+    toast.innerHTML = `
+        <div style="font-size:2.2em;margin-bottom:8px">👑</div>
+        <div style="font-size:1.1em;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#e879f9,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px">Welcome!</div>
+        <div style="font-size:0.85em;color:rgba(255,255,255,0.75);line-height:1.5">Imperial Roulette<br><span style="color:#c084fc;font-size:0.9em">Fortune Awaits You</span></div>
+    `;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 2200);
+}
+</script>
     <style>
         html, body {
             height: 100%; margin: 0; padding: 0; overflow: hidden;
@@ -23,11 +48,15 @@
    ЭКРАН ВЫБОРА ЯЗЫКА
 ══════════════════════════════ */
 #lang-screen {
-    position: fixed; inset: 0; z-index: 999999;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw; height: 100vh;
+    z-index: 999999;
     background: #08001a;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     overflow: hidden;
+    box-sizing: border-box;
 }
 #lang-screen.hide {
     display: none;
@@ -863,7 +892,8 @@ const I18N = {
             'Почти готово…',
             'Готово!'
         ],
-        greeting: 'Добро пожаловать в Imperial Roulette! 🎰',
+        greeting: 'Welcome to Imperial Roulette! 🎰 Your fortune awaits!',
+        greetingAlert: true,
         wallet: 'Кошелек',
         balance: 'БАЛАНС',
         bet: 'Ставка',
@@ -891,10 +921,10 @@ const I18N = {
         tab_priv: 'КОНФИДЕНЦИАЛЬНОСТЬ',
         risk_title: '🎰 РИСК БОНУС',
         risk_prize_text: 'Возможен выигрыш',
-        risk_instruction: 'Открывай звёзды ✨ и найди 5 мешочков 💰\nСобери все 5 — выиграй 500 TON!',
+        risk_instruction: '5 попыток найти 💰 мешочки!\nНайди все 5 — выиграй 500 TON!',
         risk_empty: 'Пусто',
         risk_win_msg: '🏆 Поздравляем! Вы выиграли 500 TON!',
-        risk_lose_msg: (found, max) => `Найдено ${found} из 5 мешочков. Удачи в следующий раз!`,
+        risk_lose_msg: (found, attempts) => `Найдено ${found} из 5 💰 за ${attempts} попыток. Удачи!`,
         risk_game_over: 'Игра окончена! Попробуйте снова.',
         risk_close: 'Закрыть',
         err_min_dep: (n) => `Минимум ${n} звёзд`,
@@ -913,7 +943,8 @@ const I18N = {
             'Almost ready…',
             'Ready!'
         ],
-        greeting: 'Welcome to Imperial Roulette! 🎰',
+        greeting: 'Welcome to Imperial Roulette! 🎰 Your fortune awaits!',
+        greetingAlert: true,
         wallet: 'Wallet',
         balance: 'BALANCE',
         bet: 'Bet',
@@ -941,10 +972,10 @@ const I18N = {
         tab_priv: 'PRIVACY',
         risk_title: '🎰 RISK BONUS',
         risk_prize_text: 'Possible win',
-        risk_instruction: 'Open stars ✨ and find 5 bags 💰\nCollect all 5 — win 500 TON!',
+        risk_instruction: '5 chances to find 💰 bags!\nFind all 5 — win 500 TON!',
         risk_empty: 'Empty',
         risk_win_msg: '🏆 Congratulations! You won 500 TON!',
-        risk_lose_msg: (found, max) => `Found ${found} of 5 bags. Better luck next time!`,
+        risk_lose_msg: (found, attempts) => `Found ${found}/5 💰 bags in ${attempts} attempts. Try again!`,
         risk_game_over: 'Game over! Try again.',
         risk_close: 'Close',
         err_min_dep: (n) => `Minimum ${n} stars`,
@@ -1046,10 +1077,11 @@ function startLoadingScreen() {
             setTimeout(() => {
                 document.getElementById('app-content').classList.add('ready');
                 applyLangToUI();
-                // Приветствие
+                // Приветствие — всегда на английском
                 setTimeout(() => {
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                }, 200);
+                    showWelcomeToast();
+                }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
             }, 300);
@@ -1235,7 +1267,7 @@ const sectors = [
     { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
     { t:'★SB',       c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false, isRisk:false },
     { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×10',       c:'#f39c12', mult:10,  weight:3,     isSB:false, isFree:false, isRisk:false },
+    { t:'×5',        c:'#f39c12', mult:5,   weight:3,     isSB:false, isFree:false, isRisk:false },
     { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false },
     { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
     { t:'РИСК',      c:'#c0392b', mult:0,   weight:0.99,  isSB:false, isFree:false, isRisk:true  },
@@ -1512,7 +1544,7 @@ function doSpin() {
             // Открываем риск бонус
             playWin();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            addHistory('🎰 РИСК', 'h-win');
+            addHistory(lang === 'ru' ? '🎰 РИСК БОНУС' : '🎰 RISK BONUS', 'h-win');
             setTimeout(() => openRiskModal(), 600);
         } else if (win.mult > 0) {
             winAmount = curBet * win.mult;
@@ -1535,26 +1567,27 @@ function doSpin() {
 
 /* ══════════════════════════════════════
    РИСК БОНУС — ЛОГИКА
-   10 звёзд, 5 мешочков спрятаны.
-   Расположение рандомное, но сделано так,
-   что человек НЕ сможет собрать все 5:
-   — при наборе 4-го мешочка с вероятностью 85%
-     следующий ход открывает пустую ячейку (блокер),
-     исключая возможность найти 5-й.
+   10 звёзд на экране, всего 5 ПОПЫТОК.
+   Мешочков скрыто максимум 4 из 10 —
+   собрать все 5 физически невозможно.
+   Рандом: количество мешков 2-4, позиции случайные.
 ══════════════════════════════════════ */
 let riskGame = {
     stars: [],        // массив из 10 элементов: true=мешок, false=пусто
     revealed: [],     // какие открыты
     bagsFound: 0,
+    attemptsLeft: 5,
+    attemptsUsed: 0,
     gameOver: false,
     moneyParticles: null
 };
 
 function generateRiskStars() {
-    // Размещаем 5 мешков на 10 позициях
+    // Максимум 4 мешка из 10 — нельзя собрать все 5
+    const bagCount = 2 + Math.floor(Math.random() * 3); // 2, 3 или 4 мешка
     const positions = Array(10).fill(false);
     const bagPositions = [];
-    while (bagPositions.length < 5) {
+    while (bagPositions.length < bagCount) {
         const p = Math.floor(Math.random() * 10);
         if (!bagPositions.includes(p)) bagPositions.push(p);
     }
@@ -1583,17 +1616,21 @@ function spawnMoneyParticles() {
 }
 
 function openRiskModal() {
-    // Инициализируем игру
+    // Инициализируем игру — 5 попыток, макс 4 мешка скрыто
     riskGame.stars = generateRiskStars();
     riskGame.revealed = Array(10).fill(false);
     riskGame.bagsFound = 0;
+    riskGame.attemptsLeft = 5;
+    riskGame.attemptsUsed = 0;
     riskGame.gameOver = false;
 
     // Обновляем тексты языка
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
-    document.getElementById('risk-instruction-el').innerHTML = t('risk_instruction').replace('\n','<br>');
     document.getElementById('risk-close-text').textContent = t('risk_close');
+
+    // Показываем счётчик попыток в инструкции
+    updateRiskInstruction();
 
     // Сбрасываем слоты
     for (let i = 0; i < 5; i++) {
@@ -1621,60 +1658,76 @@ function openRiskModal() {
     document.getElementById('risk-modal').classList.add('open');
 }
 
+function updateRiskInstruction() {
+    const el = document.getElementById('risk-instruction-el');
+    if (lang === 'ru') {
+        el.innerHTML = `Осталось попыток: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> из 5<br>Найди мешочки 💰 — собери все 5 и выиграй 500 TON!`;
+    } else {
+        el.innerHTML = `Attempts left: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> of 5<br>Find bags 💰 — collect all 5 and win 500 TON!`;
+    }
+}
+
 function onRiskStarClick(idx) {
     if (riskGame.gameOver) return;
     if (riskGame.revealed[idx]) return;
+    if (riskGame.attemptsLeft <= 0) return;
 
     const btn = document.getElementById('risk-stars-grid').children[idx];
     riskGame.revealed[idx] = true;
+    riskGame.attemptsLeft--;
+    riskGame.attemptsUsed++;
     btn.classList.add('revealed');
 
-    // Логика блокировки: если уже 4 мешочка найдено,
-    // принудительно делаем это поле пустым (85% шанс блокировки)
-    let isBag = riskGame.stars[idx];
-    if (riskGame.bagsFound >= 4 && isBag && Math.random() < 0.85) {
-        isBag = false; // блокируем последний мешок
-    }
+    const isBag = riskGame.stars[idx];
 
     if (isBag) {
         btn.textContent = '💰';
         btn.classList.add('is-bag');
         riskGame.bagsFound++;
 
-        // Заполняем слот
+        // Заполняем слот прогресса
         const slot = document.getElementById(`bag-slot-${riskGame.bagsFound - 1}`);
         slot.textContent = '💰';
         slot.classList.add('filled');
 
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
+        // Победа невозможна — макс 4 мешка скрыто, нужно 5
+        // Этот код оставлен для полноты но никогда не сработает
         if (riskGame.bagsFound >= 5) {
-            // ПОБЕДА (теоретически недостижима, но код есть)
             riskGame.gameOver = true;
             const msg = document.getElementById('risk-result-msg');
             msg.textContent = t('risk_win_msg');
             msg.classList.add('win-msg');
             document.getElementById('risk-close-btn').classList.add('show');
+            return;
         }
     } else {
         btn.textContent = lang === 'ru' ? 'пусто' : 'empty';
         btn.classList.add('is-empty');
         btn.style.fontSize = '0.65em';
-
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
 
-        // Проверяем: если все 10 открыты или невозможно найти 5
-        const unrevealed = riskGame.revealed.filter(r => !r).length;
-        const bagsLeft = riskGame.stars.filter((s,i) => s && !riskGame.revealed[i]).length;
-        const neededBags = 5 - riskGame.bagsFound;
+    // Обновляем счётчик попыток
+    updateRiskInstruction();
 
-        if (unrevealed === 0 || bagsLeft < neededBags) {
-            riskGame.gameOver = true;
-            const msg = document.getElementById('risk-result-msg');
-            msg.textContent = t('risk_lose_msg', riskGame.bagsFound, 5);
-            msg.classList.add('lose-msg');
-            document.getElementById('risk-close-btn').classList.add('show');
-        }
+    // Конец игры: попытки кончились
+    if (riskGame.attemptsLeft <= 0) {
+        riskGame.gameOver = true;
+        // Блокируем все оставшиеся звёзды визуально
+        const grid = document.getElementById('risk-stars-grid');
+        Array.from(grid.children).forEach(b => {
+            if (!b.classList.contains('revealed')) {
+                b.disabled = true;
+                b.style.opacity = '0.3';
+                b.style.cursor = 'not-allowed';
+            }
+        });
+        const msg = document.getElementById('risk-result-msg');
+        msg.textContent = t('risk_lose_msg', riskGame.bagsFound, riskGame.attemptsUsed);
+        msg.classList.add('lose-msg');
+        document.getElementById('risk-close-btn').classList.add('show');
     }
 }
 
@@ -1735,6 +1788,31 @@ window.addEventListener('DOMContentLoaded', () => {
     loadBalance();
     draw(0, -1, 0);
 });
+
+function showWelcomeToast() {
+    const toast = document.createElement('div');
+    toast.id = 'welcome-toast';
+    toast.style.cssText = `
+        position:fixed; top:50%; left:50%; transform:translate(-50%,-60%);
+        z-index:9999; background:linear-gradient(135deg,rgba(30,10,50,0.97),rgba(50,20,80,0.97));
+        border:2px solid #c084fc; border-radius:20px; padding:24px 32px;
+        text-align:center; box-shadow:0 0 40px rgba(192,132,252,0.5);
+        font-family:'Segoe UI',sans-serif; color:white;
+        opacity:0; transition:opacity 0.4s ease; pointer-events:none;
+        max-width:85vw;
+    `;
+    toast.innerHTML = `
+        <div style="font-size:2.2em;margin-bottom:8px">👑</div>
+        <div style="font-size:1.1em;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#e879f9,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px">Welcome!</div>
+        <div style="font-size:0.85em;color:rgba(255,255,255,0.75);line-height:1.5">Imperial Roulette<br><span style="color:#c084fc;font-size:0.9em">Fortune Awaits You</span></div>
+    `;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 2200);
+}
 </script>
 
 </body>
