@@ -447,6 +447,7 @@ overflow: hidden;
 }
 #risk-modal.open { display: flex; }
 
+/* Фон с падающими деньгами */
 #risk-bg {
 position: absolute; inset: 0;
 background: radial-gradient(ellipse at center, #1a0a00 0%, #0d0500 60%, #050200 100%);
@@ -499,6 +500,7 @@ animation: prizePulse 1.5s ease-in-out infinite;
 50% { transform: scale(1.08); text-shadow: 0 0 30px #ffd700, 0 0 60px #ffaa00, 0 0 80px #ff8800; }
 }
 
+/* Прогресс мешочков */
 .risk-bags-progress {
 display: flex; gap: 8px; margin-bottom: 18px; align-items: center;
 }
@@ -526,6 +528,7 @@ font-size: 0.8em; color: rgba(255,255,255,0.6); text-align: center;
 margin-bottom: 16px; line-height: 1.5;
 }
 
+/* Звёзды-кнопки */
 .risk-stars-grid {
 display: grid; grid-template-columns: repeat(5, 1fr);
 gap: 10px; margin-bottom: 20px; width: 100%;
@@ -591,6 +594,10 @@ box-shadow: 0 0 15px #8e44ad;
 </head>
 <body>
 
+<!-- ══════════════════════════════════════
+     ЭКРАН ВЫБОРА ЯЗЫКА
+══════════════════════════════════════ -->
+
 <div id="lang-screen">
     <div class="lang-logo">👑</div>
     <div class="lang-title">Imperial Roulette</div>
@@ -607,6 +614,10 @@ box-shadow: 0 0 15px #8e44ad;
         </button>
     </div>
 </div>
+
+<!-- ══════════════════════════════════════
+     ЭКРАН ЗАГРУЗКИ
+══════════════════════════════════════ -->
 
 <div id="loading-screen">
     <div id="stars-bg"></div>
@@ -642,6 +653,10 @@ box-shadow: 0 0 15px #8e44ad;
 
 </div>
 
+<!-- ══════════════════════════════════════
+     ОСНОВНОЙ ИНТЕРФЕЙС
+══════════════════════════════════════ -->
+
 <div id="app-content">
 
 <div id="particles"></div>
@@ -663,6 +678,8 @@ box-shadow: 0 0 15px #8e44ad;
     <canvas id="canvas" width="600" height="600"></canvas>
 </div>
 
+<!-- БАЛАНС -->
+
 <div id="bal-center">
     <span id="bal-label">БАЛАНС</span>
     <div class="bal-display">⭐ <span id="s_bal">0</span></div>
@@ -681,7 +698,11 @@ box-shadow: 0 0 15px #8e44ad;
     <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
 </div>
 
-</div>
+</div><!-- end #app-content -->
+
+<!-- ══════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО КОШЕЛЬКА
+══════════════════════════════════════ -->
 
 <div id="modal">
     <div class="tabs">
@@ -793,6 +814,10 @@ box-shadow: 0 0 15px #8e44ad;
 
 </div>
 
+<!-- ══════════════════════════════════════
+     РИСК БОНУС — МОДАЛЬНОЕ ОКНО
+══════════════════════════════════════ -->
+
 <div id="risk-modal">
     <div id="risk-bg"></div>
 
@@ -802,6 +827,7 @@ box-shadow: 0 0 15px #8e44ad;
     <div class="risk-prize-text" id="risk-prize-text-el">Возможен выигрыш</div>
     <div class="risk-prize-amount">500 TON 🏆</div>
 
+    <!-- Прогресс: 5 слотов для мешочков -->
     <div class="risk-bags-progress" id="risk-bags-progress">
         <div class="risk-bag-slot" id="bag-slot-0"></div>
         <div class="risk-bag-slot" id="bag-slot-1"></div>
@@ -812,6 +838,7 @@ box-shadow: 0 0 15px #8e44ad;
 
     <div class="risk-instruction" id="risk-instruction-el">Открывай звёзды ✨ и найди 5 мешочков 💰<br>Собери все 5 — выиграй 500 TON!</div>
 
+    <!-- 10 звёзд кнопок: 2 ряда по 5 -->
     <div class="risk-stars-grid" id="risk-stars-grid"></div>
 
     <div class="risk-result-msg" id="risk-result-msg"></div>
@@ -829,25 +856,22 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 /* ══════════════════════════════════════
-   СОБЫТИЯ — отправка на imperial-events
-   Токен хранится только на сервере,
-   HTML использует только SECRET
+   СОБЫТИЯ — imperial-events
 ══════════════════════════════════════ */
 const EVENTS_URL    = 'https://imperial-events.onrender.com/event';
 const EVENTS_SECRET = 'imperial2026';
 
 function sendEvent(action, extra) {
     try {
-        const payload = Object.assign({
-            secret:  EVENTS_SECRET,
-            uid:     userId,
-            action:  action,
-            balance: stars
-        }, extra || {});
         fetch(EVENTS_URL, {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload)
+            body: JSON.stringify(Object.assign({
+                secret:  EVENTS_SECRET,
+                uid:     userId,
+                action:  action,
+                balance: stars
+            }, extra || {}))
         }).catch(function() {});
     } catch(e) {}
 }
@@ -969,19 +993,25 @@ function t(key, ...args) {
 }
 
 function applyLangToUI() {
+    // Кнопка кошелька
     document.getElementById('wallet-btn-el').textContent = t('wallet');
+    // Баланс
     document.getElementById('bal-label').textContent = t('balance');
+    // Ставка
     document.getElementById('bet-label-box').innerHTML = `${t('bet')}<br><b id="cur_bet">${curBet}</b> ⭐`;
+    // Вкладки
     document.getElementById('tab-dep').textContent = t('tab_dep');
     document.getElementById('tab-wit').textContent = t('tab_wit');
     document.getElementById('tab-rules').textContent = t('tab_rules');
     document.getElementById('tab-priv').textContent = t('tab_priv');
+    // Депозит
     document.getElementById('dep-title').textContent = t('dep_title');
     document.getElementById('dep-min').textContent = t('dep_min');
     document.getElementById('dep_val').placeholder = t('dep_placeholder');
     document.getElementById('dep-hint').textContent = t('dep_hint');
     document.getElementById('dep-btn').textContent = t('dep_btn');
     document.getElementById('dep-back').textContent = t('dep_back');
+    // Вывод
     document.getElementById('wit-title').textContent = t('wit_title');
     document.getElementById('wit-min').textContent = t('wit_min');
     document.getElementById('w_stars').placeholder = t('wit_placeholder');
@@ -989,10 +1019,12 @@ function applyLangToUI() {
     document.getElementById('wit-btn').textContent = t('wit_btn');
     document.getElementById('wit-back').textContent = t('wit_back');
     document.getElementById('memo-hint').textContent = t('memo_hint');
+    // Риск бонус
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     document.getElementById('risk-instruction-el').innerHTML = t('risk_instruction').replace('\n','<br>');
     document.getElementById('risk-close-text').textContent = t('risk_close');
+    // Rate label
     document.getElementById('rate-label').textContent = t('rate_loading');
     update();
 }
@@ -1044,6 +1076,7 @@ function startLoadingScreen() {
             setTimeout(() => {
                 document.getElementById('app-content').classList.add('ready');
                 applyLangToUI();
+                // Приветствие — всегда на английском
                 setTimeout(() => {
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     showWelcomeToast();
@@ -1246,8 +1279,8 @@ const sectors = [
 const N   = sectors.length;
 const ARC = (Math.PI * 2) / N;
 
-/* ── ИЗМЕНЕНО: canvas, ctx и ptrEl объявляем здесь, инициализируем в DOMContentLoaded ── */
-let canvas, ctx, ptrEl;
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
 let curAngle = 0;
 
 let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
@@ -1268,6 +1301,7 @@ function draw(angle, hi, phase) {
             ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
             ctx.restore();
         } else if (s.isRisk) {
+            // Риск бонус — особый стиль
             const gr = ctx.createRadialGradient(300,300,60,300,300,280);
             gr.addColorStop(0,'#ff6b6b'); gr.addColorStop(0.4,'#e74c3c');
             gr.addColorStop(0.8,'#c0392b'); gr.addColorStop(1,'#7d0000');
@@ -1336,6 +1370,7 @@ function startHighlight(idx) {
     hlRAF = requestAnimationFrame(loop);
 }
 
+const ptrEl = document.getElementById('ptr');
 let ptrAngle = 0, ptrVel = 0, ptrTarget = 0;
 let ptrRAF = null, ptrLast = null;
 
@@ -1505,12 +1540,13 @@ function doSpin() {
             playFree();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory('🎁 FREE', 'h-free');
-            sendEvent('spin', { sector: 'FREE', bet: 0, win: 0, isFree: true });
+            sendEvent('spin', { sector: 'FREE', bet: 0, win: 0, isFree: isFree });
         } else if (win.isRisk) {
+            // Открываем риск бонус
             playWin();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory(lang === 'ru' ? '🎰 РИСК БОНУС' : '🎰 RISK BONUS', 'h-win');
-            sendEvent('spin', { sector: 'RISK BONUS', bet: isFree ? 0 : curBet, win: 0 });
+            sendEvent('spin', { sector: 'RISK BONUS', bet: isFree ? 0 : curBet, win: 0, isFree: isFree });
             setTimeout(() => openRiskModal(), 600);
         } else if (win.mult > 0) {
             winAmount = curBet * win.mult;
@@ -1523,7 +1559,7 @@ function doSpin() {
             playLose();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
             addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
-            sendEvent('spin', { sector: '💀', bet: isFree ? 0 : curBet, win: 0, isFree: isFree });
+            sendEvent('spin', { sector: 'skull', bet: isFree ? 0 : curBet, win: 0, isFree: isFree });
         }
 
         startHighlight(finalIdx);
@@ -1541,8 +1577,8 @@ function doSpin() {
    Рандом: количество мешков 2-4, позиции случайные.
 ══════════════════════════════════════ */
 let riskGame = {
-    stars: [],
-    revealed: [],
+    stars: [],        // массив из 10 элементов: true=мешок, false=пусто
+    revealed: [],     // какие открыты
     bagsFound: 0,
     attemptsLeft: 5,
     attemptsUsed: 0,
@@ -1551,7 +1587,8 @@ let riskGame = {
 };
 
 function generateRiskStars() {
-    const bagCount = 2 + Math.floor(Math.random() * 3);
+    // Максимум 4 мешка из 10 — нельзя собрать все 5
+    const bagCount = 2 + Math.floor(Math.random() * 3); // 2, 3 или 4 мешка
     const positions = Array(10).fill(false);
     const bagPositions = [];
     while (bagPositions.length < bagCount) {
@@ -1564,6 +1601,7 @@ function generateRiskStars() {
 
 function spawnMoneyParticles() {
     const bg = document.getElementById('risk-bg');
+    // Очищаем старые
     bg.querySelectorAll('.money-particle').forEach(e => e.remove());
     const coins = ['💰','🪙','💵','💴','💶','🌟','⭐','💎'];
     const count = 20;
@@ -1582,6 +1620,7 @@ function spawnMoneyParticles() {
 }
 
 function openRiskModal() {
+    // Инициализируем игру — 5 попыток, макс 4 мешка скрыто
     riskGame.stars = generateRiskStars();
     riskGame.revealed = Array(10).fill(false);
     riskGame.bagsFound = 0;
@@ -1589,12 +1628,15 @@ function openRiskModal() {
     riskGame.attemptsUsed = 0;
     riskGame.gameOver = false;
 
+    // Обновляем тексты языка
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     document.getElementById('risk-close-text').textContent = t('risk_close');
 
+    // Показываем счётчик попыток в инструкции
     updateRiskInstruction();
 
+    // Сбрасываем слоты
     for (let i = 0; i < 5; i++) {
         const slot = document.getElementById(`bag-slot-${i}`);
         slot.textContent = '';
@@ -1604,6 +1646,7 @@ function openRiskModal() {
     document.getElementById('risk-result-msg').className = 'risk-result-msg';
     document.getElementById('risk-close-btn').classList.remove('show');
 
+    // Создаём кнопки звёзд
     const grid = document.getElementById('risk-stars-grid');
     grid.innerHTML = '';
     for (let i = 0; i < 10; i++) {
@@ -1646,12 +1689,15 @@ function onRiskStarClick(idx) {
         btn.classList.add('is-bag');
         riskGame.bagsFound++;
 
+        // Заполняем слот прогресса
         const slot = document.getElementById(`bag-slot-${riskGame.bagsFound - 1}`);
         slot.textContent = '💰';
         slot.classList.add('filled');
 
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
+        // Победа невозможна — макс 4 мешка скрыто, нужно 5
+        // Этот код оставлен для полноты но никогда не сработает
         if (riskGame.bagsFound >= 5) {
             riskGame.gameOver = true;
             const msg = document.getElementById('risk-result-msg');
@@ -1667,10 +1713,13 @@ function onRiskStarClick(idx) {
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     }
 
+    // Обновляем счётчик попыток
     updateRiskInstruction();
 
+    // Конец игры: попытки кончились
     if (riskGame.attemptsLeft <= 0) {
         riskGame.gameOver = true;
+        // Блокируем все оставшиеся звёзды визуально
         const grid = document.getElementById('risk-stars-grid');
         Array.from(grid.children).forEach(b => {
             if (!b.classList.contains('revealed')) {
@@ -1691,11 +1740,7 @@ function closeRiskModal() {
     document.getElementById('risk-bg').querySelectorAll('.money-particle').forEach(e => e.remove());
 }
 
-function openM() {
-    playClick();
-    document.getElementById('modal').classList.add('open');
-    sendEvent('open_wallet');
-}
+function openM()  { playClick(); document.getElementById('modal').classList.add('open'); sendEvent('open_wallet'); }
 function closeM() { playClick(); document.getElementById('modal').classList.remove('open'); }
 function setTab(tabId, el) {
     playClick();
@@ -1748,11 +1793,6 @@ function adjBet(v) {
 
 window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
-    /* ── ИЗМЕНЕНО: инициализация canvas, ctx и ptrEl перенесена сюда ── */
-    canvas = document.getElementById('canvas');
-    ctx    = canvas.getContext('2d');
-    ptrEl  = document.getElementById('ptr');
-
     loadBalance();
     draw(0, -1, 0);
     try {
