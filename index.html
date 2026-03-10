@@ -1160,14 +1160,22 @@ let tonPerStar = 0.013333;
 let soundEnabled = true;
 let bgLoopTimer  = null;
 let bgGainNode   = null;
-const actx       = new (window.AudioContext || window.webkitAudioContext)();
+let actx         = null;
+
+function getActx() {
+    if (!actx) {
+        try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    return actx;
+}
 
 function resumeAudio() {
-    return actx.state === 'suspended' ? actx.resume() : Promise.resolve();
+    const a = getActx();
+    return (a && a.state === 'suspended') ? a.resume() : Promise.resolve();
 }
 
 function startBgMusic() {
-    if (!soundEnabled || bgLoopTimer) return;
+    const actx = getActx(); if (!actx || !soundEnabled || bgLoopTimer) return;
     bgGainNode = actx.createGain();
     bgGainNode.gain.value = 0.05;
     bgGainNode.connect(actx.destination);
@@ -1213,7 +1221,8 @@ function startBgMusic() {
 
 function stopBgMusic() {
     if (bgLoopTimer) { clearInterval(bgLoopTimer); bgLoopTimer = null; }
-    if (bgGainNode)  { bgGainNode.gain.linearRampToValueAtTime(0, actx.currentTime + 0.3); bgGainNode = null; }
+    const a = getActx();
+    if (bgGainNode)  { bgGainNode.gain.linearRampToValueAtTime(0, (a ? a.currentTime : 0) + 0.3); bgGainNode = null; }
 }
 
 function toggleSound() {
@@ -1224,6 +1233,7 @@ function toggleSound() {
 }
 
 function playTone(freq, type, dur, vol) {
+    const actx = getActx(); if (!actx) return;
     if (!soundEnabled) return;
     const o = actx.createOscillator(), g = actx.createGain();
     o.connect(g); g.connect(actx.destination);
@@ -1245,7 +1255,7 @@ let ratchetTimer = null;
 function startRatchet(ms) {
     stopRatchet();
     ratchetTimer = setInterval(() => {
-        if (!soundEnabled || actx.state === 'suspended') return;
+        const actx = getActx(); if (!actx || !soundEnabled || actx.state === 'suspended') return;
         const o = actx.createOscillator(), g = actx.createGain();
         o.connect(g); g.connect(actx.destination);
         o.type = 'square'; o.frequency.value = 900;
