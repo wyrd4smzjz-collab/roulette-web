@@ -18,81 +18,16 @@
         }
 
 /* ══════════════════════════════
-   ЭКРАН ВЫБОРА ЯЗЫКА
-══════════════════════════════ */
-#lang-screen {
-    position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    right: 0 !important; bottom: 0 !important;
-    width: 100% !important; height: 100% !important;
-    margin: 0 !important; padding: 0 !important;
-    z-index: 999999;
-    background: #08001a;
-    display: flex !important; flex-direction: column;
-    align-items: center; justify-content: center;
-    overflow: hidden;
-    box-sizing: border-box;
-    text-align: center;
-}
-#lang-screen > * {
-    flex-shrink: 0;
-}
-#lang-screen.hide {
-    display: none;
-}
-.lang-logo {
-    font-size: 64px;
-    filter: drop-shadow(0 0 20px #c084fc) drop-shadow(0 0 40px #7c3aed);
-    margin-bottom: 10px;
-    animation: crownPulse 2s ease-in-out infinite;
-}
-.lang-title {
-    font-size: clamp(1.2em, 7vw, 1.8em); font-weight: 900; letter-spacing: 3px;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, #e879f9, #a855f7, #7c3aed, #c084fc);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 12px rgba(168,85,247,0.6));
-    margin-bottom: 6px;
-}
-.lang-subtitle {
-    font-size: 0.72em; letter-spacing: 4px; color: rgba(192,132,252,0.7);
-    text-transform: uppercase; margin-bottom: 40px;
-}
-.lang-prompt {
-    font-size: 1em; color: rgba(255,255,255,0.7); margin-bottom: 24px;
-    letter-spacing: 1px;
-}
-.lang-btns {
-    display: flex; gap: 20px;
-}
-.lang-btn {
-    padding: 16px 40px; border-radius: 50px; border: 2px solid #8e44ad;
-    background: rgba(142,68,173,0.2); color: white; font-size: 1.1em;
-    font-weight: 700; letter-spacing: 2px; cursor: pointer;
-    transition: all 0.3s;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-}
-.lang-btn:hover, .lang-btn:active {
-    background: rgba(142,68,173,0.5);
-    box-shadow: 0 0 20px #8e44ad;
-    transform: scale(1.05);
-}
-.lang-flag { font-size: 1.8em; }
-.lang-name { font-size: 0.85em; opacity: 0.8; }
-
-/* ══════════════════════════════
    ЭКРАН ЗАГРУЗКИ
 ══════════════════════════════ */
 #loading-screen {
     position: fixed; inset: 0; z-index: 99999;
     background: #08001a;
-    display: none; flex-direction: column;
+    display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     overflow: hidden;
     transition: opacity 0.8s ease;
 }
-#loading-screen.visible { display: flex; }
 #loading-screen.hide {
     opacity: 0;
     pointer-events: none;
@@ -775,30 +710,105 @@ canvas#canvas {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ══════════════════════════════
+   ВКЛАДКА ВЫБОРА ЯЗЫКА
+══════════════════════════════ */
+#lang-content {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+    position: fixed;
+    inset: 0;
+    background: #08001a;
+    z-index: 260;
+}
+#lang-content.active {
+    display: flex;
+}
+
+.lang-header {
+    font-size: 1.8em;
+    font-weight: 900;
+    color: #c084fc;
+    margin-bottom: 40px;
+    text-align: center;
+    text-shadow: 0 0 15px rgba(192,132,252,0.5);
+}
+
+.lang-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.lang-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 2px solid rgba(142,68,173,0.4);
+    background: rgba(142,68,173,0.15);
+    color: white;
+    font-size: 1.2em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.lang-option-btn:hover, .lang-option-btn:active {
+    background: rgba(142,68,173,0.35);
+    border-color: #8e44ad;
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(142,68,173,0.4);
+}
+.lang-option-btn.active {
+    background: rgba(142,68,173,0.5);
+    border-color: #c084fc;
+    box-shadow: 0 0 25px rgba(192,132,252,0.5);
+}
+
+.lang-flag-big {
+    font-size: 2em;
+}
+
+.lang-current {
+    margin-top: 30px;
+    padding: 12px 24px;
+    background: rgba(39,174,96,0.15);
+    border: 1px solid rgba(39,174,96,0.4);
+    border-radius: 12px;
+    color: #2ecc71;
+    font-size: 0.9em;
+}
+
+.lang-back-btn {
+    margin-top: 40px;
+    padding: 14px 40px;
+    border-radius: 50px;
+    border: 2px solid #8e44ad;
+    background: rgba(142,68,173,0.3);
+    color: white;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.lang-back-btn:hover {
+    background: rgba(142,68,173,0.5);
+    box-shadow: 0 0 15px #8e44ad;
+}
 </style>
 </head>
 <body>
-
-<!-- ══════════════════════════════════════
-     ЭКРАН ВЫБОРА ЯЗЫКА
-══════════════════════════════════════ -->
-
-<div id="lang-screen">
-    <div class="lang-logo">👑</div>
-    <div class="lang-title">Imperial Roulette</div>
-    <div class="lang-subtitle">Fortune Awaits</div>
-    <div class="lang-prompt" id="lang-prompt">Выберите язык / Choose language</div>
-    <div class="lang-btns">
-        <button class="lang-btn" onclick="selectLang('ru')">
-            <span class="lang-flag">🇷🇺</span>
-            <span>Русский</span>
-        </button>
-        <button class="lang-btn" onclick="selectLang('en')">
-            <span class="lang-flag">🇬🇧</span>
-            <span>English</span>
-        </button>
-    </div>
-</div>
 
 <!-- ══════════════════════════════════════
      ЭКРАН ЗАГРУЗКИ
@@ -892,6 +902,7 @@ canvas#canvas {
     <div class="tabs">
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">ПОПОЛНИТЬ</div>
         <div class="tab"        id="tab-wit" onclick="setTab('wit',this)" data-ru="ВЫВОД" data-en="WITHDRAW">ВЫВОД</div>
+        <div class="tab"        id="tab-lang" onclick="setTab('lang',this)" data-ru="ЯЗЫК" data-en="LANGUAGE">ЯЗЫК</div>
         <div class="tab"        id="tab-rules" onclick="setTab('rules',this)" data-ru="ПРАВИЛА" data-en="RULES">ПРАВИЛА</div>
         <div class="tab"        id="tab-priv" onclick="setTab('priv',this)" data-ru="КОНФИДЕНЦИАЛЬНОСТЬ" data-en="PRIVACY">КОНФИДЕНЦИАЛЬНОСТЬ</div>
     </div>
@@ -918,6 +929,25 @@ canvas#canvas {
         <p class="m-hint" style="font-size:.75em;" id="memo-hint">MEMO — если требуется биржей или кошельком</p>
         <button class="modal-btn" onclick="doWit()" id="wit-btn">ВЫВЕСТИ</button>
         <p class="back-link" id="wit-back" onclick="closeM()">← Назад</p>
+    </div>
+
+    <div id="lang" class="tab-content">
+        <div class="lang-header" id="lang-header-title">🌍 ВЫБОР ЯЗЫКА</div>
+        
+        <div class="lang-options">
+            <button class="lang-option-btn" id="lang-btn-ru" onclick="selectLangFromTab('ru')">
+                <span class="lang-flag-big">🇷🇺</span>
+                <span>Русский</span>
+            </button>
+            <button class="lang-option-btn" id="lang-btn-en" onclick="selectLangFromTab('en')">
+                <span class="lang-flag-big">🇬🇧</span>
+                <span>English</span>
+            </button>
+        </div>
+        
+        <div class="lang-current" id="lang-current-label">Текущий язык: Русский</div>
+        
+        <button class="lang-back-btn" onclick="closeM()">← Назад</button>
     </div>
 
     <div id="rules" class="tab-content">
@@ -1115,8 +1145,12 @@ const I18N = {
         rate_loading: 'Курс: загрузка…',
         tab_dep: 'ПОПОЛНИТЬ',
         tab_wit: 'ВЫВОД',
+        tab_lang: 'ЯЗЫК',
         tab_rules: 'ПРАВИЛА',
         tab_priv: 'КОНФИДЕНЦИАЛЬНОСТЬ',
+        lang_title: '🌍 ВЫБОР ЯЗЫКА',
+        lang_current: 'Текущий язык: Русский',
+        lang_back: '← Назад',
         risk_title: '🎰 РИСК БОНУС',
         risk_prize_text: 'Возможен выигрыш',
         risk_instruction: '5 попыток найти 💰 мешочки!\nНайди все 5 — выиграй 500 TON!',
@@ -1173,8 +1207,12 @@ const I18N = {
         rate_loading: 'Rate: loading…',
         tab_dep: 'DEPOSIT',
         tab_wit: 'WITHDRAW',
+        tab_lang: 'LANGUAGE',
         tab_rules: 'RULES',
         tab_priv: 'PRIVACY',
+        lang_title: '🌍 LANGUAGE SELECTION',
+        lang_current: 'Current language: English',
+        lang_back: '← Back',
         risk_title: '🎰 RISK BONUS',
         risk_prize_text: 'Possible win',
         risk_instruction: '5 chances to find 💰 bags!\nFind all 5 — win 500 TON!',
@@ -1214,6 +1252,7 @@ function applyLangToUI() {
     // Вкладки
     document.getElementById('tab-dep').textContent = t('tab_dep');
     document.getElementById('tab-wit').textContent = t('tab_wit');
+    document.getElementById('tab-lang').textContent = t('tab_lang');
     document.getElementById('tab-rules').textContent = t('tab_rules');
     document.getElementById('tab-priv').textContent = t('tab_priv');
     // Депозит
@@ -1231,6 +1270,10 @@ function applyLangToUI() {
     document.getElementById('wit-btn').textContent = t('wit_btn');
     document.getElementById('wit-back').textContent = t('wit_back');
     document.getElementById('memo-hint').textContent = t('memo_hint');
+    // Язык
+    document.getElementById('lang-header-title').textContent = t('lang_title');
+    document.getElementById('lang-current-label').textContent = t('lang_current');
+    document.querySelector('.lang-back-btn').textContent = t('lang_back');
     // Риск бонус
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
@@ -1248,11 +1291,19 @@ function applyLangToUI() {
     update();
 }
 
-function selectLang(selectedLang) {
+function selectLangFromTab(selectedLang) {
     lang = selectedLang;
     try { localStorage.setItem('imperial_lang', lang); } catch(_) {}
-    document.getElementById('lang-screen').classList.add('hide');
-    startLoadingScreen();
+    
+    // Обновляем UI
+    applyLangToUI();
+    
+    // Обновляем активную кнопку
+    document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
+    
+    // Обновляем текст текущего языка
+    document.getElementById('lang-current-label').textContent = t('lang_current');
 }
 
 /* ══════════════════════════════════════
@@ -1260,7 +1311,6 @@ function selectLang(selectedLang) {
 ══════════════════════════════════════ */
 function startLoadingScreen() {
     const ls = document.getElementById('loading-screen');
-    ls.classList.add('visible');
 
     const bg = document.getElementById('stars-bg');
     if (!bg.children.length) {
@@ -1672,201 +1722,472 @@ function update() {
 
 const histArr = [];
 function addHistory(label, cls) {
-    histArr.unshift;
-        g.gain.setValueAtTime(0.07, actx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
-        o.start(); o.stop(actx.currentTime + 0.04);
-    }, ms);
-}
-function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
-
-const SUPERBONUS_IDX = 7;
-const sectors = [
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×5',        c:'#9b59b6', mult:5,   weight:6,     isSB:false, isFree:false, isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'★SB',       c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×5',        c:'#f39c12', mult:5,   weight:3,     isSB:false, isFree:false, isRisk:false },
-    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'РИСК',      c:'#c0392b', mult:0,   weight:0.99,  isSB:false, isFree:false, isRisk:true  },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
-    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false }
-];
-
-const N   = sectors.length;
-const ARC = (Math.PI * 2) / N;
-
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
-let curAngle = 0;
-
-let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
-
-function draw(angle, hi, phase) {
-    ctx.clearRect(0, 0, 600, 600);
-    sectors.forEach((s, i) => {
-        const a = i * ARC + angle;
-        if (s.isSB) {
-            const gr = ctx.createRadialGradient(300,300,60,300,300,280);
-            gr.addColorStop(0,'#fff3a0'); gr.addColorStop(0.3,'#ffd700');
-            gr.addColorStop(0.7,'#cc8800'); gr.addColorStop(1,'#7a4800');
-            ctx.beginPath(); ctx.fillStyle = gr;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            ctx.save();
-            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 28;
-            ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4;
-            ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
-            ctx.restore();
-        } else if (s.isRisk) {
-            // Риск бонус — особый стиль
-            const gr = ctx.createRadialGradient(300,300,60,300,300,280);
-            gr.addColorStop(0,'#ff6b6b'); gr.addColorStop(0.4,'#e74c3c');
-            gr.addColorStop(0.8,'#c0392b'); gr.addColorStop(1,'#7d0000');
-            ctx.beginPath(); ctx.fillStyle = gr;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            ctx.save();
-            ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 20;
-            ctx.beginPath(); ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3;
-            ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
-            ctx.restore();
-        } else {
-            ctx.beginPath(); ctx.fillStyle = s.c;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-        }
-        if (i === hi && hlRemain > 0) {
-            const pulse = 0.45 + 0.55 * Math.abs(Math.sin(phase * 0.009));
-            ctx.save();
-            const hg = ctx.createRadialGradient(300,300,80,300,300,280);
-            hg.addColorStop(0,`rgba(255,255,180,${0.22*pulse})`);
-            hg.addColorStop(0.6,`rgba(255,210,0,${0.4*pulse})`);
-            hg.addColorStop(1,`rgba(255,160,0,0)`);
-            ctx.beginPath(); ctx.fillStyle = hg;
-            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
-            ctx.shadowColor = `rgba(255,220,50,${pulse})`; ctx.shadowBlur = 32;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(255,230,60,${0.95*pulse})`; ctx.lineWidth = 9;
-            ctx.moveTo(300,300); ctx.arc(300,300,274,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
-            ctx.restore();
-        }
-        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
-        ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
-        ctx.save(); ctx.translate(300,300); ctx.rotate(a + ARC/2);
-        if (s.isSB) {
-            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 16;
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial';
-            ctx.fillText('SUPER', 118, -8); ctx.fillText('BONUS', 118, 8);
-            ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#ffe066';
-            ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
-        } else if (s.isRisk) {
-            ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 14;
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial';
-            ctx.fillText('РИСК', 120, -8);
-            ctx.fillText('БОНУС', 116, 8);
-            ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#ffaaaa';
-            ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
-        } else {
-            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial';
-            ctx.fillText(s.t, 148, 8);
-        }
-        ctx.restore();
+    histArr.unshift({ label, cls });
+    if (histArr.length > 12) histArr.pop();
+    const bar = document.getElementById('history-bar');
+    bar.innerHTML = '';
+    histArr.forEach(item => {
+        const c = document.createElement('div');
+        c.className = `h-chip ${item.cls}`;
+        c.textContent = item.label;
+        bar.appendChild(c);
     });
 }
 
-function startHighlight(idx) {
-    hlIdx = idx; hlRemain = 4000; hlPhase = 0;
-    let last = null;
-    function loop(now) {
-        if (!last) last = now;
-        const dt = now - last; last = now;
-        hlRemain -= dt; hlPhase += dt;
-        draw(curAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
-        if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
-        else { hlIdx = -1; draw(curAngle, -1, 0); }
+function angleForSector(idx) {
+    return -Math.PI / 2 - idx * ARC - ARC / 2;
+}
+
+function toggleFast() {
+    playClick();
+    fastMode = !fastMode;
+    document.getElementById('fast-btn').classList.toggle('active', fastMode);
+}
+
+function handleSpin() {
+    if (isSpinning) return;
+    if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
+    if (hlRAF) { cancelAnimationFrame(hlRAF); hlRAF = null; hlIdx = -1; }
+    resumeAudio().then(() => { startBgMusic(); doSpin(); });
+}
+
+function doSpin() {
+    playClick();
+    isSpinning = true;
+    update();
+
+    let isFree = false;
+    if (hasFreeSpins > 0) { hasFreeSpins--; isFree = true; }
+    else                   { stars -= curBet; }
+    saveBalance();
+
+    const finalIdx = getWeightedRandom();
+
+    let finalAngle = angleForSector(finalIdx);
+    while (finalAngle < curAngle + Math.PI * 2 * 6) finalAngle += Math.PI * 2;
+    finalAngle += Math.floor(Math.random() * 3) * Math.PI * 2;
+
+    const totalRot = finalAngle - curAngle;
+    const startAng = curAngle;
+    const dur = fastMode ? 800 : 4000 + Math.random() * 1500;
+
+    function eased(p) {
+        return p < 0.5 ? 16 * p * p * p * p * p : 1 - Math.pow(-2 * p + 2, 5) / 2;
     }
-    if (hlRAF) cancelAnimationFrame(hlRAF);
-    hlRAF = requestAnimationFrame(loop);
-}
 
-const ptrEl = document.getElementById('ptr');
-let ptrAngle = 0, ptrVel = 0, ptrTarget = 0;
-let ptrRAF = null, ptrLast = null;
+    let t0 = null, lastSpd = 45, prevE = 0;
+    startRatchet(fastMode ? 15 : 45);
 
-function animPointer(now) {
-    if (!ptrLast) ptrLast = now;
-    const dt = Math.min(now - ptrLast, 50) / 1000;
-    ptrLast = now;
-    const err = ptrTarget - ptrAngle;
-    ptrVel += (20 * err - 7 * ptrVel) * dt;
-    ptrAngle += ptrVel * dt;
-    ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle.toFixed(2)}deg)`;
-    if (Math.abs(err) > 0.05 || Math.abs(ptrVel) > 0.05) {
-        ptrRAF = requestAnimationFrame(animPointer);
-    } else {
-        ptrAngle = ptrTarget; ptrVel = 0;
-        ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle}deg)`;
-        ptrRAF = null; ptrLast = null;
-    }
-}
-function setPointerLean(deg) {
-    ptrTarget = Math.max(-30, Math.min(30, deg));
-    if (!ptrRAF) { ptrLast = null; ptrRAF = requestAnimationFrame(animPointer); }
-}
+    function frame(now) {
+        if (!t0) t0 = now;
+        const p  = Math.min((now - t0) / dur, 1);
+        const e  = eased(p);
+        const de = e - prevE; prevE = e;
 
-function getWeightedRandom() {
-    const avail = sectors.map((s,i) => ({...s, idx:i})).filter(s => !s.isSB);
-    const total = avail.reduce((sum, s) => sum + s.weight, 0);
-    let r = Math.random() * total;
-    for (const s of avail) { r -= s.weight; if (r <= 0) return s.idx; }
-    return avail[0].idx;
-}
+        curAngle = startAng + totalRot * e;
+        draw(curAngle, -1, 0);
 
-function loadBalance() {
-    const urlBal = parseInt(new URLSearchParams(location.search).get('balance'));
-    if (tg.CloudStorage) {
-        tg.CloudStorage.getItem(`balance_${userId}`, (err, val) => {
-            const saved = (!err && val) ? parseInt(val) : NaN;
-            if (!isNaN(saved) && saved >= 0) {
-                stars = (!isNaN(urlBal) && urlBal > saved) ? urlBal : saved;
-            } else {
-                stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
-            }
-            if (!isNaN(urlBal) && urlBal > (isNaN(saved) ? -1 : saved)) saveBalance();
-            update();
-        });
-    } else {
-        stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
+        const radVel = totalRot * de / 0.016;
+        const lean   = Math.min(30, Math.abs(radVel) * 0.09);
+        setPointerLean(radVel > 0 ? -lean : lean);
+
+        const spd = p > 0.88 ? 220 : p > 0.68 ? 110 : 45;
+        if (!fastMode && spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
+
+        if (p < 1) { requestAnimationFrame(frame); return; }
+
+        stopRatchet();
+        setPointerLean(0);
+        isSpinning = false;
+        curAngle   = finalAngle;
+        update();
+
+        const win = sectors[finalIdx];
+        let winAmount = 0;
+
+        if (win.isFree) {
+            hasFreeSpins++;
+            playFree();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory('🎁 FREE', 'h-free');
+        } else if (win.isRisk) {
+            // Открываем риск бонус
+            playWin();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory(lang === 'ru' ? '🎰 РИСК БОНУС' : '🎰 RISK BONUS', 'h-win');
+            setTimeout(() => openRiskModal(), 600);
+        } else if (win.mult > 0) {
+            winAmount = curBet * win.mult;
+            stars    += winAmount;
+            playWin();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory(isFree ? `🎁+${winAmount}⭐` : `${win.t} +${winAmount}⭐`, 'h-win');
+        } else {
+            playLose();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
+        }
+
+        startHighlight(finalIdx);
+        saveBalance();
         update();
     }
+    requestAnimationFrame(frame);
 }
 
-function saveBalance(cb) {
-    if (tg.CloudStorage) {
-        tg.CloudStorage.setItem(`balance_${userId}`, String(stars), err => {
-            if (!err) console.log('saved:', stars);
-            if (cb) cb();
-        });
-    } else if (cb) cb();
+/* ══════════════════════════════════════
+   РИСК БОНУС — ЛОГИКА
+   10 звёзд на экране, всего 5 ПОПЫТОК.
+   Мешочков скрыто максимум 4 из 10 —
+   собрать все 5 физически невозможно.
+   Рандом: количество мешков 2-4, позиции случайные.
+══════════════════════════════════════ */
+let riskGame = {
+    stars: [],        // массив из 10 элементов: true=мешок, false=пусто
+    revealed: [],     // какие открыты
+    bagsFound: 0,
+    attemptsLeft: 5,
+    attemptsUsed: 0,
+    gameOver: false,
+    moneyParticles: null
+};
+
+function generateRiskStars() {
+    // Максимум 4 мешка из 10 — нельзя собрать все 5
+    const bagCount = 2 + Math.floor(Math.random() * 3); // 2, 3 или 4 мешка
+    const positions = Array(10).fill(false);
+    const bagPositions = [];
+    while (bagPositions.length < bagCount) {
+        const p = Math.floor(Math.random() * 10);
+        if (!bagPositions.includes(p)) bagPositions.push(p);
+    }
+    bagPositions.forEach(p => positions[p] = true);
+    return positions;
 }
 
-function update() {
-    document.getElementById('s_bal').innerText   = stars;
-    const curBetEl = document.getElementById('cur_bet');
-    if (curBetEl) curBetEl.innerText = curBet;
-    const btn = document.getElementById('spinBtn');
-    if (hasFreeSpins > 0) {
-        btn.innerText = t('free_spin', hasFreeSpins);
-        btn.classList.remove('dep-mode'); btn.classList.add('free-mode');
-    } else if (stars < curBet) {
-        btn.innerText = t('deposit_btn');
-        btn.classList.add('dep-mode'); btn.classList.remove('free-mode');
+function spawnMoneyParticles() {
+    const bg = document.getElementById('risk-bg');
+    // Очищаем старые
+    bg.querySelectorAll('.money-particle').forEach(e => e.remove());
+    const coins = ['💰','🪙','💵','💴','💶','🌟','⭐','💎'];
+    const count = 20;
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'money-particle';
+        const icon = coins[Math.floor(Math.random() * coins.length)];
+        el.textContent = icon;
+        const left = Math.random() * 100;
+        const dur = 2.5 + Math.random() * 3;
+        const delay = Math.random() * 4;
+        const size = 18 + Math.random() * 16;
+        el.style.cssText = `left:${left}%;font-size:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;`;
+        bg.appendChild(el);
+    }
+}
+
+function openRiskModal() {
+    // Инициализируем игру — 5 попыток, макс 4 мешка скрыто
+    riskGame.stars = generateRiskStars();
+    riskGame.revealed = Array(10).fill(false);
+    riskGame.bagsFound = 0;
+    riskGame.attemptsLeft = 5;
+    riskGame.attemptsUsed = 0;
+    riskGame.gameOver = false;
+
+    // Обновляем тексты языка
+    document.getElementById('risk-title-el').textContent = t('risk_title');
+    document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     } else {
+        btn.innerText = t('spin');
+        btn.classList.remove('dep-mode', 'free-mode');
+    }
+    document.getElementById('btn-minus').disabled = isSpinning;
+    document.getElementById('btn-plus').disabled  = isSpinning;
+}
+
+const histArr = [];
+function addHistory(label, cls) {
+    histArr.unshift({ label, cls });
+    if (histArr.length > 12) histArr.pop();
+    const bar = document.getElementById('history-bar');
+    bar.innerHTML = '';
+    histArr.forEach(item => {
+        const c = document.createElement('div');
+        c.className = `h-chip ${item.cls}`;
+        c.textContent = item.label;
+        bar.appendChild(c);
+    });
+}
+
+function angleForSector(idx) {
+    return -Math.PI / 2 - idx * ARC - ARC / 2;
+}
+
+function toggleFast() {
+    playClick();
+    fastMode = !fastMode;
+    document.getElementById('fast-btn').classList.toggle('active', fastMode);
+}
+
+function handleSpin() {
+    if (isSpinning) return;
+    if (hasFreeSpins === 0 && stars < curBet) { openM(); return; }
+    if (hlRAF) { cancelAnimationFrame(hlRAF); hlRAF = null; hlIdx = -1; }
+    resumeAudio().then(() => { startBgMusic(); doSpin(); });
+}
+
+function doSpin() {
+    playClick();
+    isSpinning = true;
+    update();
+
+    let isFree = false;
+    if (hasFreeSpins > 0) { hasFreeSpins--; isFree = true; }
+    else                   { stars -= curBet; }
+    saveBalance();
+
+    const finalIdx = getWeightedRandom();
+
+    let finalAngle = angleForSector(finalIdx);
+    while (finalAngle < curAngle + Math.PI * 2 * 6) finalAngle += Math.PI * 2;
+    finalAngle += Math.floor(Math.random() * 3) * Math.PI * 2;
+
+    const totalRot = finalAngle - curAngle;
+    const startAng = curAngle;
+    const dur = fastMode ? 800 : 4000 + Math.random() * 1500;
+
+    function eased(p) {
+        return p < 0.5 ? 16 * p * p * p * p * p : 1 - Math.pow(-2 * p + 2, 5) / 2;
+    }
+
+    let t0 = null, lastSpd = 45, prevE = 0;
+    startRatchet(fastMode ? 15 : 45);
+
+    function frame(now) {
+        if (!t0) t0 = now;
+        const p  = Math.min((now - t0) / dur, 1);
+        const e  = eased(p);
+        const de = e - prevE; prevE = e;
+
+        curAngle = startAng + totalRot * e;
+        draw(curAngle, -1, 0);
+
+        const radVel = totalRot * de / 0.016;
+        const lean   = Math.min(30, Math.abs(radVel) * 0.09);
+        setPointerLean(radVel > 0 ? -lean : lean);
+
+        const spd = p > 0.88 ? 220 : p > 0.68 ? 110 : 45;
+        if (!fastMode && spd !== lastSpd) { lastSpd = spd; startRatchet(spd); }
+
+        if (p < 1) { requestAnimationFrame(frame); return; }
+
+        stopRatchet();
+        setPointerLean(0);
+        isSpinning = false;
+        curAngle   = finalAngle;
+        update();
+
+        const win = sectors[finalIdx];
+        let winAmount = 0;
+
+        if (win.isFree) {
+            hasFreeSpins++;
+            playFree();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory('🎁 FREE', 'h-free');
+        } else if (win.isRisk) {
+            // Открываем риск бонус
+            playWin();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory(lang === 'ru' ? '🎰 РИСК БОНУС' : '🎰 RISK BONUS', 'h-win');
+            setTimeout(() => openRiskModal(), 600);
+        } else if (win.mult > 0) {
+            winAmount = curBet * win.mult;
+            stars    += winAmount;
+            playWin();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            addHistory(isFree ? `🎁+${winAmount}⭐` : `${win.t} +${winAmount}⭐`, 'h-win');
+        } else {
+            playLose();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            addHistory(isFree ? '🎁💀' : `-${curBet}⭐`, 'h-lose');
+        }
+
+        startHighlight(finalIdx);
+        saveBalance();
+        update();
+    }
+    requestAnimationFrame(frame);
+}
+
+/* ══════════════════════════════════════
+   РИСК БОНУС — ЛОГИКА
+   10 звёзд на экране, всего 5 ПОПЫТОК.
+   Мешочков скрыто максимум 4 из 10 —
+   собрать все 5 физически невозможно.
+   Рандом: количество мешков 2-4, позиции случайные.
+══════════════════════════════════════ */
+let riskGame = {
+    stars: [],        // массив из 10 элементов: true=мешок, false=пусто
+    revealed: [],     // какие открыты
+    bagsFound: 0,
+    attemptsLeft: 5,
+    attemptsUsed: 0,
+    gameOver: false,
+    moneyParticles: null
+};
+
+function generateRiskStars() {
+    // Максимум 4 мешка из 10 — нельзя собрать все 5
+    const bagCount = 2 + Math.floor(Math.random() * 3); // 2, 3 или 4 мешка
+    const positions = Array(10).fill(false);
+    const bagPositions = [];
+    while (bagPositions.length < bagCount) {
+        const p = Math.floor(Math.random() * 10);
+        if (!bagPositions.includes(p)) bagPositions.push(p);
+    }
+    bagPositions.forEach(p => positions[p] = true);
+    return positions;
+}
+
+function spawnMoneyParticles() {
+    const bg = document.getElementById('risk-bg');
+    // Очищаем старые
+    bg.querySelectorAll('.money-particle').forEach(e => e.remove());
+    const coins = ['💰','🪙','💵','💴','💶','🌟','⭐','💎'];
+    const count = 20;
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'money-particle';
+        const icon = coins[Math.floor(Math.random() * coins.length)];
+        el.textContent = icon;
+        const left = Math.random() * 100;
+        const dur = 2.5 + Math.random() * 3;
+        const delay = Math.random() * 4;
+        const size = 18 + Math.random() * 16;
+        el.style.cssText = `left:${left}%;font-size:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;`;
+        bg.appendChild(el);
+    }
+}
+
+function openRiskModal() {
+    // Инициализируем игру — 5 попыток, макс 4 мешка скрыто
+    riskGame.stars = generateRiskStars();
+    riskGame.revealed = Array(10).fill(false);
+    riskGame.bagsFound = 0;
+    riskGame.attemptsLeft = 5;
+    riskGame.attemptsUsed = 0;
+    riskGame.gameOver = false;
+
+    // Обновляем тексты языка
+    document.getElementById('risk-title-el').textContent = t('risk_title');
+    document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
+    document.getElementById('risk-close-text').textContent = t('risk_close');
+
+    // Показываем счётчик попыток в инструкции
+    updateRiskInstruction();
+
+    // Сбрасываем слоты
+    for (let i = 0; i < 5; i++) {
+        const slot = document.getElementById(`bag-slot-${i}`);
+        slot.textContent = '';
+        slot.classList.remove('filled');
+    }
+    document.getElementById('risk-result-msg').textContent = '';
+    document.getElementById('risk-result-msg').className = 'risk-result-msg';
+    document.getElementById('risk-close-btn').classList.remove('show');
+
+    // Создаём кнопки звёзд
+    const grid = document.getElementById('risk-stars-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'risk-star-btn';
+        btn.textContent = '✨';
+        btn.dataset.idx = i;
+        btn.onclick = () => onRiskStarClick(i);
+        grid.appendChild(btn);
+    }
+
+    spawnMoneyParticles();
+    document.getElementById('risk-modal').classList.add('open');
+}
+
+function updateRiskInstruction() {
+    const el = document.getElementById('risk-instruction-el');
+    if (lang === 'ru') {
+        el.innerHTML = `Осталось попыток: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> из 5<br>Найди мешочки 💰 — собери все 5 и выиграй 500 TON!`;
+    } else {
+        el.innerHTML = `Attempts left: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> of 5<br>Find bags 💰 — collect all 5 and win 500 TON!`;
+    }
+}
+
+function onRiskStarClick(idx) {
+    if (riskGame.gameOver) return;
+    if (riskGame.revealed[idx]) return;
+    if (riskGame.attemptsLeft <= 0) return;
+
+    const btn = document.getElementById('risk-stars-grid').children[idx];
+    riskGame.revealed[idx] = true;
+    riskGame.attemptsLeft--;
+    riskGame.attemptsUsed++;
+    btn.classList.add('revealed');
+
+    const isBag = riskGame.stars[idx];
+
+    if (isBag) {
+        btn.textContent = '💰';
+        btn.classList.add('is-bag');
+        riskGame.bagsFound++;
+
+        // Заполняем слот прогресса
+        const slot = document.getElementById(`bag-slot-${riskGame.bagsFound - 1}`);
+        slot.textContent = '💰';
+        slot.classList.add('filled');
+
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+        // Победа невозможна — макс 4 мешка скрыто, нужно 5
+        // Этот код оставлен для полноты но никогда не сработает
+        if (riskGame.bagsFound >= 5) {
+            riskGame.gameOver = true;
+            const msg = document.getElementById('risk-result-msg');
+            msg.textContent = t('risk_win_msg');
+            msg.classList.add('win-msg');
+            document.getElementById('risk-close-btn').classList.add('show');
+            return;
+        }
+    } else {
+        btn.textContent = lang === 'ru' ? 'пусто' : 'empty';
+        btn.classList.add('is-empty');
+        btn.style.fontSize = '0.65em';
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+
+    // Обновляем счётчик попыток
+    updateRiskInstruction();
+
+    // Конец игры: попытки кончились
+    if (riskGame.attemptsLeft <= 0) {
+        riskGame.gameOver = true;
+        // Блокируем все оставшиеся звёзды визуально
+        const grid = document.getElementById('risk-stars-grid');
+        Array.from(grid.children).forEach(b => {
+            if (!b.classList.contains('revealed')) {
+                b.disabled = true;
+                b.style.opacity = '0.3';
+                b.style.cursor = 'not-allowed';
+            }
+        });
+        const msg = document.getElementById('risk-result-msg');
+        msg.textContent = t('risk_lose_msg', riskGame.bagsFound, riskGame.attemptsUsed);
+        msg.classList.add('lose-msg');
+        document.getElementById('risk-close-btn').classList.add('show');
+    }
+}
+
+function closeRiskModal() {
+    document.getElementById('risk-modal').class    } else {
         btn.innerText = t('spin');
         btn.classList.remove('dep-mode', 'free-mode');
     }
@@ -2167,6 +2488,12 @@ function setTab(tabId, el) {
     document.querySelectorAll('.tab,.tab-content').forEach(e => e.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     el.classList.add('active');
+    
+    // Если открыли вкладку языка, обновляем активную кнопку
+    if (tabId === 'lang') {
+        document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
+        document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
+    }
 }
 
 function doDep() {
@@ -2304,14 +2631,17 @@ window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
     loadBalance();
     draw(0, -1, 0);
+    
+    // Загружаем сохранённый язык или используем дефолтный
     try {
         const savedLang = localStorage.getItem('imperial_lang');
         if (savedLang === 'ru' || savedLang === 'en') {
             lang = savedLang;
-            document.getElementById('lang-screen').classList.add('hide');
-            startLoadingScreen();
         }
     } catch(_) {}
+    
+    // Запускаем загрузку сразу без выбора языка
+    startLoadingScreen();
 });
 
 function showWelcomeToast() {
