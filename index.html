@@ -1,7 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
+    /* ══════════════════════════════
+   ЭКРАН ТЕХРАБОТ
+══════════════════════════════ */
+#maintenance-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #08001a;
+    z-index: 999999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+}
+#maintenance-screen.active {
+    display: flex;
+}
+
+.maintenance-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: wrenchSpin 3s ease-in-out infinite;
+}
+@keyframes wrenchSpin {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+}
+
+.maintenance-title {
+    font-size: 1.8em;
+    font-weight: 900;
+    color: #c084fc;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px rgba(192,132,252,0.5);
+}
+
+.maintenance-text {
+    font-size: 1em;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+    max-width: 300px;
+}
+
+.maintenance-timer {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: rgba(255,255,255,0.5);
+}
+
+   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magik Spin</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -809,6 +859,24 @@ canvas#canvas {
 </style>
 </head>
 <body>
+<!-- ══════════════════════════════════════
+     ЭКРАН ТЕХРАБОТ
+══════════════════════════════════════ -->
+<div id="maintenance-screen">
+    <div class="maintenance-icon">🔧</div>
+    <div class="maintenance-title" id="maint-title-ru">🔧 ТЕХНИЧЕСКИЕ РАБОТЫ</div>
+    <div class="maintenance-text" id="maint-text-ru">
+        Ведутся технические работы.<br>
+        Пожалуйста, зайдите позже.<br><br>
+        Приносим извинения за неудобства.
+    </div>
+    <div class="maintenance-title" style="margin-top: 30px; font-size: 1.4em;" id="maint-title-en">🔧 MAINTENANCE</div>
+    <div class="maintenance-text" id="maint-text-en">
+        Technical work in progress.<br>
+        Please come back later.<br><br>
+        We apologize for the inconvenience.
+    </div>
+</div>
 
 <!-- ══════════════════════════════════════
      ЭКРАН ЗАГРУЗКИ
@@ -1101,6 +1169,25 @@ canvas#canvas {
 </div>
 
 <script>
+<!-- ══════════════════════════════════════
+     ЭКРАН ТЕХРАБОТ
+══════════════════════════════════════ -->
+<div id="maintenance-screen">
+    <div class="maintenance-icon">🔧</div>
+    <div class="maintenance-title" id="maint-title-ru">🔧 ТЕХНИЧЕСКИЕ РАБОТЫ</div>
+    <div class="maintenance-text" id="maint-text-ru">
+        Ведутся технические работы.<br>
+        Пожалуйста, зайдите позже.<br><br>
+        Приносим извинения за неудобства.
+    </div>
+    <div class="maintenance-title" style="margin-top: 30px; font-size: 1.4em;" id="maint-title-en">🔧 MAINTENANCE</div>
+    <div class="maintenance-text" id="maint-text-en">
+        Technical work in progress.<br>
+        Please come back later.<br><br>
+        We apologize for the inconvenience.
+    </div>
+</div>
+
 const tg = window.Telegram.WebApp;
 tg.expand();
 
