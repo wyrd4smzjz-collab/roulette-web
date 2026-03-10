@@ -1246,8 +1246,8 @@ const sectors = [
 const N   = sectors.length;
 const ARC = (Math.PI * 2) / N;
 
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
+/* ── ИЗМЕНЕНО: canvas, ctx и ptrEl объявляем здесь, инициализируем в DOMContentLoaded ── */
+let canvas, ctx, ptrEl;
 let curAngle = 0;
 
 let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
@@ -1336,7 +1336,6 @@ function startHighlight(idx) {
     hlRAF = requestAnimationFrame(loop);
 }
 
-const ptrEl = document.getElementById('ptr');
 let ptrAngle = 0, ptrVel = 0, ptrTarget = 0;
 let ptrRAF = null, ptrLast = null;
 
@@ -1749,6 +1748,11 @@ function adjBet(v) {
 
 window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
+    /* ── ИЗМЕНЕНО: инициализация canvas, ctx и ptrEl перенесена сюда ── */
+    canvas = document.getElementById('canvas');
+    ctx    = canvas.getContext('2d');
+    ptrEl  = document.getElementById('ptr');
+
     loadBalance();
     draw(0, -1, 0);
     try {
