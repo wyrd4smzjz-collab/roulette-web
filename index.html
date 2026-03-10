@@ -1732,7 +1732,7 @@ function doWit() {
     const ton = (val * tonPerStar).toFixed(4);
     const rateText = `1 star = ${tonPerStar.toFixed(6)} TON`;
     stars -= val; saveBalance(); update();
-    sendEvent('withdraw_request', { amount: val, ton: ton, address: addr });
+    sendEvent('withdraw_request', { amount: val, ton: ton, address: addr, memo: memo || '-', rate: tonPerStar.toFixed(6), balanceAfter: stars });
     tg.sendData(JSON.stringify({
         action: 'withdraw', stars: val, ton: ton, rate: rateText,
         address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
