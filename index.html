@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta charset="UTF-8">
@@ -18,7 +17,6 @@
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
 
-```
 /* ══════════════════════════════
    ЭКРАН ВЫБОРА ЯЗЫКА
 ══════════════════════════════ */
@@ -263,6 +261,34 @@
     background: rgba(142,68,173,0.3); border: 1px solid #8e44ad;
     color: white; border-radius: 8px; padding: 6px 12px;
     font-size: 0.8em; cursor: pointer;
+}
+
+/* ══════════════════════════════
+   КНОПКА ПОДДЕРЖКИ
+══════════════════════════════ */
+.support-btn {
+    position: fixed;
+    left: 15px;
+    top: calc(env(safe-area-inset-top) + 12px);
+    z-index: 200;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(142,68,173,0.3);
+    border: 1px solid #8e44ad;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+.support-btn:hover, .support-btn:active {
+    background: rgba(142,68,173,0.5);
+    box-shadow: 0 0 15px #8e44ad;
+    transform: scale(1.1);
 }
 
 #bal-center {
@@ -590,9 +616,166 @@ canvas#canvas {
     background: rgba(142,68,173,0.6);
     box-shadow: 0 0 15px #8e44ad;
 }
-</style>
-```
 
+/* ══════════════════════════════
+   ВКЛАДКА ПОДДЕРЖКИ
+══════════════════════════════ */
+#support-content {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 80px;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+    position: fixed;
+    inset: 0;
+    background: #050505;
+    z-index: 250;
+}
+#support-content.active {
+    display: flex;
+}
+
+.support-header {
+    font-size: 1.5em;
+    font-weight: 900;
+    color: #c084fc;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(192,132,252,0.5);
+}
+
+.support-welcome {
+    background: rgba(142,68,173,0.15);
+    border: 1px solid rgba(142,68,173,0.4);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+    width: 100%;
+    max-width: 340px;
+}
+
+.support-welcome-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.support-welcome-text {
+    font-size: 1em;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.5;
+}
+
+.support-input-area {
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 20px;
+}
+
+.support-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(142,68,173,0.4);
+    background: rgba(0,0,0,0.3);
+    color: white;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    line-height: 1.5;
+}
+.support-textarea:focus {
+    outline: none;
+    border-color: #8e44ad;
+    box-shadow: 0 0 15px rgba(142,68,173,0.3);
+}
+.support-textarea::placeholder {
+    color: rgba(255,255,255,0.4);
+}
+
+.support-send-btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 18px;
+    border-radius: 50px;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    background: linear-gradient(135deg, #8e44ad, #c084fc);
+    box-shadow: 0 0 20px rgba(142,68,173,0.4);
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 16px;
+}
+.support-send-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(192,132,252,0.6);
+}
+.support-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.support-sent-msg {
+    display: none;
+    background: rgba(39,174,96,0.2);
+    border: 1px solid #27ae60;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    color: #2ecc71;
+    font-weight: bold;
+    width: 100%;
+    max-width: 340px;
+    animation: fadeIn 0.3s ease;
+}
+
+.support-history {
+    width: 100%;
+    max-width: 340px;
+    margin-top: 20px;
+}
+
+.support-msg-item {
+    background: rgba(142,68,173,0.1);
+    border: 1px solid rgba(142,68,173,0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+}
+
+.support-msg-user {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75em;
+    margin-bottom: 4px;
+}
+
+.support-msg-text {
+    color: white;
+    line-height: 1.4;
+}
+
+.support-msg-admin {
+    background: rgba(39,174,96,0.15);
+    border-color: rgba(39,174,96,0.4);
+}
+
+.support-msg-admin .support-msg-user {
+    color: #2ecc71;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 </head>
 <body>
 
@@ -624,34 +807,32 @@ canvas#canvas {
 <div id="loading-screen">
     <div id="stars-bg"></div>
 
-```
-<div class="nebula" style="width:300px;height:300px;left:10%;top:20%;background:radial-gradient(circle,rgba(124,58,237,0.18) 0%,transparent 70%);"></div>
-<div class="nebula" style="width:200px;height:200px;right:5%;bottom:25%;background:radial-gradient(circle,rgba(232,121,249,0.15) 0%,transparent 70%);"></div>
-<div class="nebula" style="width:250px;height:250px;left:30%;bottom:10%;background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%);"></div>
+    <div class="nebula" style="width:300px;height:300px;left:10%;top:20%;background:radial-gradient(circle,rgba(124,58,237,0.18) 0%,transparent 70%);"></div>
+    <div class="nebula" style="width:200px;height:200px;right:5%;bottom:25%;background:radial-gradient(circle,rgba(232,121,249,0.15) 0%,transparent 70%);"></div>
+    <div class="nebula" style="width:250px;height:250px;left:30%;bottom:10%;background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%);"></div>
 
-<div class="orbit-ring" style="width:200px;height:200px;left:50%;top:42%;animation-duration:8s;">
-    <div class="orbit-dot"></div>
-</div>
-<div class="orbit-ring" style="width:280px;height:280px;left:50%;top:42%;animation-duration:14s;animation-direction:reverse;border-color:rgba(232,121,249,0.12);">
-    <div class="orbit-dot" style="background:#e879f9;box-shadow:0 0 8px #e879f9;"></div>
-</div>
-
-<div class="load-center-block">
-    <div class="load-logo">
-        <div class="load-crown">👑</div>
-        <div class="load-title">Imperial Roulette</div>
-        <div class="load-subtitle" id="load-subtitle-text">Fortune Awaits</div>
+    <div class="orbit-ring" style="width:200px;height:200px;left:50%;top:42%;animation-duration:8s;">
+        <div class="orbit-dot"></div>
+    </div>
+    <div class="orbit-ring" style="width:280px;height:280px;left:50%;top:42%;animation-duration:14s;animation-direction:reverse;border-color:rgba(232,121,249,0.12);">
+        <div class="orbit-dot" style="background:#e879f9;box-shadow:0 0 8px #e879f9;"></div>
     </div>
 
-    <div class="load-bar-wrap">
-        <div class="load-bar-track">
-            <div class="load-bar-fill" id="load-fill"></div>
+    <div class="load-center-block">
+        <div class="load-logo">
+            <div class="load-crown">👑</div>
+            <div class="load-title">Imperial Roulette</div>
+            <div class="load-subtitle" id="load-subtitle-text">Fortune Awaits</div>
         </div>
-        <div class="load-pct" id="load-pct">0%</div>
-        <div class="load-status" id="load-status">Initializing…</div>
+
+        <div class="load-bar-wrap">
+            <div class="load-bar-track">
+                <div class="load-bar-fill" id="load-fill"></div>
+            </div>
+            <div class="load-pct" id="load-pct">0%</div>
+            <div class="load-status" id="load-status">Initializing…</div>
+        </div>
     </div>
-</div>
-```
 
 </div>
 
@@ -661,44 +842,45 @@ canvas#canvas {
 
 <div id="app-content">
 
-<div id="particles"></div>
+    <div id="particles"></div>
 
-<div id="sb-banner">
-    <span class="sb-crown">👑</span>
-    <div class="sb-text">
-        <span class="sb-label">SuperBonus</span>
-        <span class="sb-amount">500 TON</span>
+    <div id="sb-banner">
+        <span class="sb-crown">👑</span>
+        <div class="sb-text">
+            <span class="sb-label">SuperBonus</span>
+            <span class="sb-amount">500 TON</span>
+        </div>
     </div>
-</div>
 
-<button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Кошелек</button>
+    <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
+    <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Кошелек</button>
 
-<div class="top-bar"></div>
+    <div class="top-bar"></div>
 
-<div class="wheel-container">
-    <div id="ptr"></div>
-    <canvas id="canvas" width="600" height="600"></canvas>
-</div>
-
-<!-- БАЛАНС -->
-
-<div id="bal-center">
-    <span id="bal-label">БАЛАНС</span>
-    <div class="bal-display">⭐ <span id="s_bal">0</span></div>
-</div>
-
-<div id="history-bar"></div>
-
-<div class="controls">
-    <div class="bet-box">
-        <button id="sound-btn" onclick="toggleSound()">🔊</button>
-        <button class="btn-adj" id="btn-minus" onclick="adjBet(-20)">-</button>
-        <div id="bet-label-box">Ставка<br><b id="cur_bet">5</b> ⭐</div>
-        <button class="btn-adj" id="btn-plus" onclick="adjBet(20)">+</button>
-        <button id="fast-btn" onclick="toggleFast()">🐇</button>
+    <div class="wheel-container">
+        <div id="ptr"></div>
+        <canvas id="canvas" width="600" height="600"></canvas>
     </div>
-    <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
-</div>
+
+    <!-- БАЛАНС -->
+
+    <div id="bal-center">
+        <span id="bal-label">БАЛАНС</span>
+        <div class="bal-display">⭐ <span id="s_bal">0</span></div>
+    </div>
+
+    <div id="history-bar"></div>
+
+    <div class="controls">
+        <div class="bet-box">
+            <button id="sound-btn" onclick="toggleSound()">🔊</button>
+            <button class="btn-adj" id="btn-minus" onclick="adjBet(-20)">-</button>
+            <div id="bet-label-box">Ставка<br><b id="cur_bet">5</b> ⭐</div>
+            <button class="btn-adj" id="btn-plus" onclick="adjBet(20)">+</button>
+            <button id="fast-btn" onclick="toggleFast()">🐇</button>
+        </div>
+        <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+    </div>
 
 </div><!-- end #app-content -->
 
@@ -714,105 +896,103 @@ canvas#canvas {
         <div class="tab"        id="tab-priv" onclick="setTab('priv',this)" data-ru="КОНФИДЕНЦИАЛЬНОСТЬ" data-en="PRIVACY">КОНФИДЕНЦИАЛЬНОСТЬ</div>
     </div>
 
-```
-<div id="dep" class="tab-content active">
-    <h2 style="color:gold; margin-bottom:4px;" id="dep-title">Пополнение ⭐</h2>
-    <p class="m-warn" id="dep-min">Минимум 100 ⭐</p>
-    <input class="modal-input" type="number" id="dep_val"
-           placeholder="Введите количество звёзд" min="100" inputmode="numeric">
-    <p class="m-hint" id="dep-hint">Введите количество звёзд для пополнения баланса</p>
-    <button class="modal-btn green" onclick="doDep()" id="dep-btn">КУПИТЬ ⭐</button>
-    <p class="back-link" id="dep-back" onclick="closeM()">← Назад</p>
-</div>
-
-<div id="wit" class="tab-content">
-    <h2 style="color:#0088cc; margin-bottom:4px;" id="wit-title">Вывод TON</h2>
-    <p class="m-warn" id="wit-min">Минимум 500 ⭐</p>
-    <input class="modal-input" type="number" id="w_stars"
-           placeholder="Сумма звёзд (мин. 500)" inputmode="numeric" oninput="calcWit()">
-    <div class="m-preview" id="wit_preview">Вы получите: — TON</div>
-    <p class="m-rate" id="rate-label">Курс: загрузка…</p>
-    <input class="modal-input" type="text" id="w_addr" placeholder="Адрес TON (UQ...)">
-    <input class="modal-input" type="text" id="w_memo" placeholder="MEMO / Tag">
-    <p class="m-hint" style="font-size:.75em;" id="memo-hint">MEMO — если требуется биржей или кошельком</p>
-    <button class="modal-btn" onclick="doWit()" id="wit-btn">ВЫВЕСТИ</button>
-    <p class="back-link" id="wit-back" onclick="closeM()">← Назад</p>
-</div>
-
-<div id="rules" class="tab-content">
-    <div class="legal-text">
-        <h2>📜 TERMS &amp; CONDITIONS</h2>
-        <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
-        <h3>1. General Provisions</h3>
-        <p>Imperial Roulette is a digital entertainment service available through the Telegram platform.</p>
-        <p>By accessing or using the Service, the user confirms that:</p>
-        <ul>
-            <li>The user is at least 18 years old</li>
-            <li>The user understands the random nature of the game</li>
-            <li>The user accepts these Terms in full</li>
-        </ul>
-        <p>If the user does not agree, they must stop using the Service immediately.</p>
-        <hr class="section-divider">
-        <h3>2. Nature of the Service</h3>
-        <p>The Service provides an interactive digital game mechanic based on a random algorithm. Results are generated automatically using a randomization system.</p>
-        <p>The Service:</p>
-        <ul>
-            <li>Does not guarantee winnings</li>
-            <li>Does not promise profit</li>
-            <li>Is not an investment platform</li>
-            <li>Is not a financial service</li>
-        </ul>
-        <p>Participation is voluntary and at the user's own risk.</p>
-        <hr class="section-divider">
-        <h3>3. In-Game Units (Stars)</h3>
-        <p>The Service may use Telegram Stars for participation in the game. Stars are digital platform units provided by Telegram and are not issued by the Service.</p>
-        <hr class="section-divider">
-        <h3>4. Digital Rewards and TON Transfers</h3>
-        <p>Users may receive digital rewards based on game results. Where applicable, rewards may be transferred in TON digital assets. TON transfers are processed to the wallet address provided by the user, may be subject to network delays, and are irreversible once completed.</p>
-        <hr class="section-divider">
-        <h3>5. Randomness</h3>
-        <p>Game outcomes are determined by an automated algorithm. The user acknowledges that results are unpredictable, losses are possible, and there is no guaranteed win.</p>
-        <hr class="section-divider">
-        <h3>6. User Responsibilities</h3>
-        <p>Users agree not to use automated scripts or bots, exploit system vulnerabilities, create multiple accounts for abuse, or attempt to manipulate results.</p>
-        <hr class="section-divider">
-        <h3>7. Limitation of Liability</h3>
-        <p>The Administration is not responsible for financial losses, incorrect understanding of the mechanics, Telegram platform failures, blockchain network delays, or user errors.</p>
-        <hr class="section-divider">
-        <h3>8. Amendments</h3>
-        <p>These Terms may be updated at any time. Continued use of the Service constitutes acceptance of the updated version.</p>
+    <div id="dep" class="tab-content active">
+        <h2 style="color:gold; margin-bottom:4px;" id="dep-title">Пополнение ⭐</h2>
+        <p class="m-warn" id="dep-min">Минимум 100 ⭐</p>
+        <input class="modal-input" type="number" id="dep_val"
+               placeholder="Введите количество звёзд" min="100" inputmode="numeric">
+        <p class="m-hint" id="dep-hint">Введите количество звёзд для пополнения баланса</p>
+        <button class="modal-btn green" onclick="doDep()" id="dep-btn">КУПИТЬ ⭐</button>
+        <p class="back-link" id="dep-back" onclick="closeM()">← Назад</p>
     </div>
-    <p class="back-link" onclick="closeM()">← Back</p>
-</div>
 
-<div id="priv" class="tab-content">
-    <div class="legal-text">
-        <h2>🔒 PRIVACY POLICY</h2>
-        <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
-        <h3>1. Information We Collect</h3>
-        <p>The Service may collect limited technical data including Telegram User ID, Username, wallet address, and game interaction data. The Service does NOT collect passport data, banking credentials, or private wallet keys.</p>
-        <hr class="section-divider">
-        <h3>2. Purpose of Data Collection</h3>
-        <p>Data is collected strictly for operating the Service, processing game mechanics, managing reward transfers, preventing fraud, and improving user experience.</p>
-        <hr class="section-divider">
-        <h3>3. Data Storage</h3>
-        <p>User data is stored for as long as necessary to operate the Service or comply with applicable obligations.</p>
-        <hr class="section-divider">
-        <h3>4. Data Sharing</h3>
-        <p>The Service does not sell or rent user data. Data may only be shared if required by law or to prevent fraud.</p>
-        <hr class="section-divider">
-        <h3>5. Security</h3>
-        <p>Reasonable technical measures are implemented to protect user data. However, no digital system can guarantee absolute security.</p>
-        <hr class="section-divider">
-        <h3>6. Blockchain Transparency</h3>
-        <p>TON transactions are publicly visible on the blockchain. The Service is not responsible for third-party blockchain analytics.</p>
-        <hr class="section-divider">
-        <h3>7. Contact</h3>
-        <p>For privacy-related requests, users may contact support through the official Telegram support channel.</p>
+    <div id="wit" class="tab-content">
+        <h2 style="color:#0088cc; margin-bottom:4px;" id="wit-title">Вывод TON</h2>
+        <p class="m-warn" id="wit-min">Минимум 500 ⭐</p>
+        <input class="modal-input" type="number" id="w_stars"
+               placeholder="Сумма звёзд (мин. 500)" inputmode="numeric" oninput="calcWit()">
+        <div class="m-preview" id="wit_preview">Вы получите: — TON</div>
+        <p class="m-rate" id="rate-label">Курс: загрузка…</p>
+        <input class="modal-input" type="text" id="w_addr" placeholder="Адрес TON (UQ...)">
+        <input class="modal-input" type="text" id="w_memo" placeholder="MEMO / Tag">
+        <p class="m-hint" style="font-size:.75em;" id="memo-hint">MEMO — если требуется биржей или кошельком</p>
+        <button class="modal-btn" onclick="doWit()" id="wit-btn">ВЫВЕСТИ</button>
+        <p class="back-link" id="wit-back" onclick="closeM()">← Назад</p>
     </div>
-    <p class="back-link" onclick="closeM()">← Back</p>
-</div>
-```
+
+    <div id="rules" class="tab-content">
+        <div class="legal-text">
+            <h2>📜 TERMS &amp; CONDITIONS</h2>
+            <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
+            <h3>1. General Provisions</h3>
+            <p>Imperial Roulette is a digital entertainment service available through the Telegram platform.</p>
+            <p>By accessing or using the Service, the user confirms that:</p>
+            <ul>
+                <li>The user is at least 18 years old</li>
+                <li>The user understands the random nature of the game</li>
+                <li>The user accepts these Terms in full</li>
+            </ul>
+            <p>If the user does not agree, they must stop using the Service immediately.</p>
+            <hr class="section-divider">
+            <h3>2. Nature of the Service</h3>
+            <p>The Service provides an interactive digital game mechanic based on a random algorithm. Results are generated automatically using a randomization system.</p>
+            <p>The Service:</p>
+            <ul>
+                <li>Does not guarantee winnings</li>
+                <li>Does not promise profit</li>
+                <li>Is not an investment platform</li>
+                <li>Is not a financial service</li>
+            </ul>
+            <p>Participation is voluntary and at the user's own risk.</p>
+            <hr class="section-divider">
+            <h3>3. In-Game Units (Stars)</h3>
+            <p>The Service may use Telegram Stars for participation in the game. Stars are digital platform units provided by Telegram and are not issued by the Service.</p>
+            <hr class="section-divider">
+            <h3>4. Digital Rewards and TON Transfers</h3>
+            <p>Users may receive digital rewards based on game results. Where applicable, rewards may be transferred in TON digital assets. TON transfers are processed to the wallet address provided by the user, may be subject to network delays, and are irreversible once completed.</p>
+            <hr class="section-divider">
+            <h3>5. Randomness</h3>
+            <p>Game outcomes are determined by an automated algorithm. The user acknowledges that results are unpredictable, losses are possible, and there is no guaranteed win.</p>
+            <hr class="section-divider">
+            <h3>6. User Responsibilities</h3>
+            <p>Users agree not to use automated scripts or bots, exploit system vulnerabilities, create multiple accounts for abuse, or attempt to manipulate results.</p>
+            <hr class="section-divider">
+            <h3>7. Limitation of Liability</h3>
+            <p>The Administration is not responsible for financial losses, incorrect understanding of the mechanics, Telegram platform failures, blockchain network delays, or user errors.</p>
+            <hr class="section-divider">
+            <h3>8. Amendments</h3>
+            <p>These Terms may be updated at any time. Continued use of the Service constitutes acceptance of the updated version.</p>
+        </div>
+        <p class="back-link" onclick="closeM()">← Back</p>
+    </div>
+
+    <div id="priv" class="tab-content">
+        <div class="legal-text">
+            <h2>🔒 PRIVACY POLICY</h2>
+            <p class="eff-date">Effective date: 27.02.2026 · Imperial Roulette</p>
+            <h3>1. Information We Collect</h3>
+            <p>The Service may collect limited technical data including Telegram User ID, Username, wallet address, and game interaction data. The Service does NOT collect passport data, banking credentials, or private wallet keys.</p>
+            <hr class="section-divider">
+            <h3>2. Purpose of Data Collection</h3>
+            <p>Data is collected strictly for operating the Service, processing game mechanics, managing reward transfers, preventing fraud, and improving user experience.</p>
+            <hr class="section-divider">
+            <h3>3. Data Storage</h3>
+            <p>User data is stored for as long as necessary to operate the Service or comply with applicable obligations.</p>
+            <hr class="section-divider">
+            <h3>4. Data Sharing</h3>
+            <p>The Service does not sell or rent user data. Data may only be shared if required by law or to prevent fraud.</p>
+            <hr class="section-divider">
+            <h3>5. Security</h3>
+            <p>Reasonable technical measures are implemented to protect user data. However, no digital system can guarantee absolute security.</p>
+            <hr class="section-divider">
+            <h3>6. Blockchain Transparency</h3>
+            <p>TON transactions are publicly visible on the blockchain. The Service is not responsible for third-party blockchain analytics.</p>
+            <hr class="section-divider">
+            <h3>7. Contact</h3>
+            <p>For privacy-related requests, users may contact support through the official Telegram support channel.</p>
+        </div>
+        <p class="back-link" onclick="closeM()">← Back</p>
+    </div>
 
 </div>
 
@@ -823,34 +1003,71 @@ canvas#canvas {
 <div id="risk-modal">
     <div id="risk-bg"></div>
 
-```
-<div class="risk-inner">
-    <div class="risk-title" id="risk-title-el">🎰 РИСК БОНУС</div>
-    <div class="risk-prize-text" id="risk-prize-text-el">Возможен выигрыш</div>
-    <div class="risk-prize-amount">500 TON 🏆</div>
+    <div class="risk-inner">
+        <div class="risk-title" id="risk-title-el">🎰 РИСК БОНУС</div>
+        <div class="risk-prize-text" id="risk-prize-text-el">Возможен выигрыш</div>
+        <div class="risk-prize-amount">500 TON 🏆</div>
 
-    <!-- Прогресс: 5 слотов для мешочков -->
-    <div class="risk-bags-progress" id="risk-bags-progress">
-        <div class="risk-bag-slot" id="bag-slot-0"></div>
-        <div class="risk-bag-slot" id="bag-slot-1"></div>
-        <div class="risk-bag-slot" id="bag-slot-2"></div>
-        <div class="risk-bag-slot" id="bag-slot-3"></div>
-        <div class="risk-bag-slot" id="bag-slot-4"></div>
+        <!-- Прогресс: 5 слотов для мешочков -->
+        <div class="risk-bags-progress" id="risk-bags-progress">
+            <div class="risk-bag-slot" id="bag-slot-0"></div>
+            <div class="risk-bag-slot" id="bag-slot-1"></div>
+            <div class="risk-bag-slot" id="bag-slot-2"></div>
+            <div class="risk-bag-slot" id="bag-slot-3"></div>
+            <div class="risk-bag-slot" id="bag-slot-4"></div>
+        </div>
+
+        <div class="risk-instruction" id="risk-instruction-el">Открывай звёзды ✨ и найди 5 мешочков 💰<br>Собери все 5 — выиграй 500 TON!</div>
+
+        <!-- 10 звёзд кнопок: 2 ряда по 5 -->
+        <div class="risk-stars-grid" id="risk-stars-grid"></div>
+
+        <div class="risk-result-msg" id="risk-result-msg"></div>
+
+        <button class="risk-close-btn" id="risk-close-btn" onclick="closeRiskModal()">
+            <span id="risk-close-text">Закрыть</span>
+        </button>
     </div>
 
-    <div class="risk-instruction" id="risk-instruction-el">Открывай звёзды ✨ и найди 5 мешочков 💰<br>Собери все 5 — выиграй 500 TON!</div>
-
-    <!-- 10 звёзд кнопок: 2 ряда по 5 -->
-    <div class="risk-stars-grid" id="risk-stars-grid"></div>
-
-    <div class="risk-result-msg" id="risk-result-msg"></div>
-
-    <button class="risk-close-btn" id="risk-close-btn" onclick="closeRiskModal()">
-        <span id="risk-close-text">Закрыть</span>
-    </button>
 </div>
-```
 
+<!-- ══════════════════════════════════════
+     ВКЛАДКА ПОДДЕРЖКИ
+══════════════════════════════════════ -->
+<div id="support-content">
+    <div class="support-header" id="support-header-el">🎧 ПОДДЕРЖКА</div>
+    
+    <div class="support-welcome">
+        <div class="support-welcome-icon">👋</div>
+        <div class="support-welcome-text" id="support-welcome-text-el">
+            Здравствуйте! Мы готовы помочь вам.<br>
+            Опишите ваш вопрос или проблему ниже.
+        </div>
+    </div>
+    
+    <div class="support-input-area">
+        <textarea 
+            class="support-textarea" 
+            id="support-textarea"
+            placeholder="Введите ваше сообщение..."
+            maxlength="1000"
+        ></textarea>
+    </div>
+    
+    <button class="support-send-btn" id="support-send-btn" onclick="sendSupportMessage()">
+        ОТПРАВИТЬ СООБЩЕНИЕ
+    </button>
+    
+    <div class="support-sent-msg" id="support-sent-msg">
+        ✅ Сообщение отправлено!<br>
+        <span style="font-size: 0.85em; font-weight: normal;">
+            Мы ответим вам в ближайшее время.
+        </span>
+    </div>
+    
+    <div class="support-history" id="support-history"></div>
+    
+    <p class="back-link" id="support-back" onclick="closeSupport()">← Назад</p>
 </div>
 
 <script>
@@ -908,6 +1125,13 @@ const I18N = {
         risk_lose_msg: (found, attempts) => `Найдено ${found} из 5 💰 за ${attempts} попыток. Удачи!`,
         risk_game_over: 'Игра окончена! Попробуйте снова.',
         risk_close: 'Закрыть',
+        support_title: '🎧 ПОДДЕРЖКА',
+        support_welcome: 'Здравствуйте! Мы готовы помочь вам.<br>Опишите ваш вопрос или проблему ниже.',
+        support_placeholder: 'Введите ваше сообщение...',
+        support_send: 'ОТПРАВИТЬ СООБЩЕНИЕ',
+        support_sent: '✅ Сообщение отправлено!<br><span style="font-size: 0.85em; font-weight: normal;">Мы ответим вам в ближайшее время.</span>',
+        support_back: '← Назад',
+        support_empty: 'Пожалуйста, введите сообщение',
         err_min_dep: (n) => `Минимум ${n} звёзд`,
         err_no_addr: 'Введите адрес TON',
         err_no_amount: 'Введите сумму',
@@ -959,6 +1183,13 @@ const I18N = {
         risk_lose_msg: (found, attempts) => `Found ${found}/5 💰 bags in ${attempts} attempts. Try again!`,
         risk_game_over: 'Game over! Try again.',
         risk_close: 'Close',
+        support_title: '🎧 SUPPORT',
+        support_welcome: 'Hello! We are ready to help you.<br>Describe your question or issue below.',
+        support_placeholder: 'Enter your message...',
+        support_send: 'SEND MESSAGE',
+        support_sent: '✅ Message sent!<br><span style="font-size: 0.85em; font-weight: normal;">We will reply to you soon.</span>',
+        support_back: '← Back',
+        support_empty: 'Please enter a message',
         err_min_dep: (n) => `Minimum ${n} stars`,
         err_no_addr: 'Enter TON address',
         err_no_amount: 'Enter amount',
@@ -1007,6 +1238,13 @@ function applyLangToUI() {
     document.getElementById('risk-close-text').textContent = t('risk_close');
     // Rate label
     document.getElementById('rate-label').textContent = t('rate_loading');
+    // Поддержка
+    document.getElementById('support-header-el').textContent = t('support_title');
+    document.getElementById('support-welcome-text-el').innerHTML = t('support_welcome');
+    document.getElementById('support-textarea').placeholder = t('support_placeholder');
+    document.getElementById('support-send-btn').textContent = t('support_send');
+    document.getElementById('support-sent-msg').innerHTML = t('support_sent');
+    document.getElementById('support-back').textContent = t('support_back');
     update();
 }
 
@@ -1064,6 +1302,8 @@ function startLoadingScreen() {
                 }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
+                // Отправляем уведомление о открытии рулетки
+                notifyOpenRoulette();
             }, 300);
             return;
         }
@@ -1229,6 +1469,210 @@ function startRatchet(ms) {
         const o = actx.createOscillator(), g = actx.createGain();
         o.connect(g); g.connect(actx.destination);
         o.type = 'square'; o.frequency.value = 900;
+        g.gain.setValueAtTime(0.07, actx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
+        o.start(); o.stop(actx.currentTime + 0.04);
+    }, ms);
+}
+function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
+
+const SUPERBONUS_IDX = 7;
+const sectors = [
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
+    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
+    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
+    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
+    { t:'×5',        c:'#9b59b6', mult:5,   weight:6,     isSB:false, isFree:false, isRisk:false },
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
+    { t:'★SB',       c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false, isRisk:false },
+    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
+    { t:'×5',        c:'#f39c12', mult:5,   weight:3,     isSB:false, isFree:false, isRisk:false },
+    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false },
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
+    { t:'РИСК',      c:'#c0392b', mult:0,   weight:0.99,  isSB:false, isFree:false, isRisk:true  },
+    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
+    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
+    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false }
+];
+
+const N   = sectors.length;
+const ARC = (Math.PI * 2) / N;
+
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let curAngle = 0;
+
+let hlIdx = -1, hlPhase = 0, hlRemain = 0, hlRAF = null;
+
+function draw(angle, hi, phase) {
+    ctx.clearRect(0, 0, 600, 600);
+    sectors.forEach((s, i) => {
+        const a = i * ARC + angle;
+        if (s.isSB) {
+            const gr = ctx.createRadialGradient(300,300,60,300,300,280);
+            gr.addColorStop(0,'#fff3a0'); gr.addColorStop(0.3,'#ffd700');
+            gr.addColorStop(0.7,'#cc8800'); gr.addColorStop(1,'#7a4800');
+            ctx.beginPath(); ctx.fillStyle = gr;
+            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
+            ctx.save();
+            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 28;
+            ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4;
+            ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+            ctx.restore();
+        } else if (s.isRisk) {
+            // Риск бонус — особый стиль
+            const gr = ctx.createRadialGradient(300,300,60,300,300,280);
+            gr.addColorStop(0,'#ff6b6b'); gr.addColorStop(0.4,'#e74c3c');
+            gr.addColorStop(0.8,'#c0392b'); gr.addColorStop(1,'#7d0000');
+            ctx.beginPath(); ctx.fillStyle = gr;
+            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
+            ctx.save();
+            ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 20;
+            ctx.beginPath(); ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3;
+            ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+            ctx.restore();
+        } else {
+            ctx.beginPath(); ctx.fillStyle = s.c;
+            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
+        }
+        if (i === hi && hlRemain > 0) {
+            const pulse = 0.45 + 0.55 * Math.abs(Math.sin(phase * 0.009));
+            ctx.save();
+            const hg = ctx.createRadialGradient(300,300,80,300,300,280);
+            hg.addColorStop(0,`rgba(255,255,180,${0.22*pulse})`);
+            hg.addColorStop(0.6,`rgba(255,210,0,${0.4*pulse})`);
+            hg.addColorStop(1,`rgba(255,160,0,0)`);
+            ctx.beginPath(); ctx.fillStyle = hg;
+            ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
+            ctx.shadowColor = `rgba(255,220,50,${pulse})`; ctx.shadowBlur = 32;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255,230,60,${0.95*pulse})`; ctx.lineWidth = 9;
+            ctx.moveTo(300,300); ctx.arc(300,300,274,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+            ctx.restore();
+        }
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+        ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
+        ctx.save(); ctx.translate(300,300); ctx.rotate(a + ARC/2);
+        if (s.isSB) {
+            ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 16;
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial';
+            ctx.fillText('SUPER', 118, -8); ctx.fillText('BONUS', 118, 8);
+            ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#ffe066';
+            ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
+        } else if (s.isRisk) {
+            ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 14;
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial';
+            ctx.fillText('РИСК', 120, -8);
+            ctx.fillText('БОНУС', 116, 8);
+            ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#ffaaaa';
+            ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial';
+            ctx.fillText(s.t, 148, 8);
+        }
+        ctx.restore();
+    });
+}
+
+function startHighlight(idx) {
+    hlIdx = idx; hlRemain = 4000; hlPhase = 0;
+    let last = null;
+    function loop(now) {
+        if (!last) last = now;
+        const dt = now - last; last = now;
+        hlRemain -= dt; hlPhase += dt;
+        draw(curAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
+        if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
+        else { hlIdx = -1; draw(curAngle, -1, 0); }
+    }
+    if (hlRAF) cancelAnimationFrame(hlRAF);
+    hlRAF = requestAnimationFrame(loop);
+}
+
+const ptrEl = document.getElementById('ptr');
+let ptrAngle = 0, ptrVel = 0, ptrTarget = 0;
+let ptrRAF = null, ptrLast = null;
+
+function animPointer(now) {
+    if (!ptrLast) ptrLast = now;
+    const dt = Math.min(now - ptrLast, 50) / 1000;
+    ptrLast = now;
+    const err = ptrTarget - ptrAngle;
+    ptrVel += (20 * err - 7 * ptrVel) * dt;
+    ptrAngle += ptrVel * dt;
+    ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle.toFixed(2)}deg)`;
+    if (Math.abs(err) > 0.05 || Math.abs(ptrVel) > 0.05) {
+        ptrRAF = requestAnimationFrame(animPointer);
+    } else {
+        ptrAngle = ptrTarget; ptrVel = 0;
+        ptrEl.style.transform = `translateX(-50%) rotate(${ptrAngle}deg)`;
+        ptrRAF = null; ptrLast = null;
+    }
+}
+function setPointerLean(deg) {
+    ptrTarget = Math.max(-30, Math.min(30, deg));
+    if (!ptrRAF) { ptrLast = null; ptrRAF = requestAnimationFrame(animPointer); }
+}
+
+function getWeightedRandom() {
+    const avail = sectors.map((s,i) => ({...s, idx:i})).filter(s => !s.isSB);
+    const total = avail.reduce((sum, s) => sum + s.weight, 0);
+    let r = Math.random() * total;
+    for (const s of avail) { r -= s.weight; if (r <= 0) return s.idx; }
+    return avail[0].idx;
+}
+
+function loadBalance() {
+    const urlBal = parseInt(new URLSearchParams(location.search).get('balance'));
+    if (tg.CloudStorage) {
+        tg.CloudStorage.getItem(`balance_${userId}`, (err, val) => {
+            const saved = (!err && val) ? parseInt(val) : NaN;
+            if (!isNaN(saved) && saved >= 0) {
+                stars = (!isNaN(urlBal) && urlBal > saved) ? urlBal : saved;
+            } else {
+                stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
+            }
+            if (!isNaN(urlBal) && urlBal > (isNaN(saved) ? -1 : saved)) saveBalance();
+            update();
+        });
+    } else {
+        stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
+        update();
+    }
+}
+
+function saveBalance(cb) {
+    if (tg.CloudStorage) {
+        tg.CloudStorage.setItem(`balance_${userId}`, String(stars), err => {
+            if (!err) console.log('saved:', stars);
+            if (cb) cb();
+        });
+    } else if (cb) cb();
+}
+
+function update() {
+    document.getElementById('s_bal').innerText   = stars;
+    const curBetEl = document.getElementById('cur_bet');
+    if (curBetEl) curBetEl.innerText = curBet;
+    const btn = document.getElementById('spinBtn');
+    if (hasFreeSpins > 0) {
+        btn.innerText = t('free_spin', hasFreeSpins);
+        btn.classList.remove('dep-mode'); btn.classList.add('free-mode');
+    } else if (stars < curBet) {
+        btn.innerText = t('deposit_btn');
+        btn.classList.add('dep-mode'); btn.classList.remove('free-mode');
+    } else {
+        btn.innerText = t('spin');
+        btn.classList.remove('dep-mode', 'free-mode');
+    }
+    document.getElementById('btn-minus').disabled = isSpinning;
+    document.getElementById('btn-plus').disabled  = isSpinning;
+}
+
+const histArr = [];
+function addHistory(label, cls) {
+    histArr.unshift;
         g.gain.setValueAtTime(0.07, actx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
         o.start(); o.stop(actx.currentTime + 0.04);
@@ -1761,6 +2205,99 @@ function adjBet(v) {
     playClick();
     curBet = Math.max(5, curBet + v);
     update();
+}
+
+/* ══════════════════════════════════════
+   ОТКРЫТИЕ РУЛЕТКИ — УВЕДОМЛЕНИЕ В БОТ
+══════════════════════════════════════ */
+function notifyOpenRoulette() {
+    // Отправляем уведомление в бот при открытии
+    tg.sendData(JSON.stringify({
+        action: 'open_roulette',
+        uid: userId,
+        lang: lang,
+        balance: stars
+    }));
+}
+
+/* ══════════════════════════════════════
+   ПОДДЕРЖКА — ФУНКЦИИ
+══════════════════════════════════════ */
+function openSupport() {
+    playClick();
+    // Скрываем основной контент, показываем поддержку
+    document.getElementById('app-content').style.display = 'none';
+    document.getElementById('support-content').classList.add('active');
+    // Обновляем язык
+    applyLangToUI();
+}
+
+function closeSupport() {
+    playClick();
+    document.getElementById('support-content').classList.remove('active');
+    document.getElementById('app-content').style.display = 'flex';
+    // Сбрасываем форму
+    document.getElementById('support-textarea').value = '';
+    document.getElementById('support-sent-msg').style.display = 'none';
+}
+
+function sendSupportMessage() {
+    playClick();
+    const text = document.getElementById('support-textarea').value.trim();
+    
+    if (!text) {
+        alert(t('support_empty'));
+        return;
+    }
+    
+    // Отправляем в бот
+    tg.sendData(JSON.stringify({
+        action: 'support_message',
+        uid: userId,
+        lang: lang,
+        message: text,
+        timestamp: new Date().toISOString()
+    }));
+    
+    // Показываем подтверждение
+    document.getElementById('support-sent-msg').style.display = 'block';
+    document.getElementById('support-send-btn').disabled = true;
+    
+    // Добавляем в историю локально
+    addSupportMessageToHistory('user', text);
+    
+    // Очищаем поле
+    document.getElementById('support-textarea').value = '';
+    
+    // Разблокируем кнопку через 3 секунды
+    setTimeout(() => {
+        document.getElementById('support-send-btn').disabled = false;
+    }, 3000);
+    
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function addSupportMessageToHistory(from, text) {
+    const history = document.getElementById('support-history');
+    const item = document.createElement('div');
+    item.className = `support-msg-item ${from === 'admin' ? 'support-msg-admin' : ''}`;
+    
+    const userLabel = from === 'admin' 
+        ? (lang === 'ru' ? '👨‍💼 Администратор' : '👨‍💼 Administrator')
+        : (lang === 'ru' ? '👤 Вы' : '👤 You');
+    
+    item.innerHTML = `
+        <div class="support-msg-user">${userLabel} • ${new Date().toLocaleTimeString()}</div>
+        <div class="support-msg-text">${escapeHtml(text)}</div>
+    `;
+    
+    history.insertBefore(item, history.firstChild);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 window.addEventListener('beforeunload', () => saveBalance());
