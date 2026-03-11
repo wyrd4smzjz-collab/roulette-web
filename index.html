@@ -236,11 +236,11 @@
             font-size: 0.8em; cursor: pointer;
         }
 
-        /* КНОПКА ПОДДЕРЖКИ */
+        /* КНОПКА ПОДДЕРЖКИ - ИЗМЕНЕНО: теперь ниже баннера */
         .support-btn {
             position: fixed;
             left: 15px;
-            top: calc(env(safe-area-inset-top) + 12px);
+            top: calc(env(safe-area-inset-top) + 65px); /* Было 12px, стало 65px (ниже баннера) */
             z-index: 200;
             width: 44px;
             height: 44px;
@@ -1632,7 +1632,6 @@ function startHighlight(idx) {
         if (!last) last = now;
         const dt = now - last; last = now;
         hlRemain -= dt; hlPhase += dt;
-        draw(curAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
         if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
         else { hlIdx = -1; draw(curAngle, -1, 0); }
     }
@@ -2110,6 +2109,13 @@ function escapeHtml(text) {
 
 window.addEventListener('beforeunload', () => saveBalance());
 window.addEventListener('DOMContentLoaded', () => {
+    // Проверка техработ из URL параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('maint') === '1') {
+        document.getElementById('maintenance-screen').classList.add('active');
+        return; // Не загружаем приложение если техработы
+    }
+    
     loadBalance();
     draw(0, -1, 0);
     
