@@ -1378,9 +1378,10 @@ function selectLangFromTab(selectedLang) {
 ══════════════════════════════════════ */
 function startLoadingScreen() {
     const ls = document.getElementById('loading-screen');
-
+    
+    // Звёздный фон
     const bg = document.getElementById('stars-bg');
-    if (!bg.children.length) {
+    if (bg && !bg.children.length) {
         for (let i = 0; i < 120; i++) {
             const s = document.createElement('div');
             s.className = 'star-dot';
@@ -1393,6 +1394,11 @@ function startLoadingScreen() {
     const fill = document.getElementById('load-fill');
     const pct  = document.getElementById('load-pct');
     const stat = document.getElementById('load-status');
+    
+    if (!fill || !pct || !stat) {
+        console.error('Loading elements not found!');
+        return;
+    }
 
     const loadingSteps = t('loading_steps');
     const steps = [
@@ -1412,14 +1418,12 @@ function startLoadingScreen() {
             setTimeout(() => {
                 document.getElementById('app-content').classList.add('ready');
                 applyLangToUI();
-                // Приветствие — всегда на английском
                 setTimeout(() => {
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     showWelcomeToast();
                 }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
-                // Отправляем уведомление о открытии рулетки
                 notifyOpenRoulette();
             }, 300);
             return;
