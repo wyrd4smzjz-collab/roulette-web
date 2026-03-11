@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magik Spin</title>
+    <title>Imperial Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         html, body {
@@ -17,9 +17,7 @@
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
 
-        /* ══════════════════════════════
-           ЭКРАН ТЕХРАБОТ
-        ══════════════════════════════ */
+        /* ЭКРАН ТЕХРАБОТ */
         #maintenance-screen {
             display: none;
             position: fixed;
@@ -61,15 +59,7 @@
             max-width: 300px;
         }
 
-        .maintenance-timer {
-            margin-top: 30px;
-            font-size: 0.9em;
-            color: rgba(255,255,255,0.5);
-        }
-
-        /* ══════════════════════════════
-           ЭКРАН ЗАГРУЗКИ
-        ══════════════════════════════ */
+        /* ЭКРАН ЗАГРУЗКИ */
         #loading-screen {
             position: fixed; inset: 0; z-index: 99999;
             background: #08001a;
@@ -200,9 +190,7 @@
             box-shadow: 0 0 8px #c084fc, 0 0 16px #7c3aed;
         }
 
-        /* ══════════════════════════════
-           ОСНОВНОЙ ИНТЕРФЕЙС
-        ══════════════════════════════ */
+        /* ОСНОВНОЙ ИНТЕРФЕЙС */
         #app-content {
             display: none;
             width: 100%;
@@ -248,9 +236,7 @@
             font-size: 0.8em; cursor: pointer;
         }
 
-        /* ══════════════════════════════
-           КНОПКА ПОДДЕРЖКИ
-        ══════════════════════════════ */
+        /* КНОПКА ПОДДЕРЖКИ */
         .support-btn {
             position: fixed;
             left: 15px;
@@ -388,9 +374,7 @@
         .dep-mode  { background: #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; }
         .free-mode { background: #27ae60 !important; box-shadow: 0 0 25px #27ae60 !important; }
 
-        /* ══════════════════════════════
-           МОДАЛЬНОЕ ОКНО
-        ══════════════════════════════ */
+        /* МОДАЛЬНОЕ ОКНО */
         #modal {
             display: none; position: fixed; inset: 0;
             background: #000; z-index: 300;
@@ -449,9 +433,7 @@
             margin: 16px 0;
         }
 
-        /* ══════════════════════════════
-           РИСК БОНУС — МОДАЛЬНОЕ ОКНО
-        ══════════════════════════════ */
+        /* РИСК БОНУС */
         #risk-modal {
             display: none; position: fixed; inset: 0; z-index: 5000;
             flex-direction: column; align-items: center; justify-content: center;
@@ -459,7 +441,6 @@
         }
         #risk-modal.open { display: flex; }
 
-        /* Фон с падающими деньгами */
         #risk-bg {
             position: absolute; inset: 0;
             background: radial-gradient(ellipse at center, #1a0a00 0%, #0d0500 60%, #050200 100%);
@@ -512,7 +493,6 @@
             50% { transform: scale(1.08); text-shadow: 0 0 30px #ffd700, 0 0 60px #ffaa00, 0 0 80px #ff8800; }
         }
 
-        /* Прогресс мешочков */
         .risk-bags-progress {
             display: flex; gap: 8px; margin-bottom: 18px; align-items: center;
         }
@@ -540,7 +520,6 @@
             margin-bottom: 16px; line-height: 1.5;
         }
 
-        /* Звёзды-кнопки */
         .risk-stars-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 10px; margin-bottom: 20px; width: 100%;
@@ -602,9 +581,7 @@
             box-shadow: 0 0 15px #8e44ad;
         }
 
-        /* ══════════════════════════════
-           ВКЛАДКА ПОДДЕРЖКИ
-        ══════════════════════════════ */
+        /* ВКЛАДКА ПОДДЕРЖКИ */
         #support-content {
             display: none;
             flex-direction: column;
@@ -761,9 +738,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ══════════════════════════════
-           ВКЛАДКА ВЫБОРА ЯЗЫКА
-        ══════════════════════════════ */
+        /* ВКЛАДКА ЯЗЫКА */
         #lang-content {
             display: none;
             flex-direction: column;
@@ -859,9 +834,7 @@
     </style>
 </head>
 <body>
-<!-- ══════════════════════════════════════
-     ЭКРАН ТЕХРАБОТ
-══════════════════════════════════════ -->
+<!-- ЭКРАН ТЕХРАБОТ -->
 <div id="maintenance-screen">
     <div class="maintenance-icon">🔧</div>
     <div class="maintenance-title" id="maint-title-ru">🔧 ТЕХНИЧЕСКИЕ РАБОТЫ</div>
@@ -878,10 +851,7 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     ЭКРАН ЗАГРУЗКИ
-══════════════════════════════════════ -->
-
+<!-- ЭКРАН ЗАГРУЗКИ -->
 <div id="loading-screen">
     <div id="stars-bg"></div>
 
@@ -911,15 +881,10 @@
             <div class="load-status" id="load-status">Initializing…</div>
         </div>
     </div>
-
 </div>
 
-<!-- ══════════════════════════════════════
-     ОСНОВНОЙ ИНТЕРФЕЙС
-══════════════════════════════════════ -->
-
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
 <div id="app-content">
-
     <div id="particles"></div>
 
     <div id="sb-banner">
@@ -940,8 +905,6 @@
         <canvas id="canvas" width="600" height="600"></canvas>
     </div>
 
-    <!-- БАЛАНС -->
-
     <div id="bal-center">
         <span id="bal-label">БАЛАНС</span>
         <div class="bal-display">⭐ <span id="s_bal">0</span></div>
@@ -959,13 +922,9 @@
         </div>
         <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
     </div>
+</div>
 
-</div><!-- end #app-content -->
-
-<!-- ══════════════════════════════════════
-     МОДАЛЬНОЕ ОКНО КОШЕЛЬКА
-══════════════════════════════════════ -->
-
+<!-- МОДАЛЬНОЕ ОКНО КОШЕЛЬКА -->
 <div id="modal">
     <div class="tabs">
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">ПОПОЛНИТЬ</div>
@@ -1091,13 +1050,9 @@
         </div>
         <p class="back-link" onclick="closeM()">← Back</p>
     </div>
-
 </div>
 
-<!-- ══════════════════════════════════════
-     РИСК БОНУС — МОДАЛЬНОЕ ОКНО
-══════════════════════════════════════ -->
-
+<!-- РИСК БОНУС -->
 <div id="risk-modal">
     <div id="risk-bg"></div>
 
@@ -1106,7 +1061,6 @@
         <div class="risk-prize-text" id="risk-prize-text-el">Возможен выигрыш</div>
         <div class="risk-prize-amount">500 TON 🏆</div>
 
-        <!-- Прогресс: 5 слотов для мешочков -->
         <div class="risk-bags-progress" id="risk-bags-progress">
             <div class="risk-bag-slot" id="bag-slot-0"></div>
             <div class="risk-bag-slot" id="bag-slot-1"></div>
@@ -1117,7 +1071,6 @@
 
         <div class="risk-instruction" id="risk-instruction-el">Открывай звёзды ✨ и найди 5 мешочков 💰<br>Собери все 5 — выиграй 500 TON!</div>
 
-        <!-- 10 звёзд кнопок: 2 ряда по 5 -->
         <div class="risk-stars-grid" id="risk-stars-grid"></div>
 
         <div class="risk-result-msg" id="risk-result-msg"></div>
@@ -1126,12 +1079,9 @@
             <span id="risk-close-text">Закрыть</span>
         </button>
     </div>
-
 </div>
 
-<!-- ══════════════════════════════════════
-     ВКЛАДКА ПОДДЕРЖКИ
-══════════════════════════════════════ -->
+<!-- ВКЛАДКА ПОДДЕРЖКИ -->
 <div id="support-content">
     <div class="support-header" id="support-header-el">🎧 ПОДДЕРЖКА</div>
     
@@ -1172,9 +1122,7 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-/* ══════════════════════════════════════
-   ЯЗЫК
-══════════════════════════════════════ */
+/* ЯЗЫК */
 let lang = 'ru';
 
 const I18N = {
@@ -1311,26 +1259,20 @@ function t(key, ...args) {
 }
 
 function applyLangToUI() {
-    // Кнопка кошелька
     document.getElementById('wallet-btn-el').textContent = t('wallet');
-    // Баланс
     document.getElementById('bal-label').textContent = t('balance');
-    // Ставка
     document.getElementById('bet-label-box').innerHTML = `${t('bet')}<br><b id="cur_bet">${curBet}</b> ⭐`;
-    // Вкладки
     document.getElementById('tab-dep').textContent = t('tab_dep');
     document.getElementById('tab-wit').textContent = t('tab_wit');
     document.getElementById('tab-lang').textContent = t('tab_lang');
     document.getElementById('tab-rules').textContent = t('tab_rules');
     document.getElementById('tab-priv').textContent = t('tab_priv');
-    // Депозит
     document.getElementById('dep-title').textContent = t('dep_title');
     document.getElementById('dep-min').textContent = t('dep_min');
     document.getElementById('dep_val').placeholder = t('dep_placeholder');
     document.getElementById('dep-hint').textContent = t('dep_hint');
     document.getElementById('dep-btn').textContent = t('dep_btn');
     document.getElementById('dep-back').textContent = t('dep_back');
-    // Вывод
     document.getElementById('wit-title').textContent = t('wit_title');
     document.getElementById('wit-min').textContent = t('wit_min');
     document.getElementById('w_stars').placeholder = t('wit_placeholder');
@@ -1338,17 +1280,13 @@ function applyLangToUI() {
     document.getElementById('wit-btn').textContent = t('wit_btn');
     document.getElementById('wit-back').textContent = t('wit_back');
     document.getElementById('memo-hint').textContent = t('memo_hint');
-    // Язык
     document.getElementById('lang-header-title').textContent = t('lang_title');
     document.getElementById('lang-current-label').textContent = t('lang_current');
     document.querySelector('.lang-back-btn').textContent = t('lang_back');
-    // Риск бонус
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     document.getElementById('risk-close-text').textContent = t('risk_close');
-    // Rate label
     document.getElementById('rate-label').textContent = t('rate_loading');
-    // Поддержка
     document.getElementById('support-header-el').textContent = t('support_title');
     document.getElementById('support-welcome-text-el').innerHTML = t('support_welcome');
     document.getElementById('support-textarea').placeholder = t('support_placeholder');
@@ -1362,24 +1300,18 @@ function selectLangFromTab(selectedLang) {
     lang = selectedLang;
     try { localStorage.setItem('imperial_lang', lang); } catch(_) {}
     
-    // Обновляем UI
     applyLangToUI();
     
-    // Обновляем активную кнопку
     document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
     document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
     
-    // Обновляем текст текущего языка
     document.getElementById('lang-current-label').textContent = t('lang_current');
 }
 
-/* ══════════════════════════════════════
-   ЭКРАН ЗАГРУЗКИ
-══════════════════════════════════════ */
+/* ЭКРАН ЗАГРУЗКИ */
 function startLoadingScreen() {
     const ls = document.getElementById('loading-screen');
     
-    // Звёздный фон
     const bg = document.getElementById('stars-bg');
     if (bg && !bg.children.length) {
         for (let i = 0; i < 120; i++) {
@@ -1424,7 +1356,7 @@ function startLoadingScreen() {
                 }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
-                notifyOpenRoulette();
+                // УБРАНО: notifyOpenRoulette() - оно закрывало WebApp!
             }, 300);
             return;
         }
@@ -1445,9 +1377,7 @@ function startLoadingScreen() {
     setTimeout(nextStep, 400);
 }
 
-/* ══════════════════════════════════════
-   ОСНОВНАЯ ЛОГИКА
-══════════════════════════════════════ */
+/* ОСНОВНАЯ ЛОГИКА */
 let stars        = 0;
 let curBet       = 5;
 let isSpinning   = false;
@@ -1479,7 +1409,7 @@ let tonPerStar = 0.013333;
     document.getElementById('rate-label').textContent = `Rate: 1 ⭐ = ${tonPerStar.toFixed(5)} TON`;
 })();
 
-/* ── ЧАСТИЦЫ ── */
+/* ЧАСТИЦЫ */
 (function spawnParticles() {
     const container = document.getElementById('particles');
     const items = ['⭐','💫','✨','🌟','⭐','💎','⭐','✨'];
@@ -1642,7 +1572,6 @@ function draw(angle, hi, phase) {
             ctx.moveTo(300,300); ctx.arc(300,300,278,a,a+ARC); ctx.lineTo(300,300); ctx.stroke();
             ctx.restore();
         } else if (s.isRisk) {
-            // Риск бонус — особый стиль
             const gr = ctx.createRadialGradient(300,300,60,300,300,280);
             gr.addColorStop(0,'#ff6b6b'); gr.addColorStop(0.4,'#e74c3c');
             gr.addColorStop(0.8,'#c0392b'); gr.addColorStop(1,'#7d0000');
@@ -1882,7 +1811,6 @@ function doSpin() {
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory('🎁 FREE', 'h-free');
         } else if (win.isRisk) {
-            // Открываем риск бонус
             playWin();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             addHistory(lang === 'ru' ? '🎰 РИСК БОНУС' : '🎰 RISK BONUS', 'h-win');
@@ -1906,16 +1834,10 @@ function doSpin() {
     requestAnimationFrame(frame);
 }
 
-/* ══════════════════════════════════════
-   РИСК БОНУС — ЛОГИКА
-   10 звёзд на экране, всего 5 ПОПЫТОК.
-   Мешочков скрыто максимум 4 из 10 —
-   собрать все 5 физически невозможно.
-   Рандом: количество мешков 2-4, позиции случайные.
-══════════════════════════════════════ */
+/* РИСК БОНУС */
 let riskGame = {
-    stars: [],        // массив из 10 элементов: true=мешок, false=пусто
-    revealed: [],     // какие открыты
+    stars: [],
+    revealed: [],
     bagsFound: 0,
     attemptsLeft: 5,
     attemptsUsed: 0,
@@ -1924,8 +1846,7 @@ let riskGame = {
 };
 
 function generateRiskStars() {
-    // Максимум 4 мешка из 10 — нельзя собрать все 5
-    const bagCount = 2 + Math.floor(Math.random() * 3); // 2, 3 или 4 мешка
+    const bagCount = 2 + Math.floor(Math.random() * 3);
     const positions = Array(10).fill(false);
     const bagPositions = [];
     while (bagPositions.length < bagCount) {
@@ -1938,7 +1859,6 @@ function generateRiskStars() {
 
 function spawnMoneyParticles() {
     const bg = document.getElementById('risk-bg');
-    // Очищаем старые
     bg.querySelectorAll('.money-particle').forEach(e => e.remove());
     const coins = ['💰','🪙','💵','💴','💶','🌟','⭐','💎'];
     const count = 20;
@@ -1957,7 +1877,6 @@ function spawnMoneyParticles() {
 }
 
 function openRiskModal() {
-    // Инициализируем игру — 5 попыток, макс 4 мешка скрыто
     riskGame.stars = generateRiskStars();
     riskGame.revealed = Array(10).fill(false);
     riskGame.bagsFound = 0;
@@ -1965,15 +1884,12 @@ function openRiskModal() {
     riskGame.attemptsUsed = 0;
     riskGame.gameOver = false;
 
-    // Обновляем тексты языка
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     document.getElementById('risk-close-text').textContent = t('risk_close');
 
-    // Показываем счётчик попыток в инструкции
     updateRiskInstruction();
 
-    // Сбрасываем слоты
     for (let i = 0; i < 5; i++) {
         const slot = document.getElementById(`bag-slot-${i}`);
         slot.textContent = '';
@@ -1983,7 +1899,6 @@ function openRiskModal() {
     document.getElementById('risk-result-msg').className = 'risk-result-msg';
     document.getElementById('risk-close-btn').classList.remove('show');
 
-    // Создаём кнопки звёзд
     const grid = document.getElementById('risk-stars-grid');
     grid.innerHTML = '';
     for (let i = 0; i < 10; i++) {
@@ -2026,15 +1941,12 @@ function onRiskStarClick(idx) {
         btn.classList.add('is-bag');
         riskGame.bagsFound++;
 
-        // Заполняем слот прогресса
         const slot = document.getElementById(`bag-slot-${riskGame.bagsFound - 1}`);
         slot.textContent = '💰';
         slot.classList.add('filled');
 
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
-        // Победа невозможна — макс 4 мешка скрыто, нужно 5
-        // Этот код оставлен для полноты но никогда не сработает
         if (riskGame.bagsFound >= 5) {
             riskGame.gameOver = true;
             const msg = document.getElementById('risk-result-msg');
@@ -2050,13 +1962,10 @@ function onRiskStarClick(idx) {
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     }
 
-    // Обновляем счётчик попыток
     updateRiskInstruction();
 
-    // Конец игры: попытки кончились
     if (riskGame.attemptsLeft <= 0) {
         riskGame.gameOver = true;
-        // Блокируем все оставшиеся звёзды визуально
         const grid = document.getElementById('risk-stars-grid');
         Array.from(grid.children).forEach(b => {
             if (!b.classList.contains('revealed')) {
@@ -2085,7 +1994,6 @@ function setTab(tabId, el) {
     document.getElementById(tabId).classList.add('active');
     el.classList.add('active');
     
-    // Если открыли вкладку языка, обновляем активную кнопку
     if (tabId === 'lang') {
         document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
         document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
@@ -2130,28 +2038,11 @@ function adjBet(v) {
     update();
 }
 
-/* ══════════════════════════════════════
-   ОТКРЫТИЕ РУЛЕТКИ — УВЕДОМЛЕНИЕ В БОТ
-══════════════════════════════════════ */
-function notifyOpenRoulette() {
-    // Отправляем уведомление в бот при открытии
-    tg.sendData(JSON.stringify({
-        action: 'open_roulette',
-        uid: userId,
-        lang: lang,
-        balance: stars
-    }));
-}
-
-/* ══════════════════════════════════════
-   ПОДДЕРЖКА — ФУНКЦИИ
-══════════════════════════════════════ */
+/* ПОДДЕРЖКА */
 function openSupport() {
     playClick();
-    // Скрываем основной контент, показываем поддержку
     document.getElementById('app-content').style.display = 'none';
     document.getElementById('support-content').classList.add('active');
-    // Обновляем язык
     applyLangToUI();
 }
 
@@ -2159,7 +2050,6 @@ function closeSupport() {
     playClick();
     document.getElementById('support-content').classList.remove('active');
     document.getElementById('app-content').style.display = 'flex';
-    // Сбрасываем форму
     document.getElementById('support-textarea').value = '';
     document.getElementById('support-sent-msg').style.display = 'none';
 }
@@ -2173,7 +2063,6 @@ function sendSupportMessage() {
         return;
     }
     
-    // Отправляем в бот
     tg.sendData(JSON.stringify({
         action: 'support_message',
         uid: userId,
@@ -2182,17 +2071,13 @@ function sendSupportMessage() {
         timestamp: new Date().toISOString()
     }));
     
-    // Показываем подтверждение
     document.getElementById('support-sent-msg').style.display = 'block';
     document.getElementById('support-send-btn').disabled = true;
     
-    // Добавляем в историю локально
     addSupportMessageToHistory('user', text);
     
-    // Очищаем поле
     document.getElementById('support-textarea').value = '';
     
-    // Разблокируем кнопку через 3 секунды
     setTimeout(() => {
         document.getElementById('support-send-btn').disabled = false;
     }, 3000);
@@ -2228,7 +2113,6 @@ window.addEventListener('DOMContentLoaded', () => {
     loadBalance();
     draw(0, -1, 0);
     
-    // Загружаем сохранённый язык или используем дефолтный
     try {
         const savedLang = localStorage.getItem('imperial_lang');
         if (savedLang === 'ru' || savedLang === 'en') {
@@ -2236,7 +2120,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     } catch(_) {}
     
-    // Запускаем загрузку сразу без выбора языка
     startLoadingScreen();
 });
 
