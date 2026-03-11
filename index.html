@@ -236,11 +236,11 @@
             font-size: 0.8em; cursor: pointer;
         }
 
-        /* КНОПКА ПОДДЕРЖКИ - ИЗМЕНЕНО: теперь ниже баннера */
+        /* КНОПКА ПОДДЕРЖКИ - НИЖЕ БАННЕРА */
         .support-btn {
             position: fixed;
             left: 15px;
-            top: calc(env(safe-area-inset-top) + 65px); /* Было 12px, стало 65px (ниже баннера) */
+            top: calc(env(safe-area-inset-top) + 65px);
             z-index: 200;
             width: 44px;
             height: 44px;
@@ -1121,6 +1121,7 @@
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
+tg.ready(); // ВАЖНО: сообщаем что WebApp готов
 
 /* ЯЗЫК */
 let lang = 'ru';
@@ -1356,7 +1357,6 @@ function startLoadingScreen() {
                 }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
-                // УБРАНО: notifyOpenRoulette() - оно закрывало WebApp!
             }, 300);
             return;
         }
@@ -1632,6 +1632,7 @@ function startHighlight(idx) {
         if (!last) last = now;
         const dt = now - last; last = now;
         hlRemain -= dt; hlPhase += dt;
+        draw(curAngle, hlRemain > 0 ? hlIdx : -1, hlPhase);
         if (hlRemain > 0) hlRAF = requestAnimationFrame(loop);
         else { hlIdx = -1; draw(curAngle, -1, 0); }
     }
@@ -2037,7 +2038,7 @@ function adjBet(v) {
     update();
 }
 
-/* ПОДДЕРЖКА */
+/* ПОДДЕРЖКА - ИСПРАВЛЕННАЯ ВЕРСИЯ */
 function openSupport() {
     playClick();
     document.getElementById('app-content').style.display = 'none';
@@ -2054,34 +2055,58 @@ function closeSupport() {
 }
 
 function sendSupportMessage() {
-    playClick();
-    const text = document.getElementById('support-textarea').value.trim();
-    
-    if (!text) {
-        alert(t('support_empty'));
-        return;
-    }
-    
-    tg.sendData(JSON.stringify({
-        action: 'support_message',
-        uid: userId,
-        lang: lang,
-        message: text,
-        timestamp: new Date().toISOString()
-    }));
-    
-    document.getElementById('support-sent-msg').style.display = 'block';
-    document.getElementById('support-send-btn').disabled = true;
-    
-    addSupportMessageToHistory('user', text);
-    
-    document.getElementById('support-textarea').value = '';
-    
-    setTimeout(() => {
+    try {
+        playClick();
+        const text = document.getElementById('support-textarea').value.trim();
+        
+        if (!text) {
+            alert(t('support_empty'));
+            return;
+        }
+        
+        console.log('Подготовка к отправке сообщения:', text);
+        
+        // Показываем что идет отправка
+        const btn = document.getElementById('support-send-btn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ Отправка...';
+        
+        // Формируем данные
+        const payload = {
+            action: 'support_message',
+            uid: userId,
+            lang: lang,
+            message: text,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('Отправка payload:', JSON.stringify(payload));
+        
+        // Отправляем данные боту
+        tg.sendData(JSON.stringify(payload));
+        
+        console.log('sendData выполнен успешно');
+        
+        // Показываем успех
+        document.getElementById('support-sent-msg').style.display = 'block';
+        addSupportMessageToHistory('user', text);
+        document.getElementById('support-textarea').value = '';
+        
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        
+        // Восстанавливаем кнопку
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }, 3000);
+        
+    } catch (e) {
+        console.error('Ошибка в sendSupportMessage:', e);
+        alert('Ошибка отправки: ' + e.message);
         document.getElementById('support-send-btn').disabled = false;
-    }, 3000);
-    
-    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        document.getElementById('support-send-btn').textContent = t('support_send');
+    }
 }
 
 function addSupportMessageToHistory(from, text) {
@@ -2107,15 +2132,27 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-window.addEventListener('beforeunload', () => saveBalance());
+// ЗАГРУЗКА - ИСПРАВЛЕННАЯ ПРОВЕРКА ТЕХРАБОТ
 window.addEventListener('DOMContentLoaded', () => {
-    // Проверка техработ из URL параметра
+    // ПРОВЕРКА ТЕХРАБОТ - САМЫЙ ПЕРВЫЙ ШАГ!
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('maint') === '1') {
+    const maint = urlParams.get('maint');
+    
+    console.log('Проверка техработ, maint =', maint);
+    
+    if (maint === '1') {
+        console.log('Техработы включены, показываем экран');
+        // Показываем экран техработ
         document.getElementById('maintenance-screen').classList.add('active');
-        return; // Не загружаем приложение если техработы
+        // Скрываем экран загрузки
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
+        return; // Прерываем загрузку приложения
     }
     
+    console.log('Техработы выключены, загружаем приложение');
+    
+    // Обычная загрузка
     loadBalance();
     draw(0, -1, 0);
     
