@@ -831,6 +831,30 @@
             background: rgba(142,68,173,0.5);
             box-shadow: 0 0 15px #8e44ad;
         }
+
+        /* КУРС TON */
+        .rate-display {
+            background: rgba(142,68,173,0.2);
+            border: 1px solid rgba(142,68,173,0.4);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin: 10px 0;
+            text-align: center;
+            width: 100%;
+            max-width: 340px;
+        }
+        .rate-display .rate-title {
+            font-size: 0.7em;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .rate-display .rate-value {
+            font-size: 1.1em;
+            color: #ffd700;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -896,7 +920,7 @@
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
-    <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Кошелек</button>
+    <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Wallet</button>
 
     <div class="top-bar"></div>
 
@@ -906,7 +930,7 @@
     </div>
 
     <div id="bal-center">
-        <span id="bal-label">БАЛАНС</span>
+        <span id="bal-label">BALANCE</span>
         <div class="bal-display">⭐ <span id="s_bal">0</span></div>
     </div>
 
@@ -916,50 +940,57 @@
         <div class="bet-box">
             <button id="sound-btn" onclick="toggleSound()">🔊</button>
             <button class="btn-adj" id="btn-minus" onclick="adjBet(-20)">-</button>
-            <div id="bet-label-box">Ставка<br><b id="cur_bet">5</b> ⭐</div>
+            <div id="bet-label-box">Bet<br><b id="cur_bet">5</b> ⭐</div>
             <button class="btn-adj" id="btn-plus" onclick="adjBet(20)">+</button>
             <button id="fast-btn" onclick="toggleFast()">🐇</button>
         </div>
-        <button id="spinBtn" class="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
+        <button id="spinBtn" class="spin-btn" onclick="handleSpin()">SPIN</button>
     </div>
 </div>
 
 <!-- МОДАЛЬНОЕ ОКНО КОШЕЛЬКА -->
 <div id="modal">
     <div class="tabs">
-        <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">ПОПОЛНИТЬ</div>
-        <div class="tab"        id="tab-wit" onclick="setTab('wit',this)" data-ru="ВЫВОД" data-en="WITHDRAW">ВЫВОД</div>
-        <div class="tab"        id="tab-lang" onclick="setTab('lang',this)" data-ru="ЯЗЫК" data-en="LANGUAGE">ЯЗЫК</div>
-        <div class="tab"        id="tab-rules" onclick="setTab('rules',this)" data-ru="ПРАВИЛА" data-en="RULES">ПРАВИЛА</div>
-        <div class="tab"        id="tab-priv" onclick="setTab('priv',this)" data-ru="КОНФИДЕНЦИАЛЬНОСТЬ" data-en="PRIVACY">КОНФИДЕНЦИАЛЬНОСТЬ</div>
+        <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">DEPOSIT</div>
+        <div class="tab"        id="tab-wit" onclick="setTab('wit',this)" data-ru="ВЫВОД" data-en="WITHDRAW">WITHDRAW</div>
+        <div class="tab"        id="tab-lang" onclick="setTab('lang',this)" data-ru="ЯЗЫК" data-en="LANGUAGE">LANGUAGE</div>
+        <div class="tab"        id="tab-rules" onclick="setTab('rules',this)" data-ru="ПРАВИЛА" data-en="RULES">RULES</div>
+        <div class="tab"        id="tab-priv" onclick="setTab('priv',this)" data-ru="КОНФИДЕНЦИАЛЬНОСТЬ" data-en="PRIVACY">PRIVACY</div>
     </div>
 
     <div id="dep" class="tab-content active">
-        <h2 style="color:gold; margin-bottom:4px;" id="dep-title">Пополнение ⭐</h2>
-        <p class="m-warn" id="dep-min">Минимум 100 ⭐</p>
+        <h2 style="color:gold; margin-bottom:4px;" id="dep-title">Deposit ⭐</h2>
+        <p class="m-warn" id="dep-min">Minimum 100 ⭐</p>
         <input class="modal-input" type="number" id="dep_val"
-               placeholder="Введите количество звёзд" min="100" inputmode="numeric">
-        <p class="m-hint" id="dep-hint">Введите количество звёзд для пополнения баланса</p>
-        <button class="modal-btn green" onclick="doDep()" id="dep-btn">КУПИТЬ ⭐</button>
-        <p class="back-link" id="dep-back" onclick="closeM()">← Назад</p>
+               placeholder="Enter number of stars" min="100" inputmode="numeric">
+        <p class="m-hint" id="dep-hint">Enter the number of stars to top up your balance</p>
+        <button class="modal-btn green" onclick="doDep()" id="dep-btn">BUY ⭐</button>
+        <p class="back-link" id="dep-back" onclick="closeM()">← Back</p>
     </div>
 
     <div id="wit" class="tab-content">
-        <h2 style="color:#0088cc; margin-bottom:4px;" id="wit-title">Вывод TON</h2>
-        <p class="m-warn" id="wit-min">Минимум 500 ⭐</p>
+        <h2 style="color:#0088cc; margin-bottom:4px;" id="wit-title">Withdraw TON</h2>
+        <p class="m-warn" id="wit-min">Minimum 1000 ⭐</p>
+        
+        <!-- Отображение курса -->
+        <div class="rate-display">
+            <div class="rate-title">Current Rate</div>
+            <div class="rate-value" id="rate-display-value">1 ⭐ = — TON</div>
+        </div>
+        
         <input class="modal-input" type="number" id="w_stars"
-               placeholder="Сумма звёзд (мин. 500)" inputmode="numeric" oninput="calcWit()">
-        <div class="m-preview" id="wit_preview">Вы получите: — TON</div>
-        <p class="m-rate" id="rate-label">Курс: загрузка…</p>
-        <input class="modal-input" type="text" id="w_addr" placeholder="Адрес TON (UQ...)">
+               placeholder="Stars amount (min. 1000)" inputmode="numeric" oninput="calcWit()">
+        <div class="m-preview" id="wit_preview">You will receive: — TON</div>
+        <p class="m-rate" id="rate-label">Rate: loading…</p>
+        <input class="modal-input" type="text" id="w_addr" placeholder="TON address (UQ...)">
         <input class="modal-input" type="text" id="w_memo" placeholder="MEMO / Tag">
-        <p class="m-hint" style="font-size:.75em;" id="memo-hint">MEMO — если требуется биржей или кошельком</p>
-        <button class="modal-btn" onclick="doWit()" id="wit-btn">ВЫВЕСТИ</button>
-        <p class="back-link" id="wit-back" onclick="closeM()">← Назад</p>
+        <p class="m-hint" style="font-size:.75em;" id="memo-hint">MEMO — if required by exchange or wallet</p>
+        <button class="modal-btn" onclick="doWit()" id="wit-btn">WITHDRAW</button>
+        <p class="back-link" id="wit-back" onclick="closeM()">← Back</p>
     </div>
 
     <div id="lang" class="tab-content">
-        <div class="lang-header" id="lang-header-title">🌍 ВЫБОР ЯЗЫКА</div>
+        <div class="lang-header" id="lang-header-title">🌍 LANGUAGE SELECTION</div>
         
         <div class="lang-options">
             <button class="lang-option-btn" id="lang-btn-ru" onclick="selectLangFromTab('ru')">
@@ -972,9 +1003,9 @@
             </button>
         </div>
         
-        <div class="lang-current" id="lang-current-label">Текущий язык: Русский</div>
+        <div class="lang-current" id="lang-current-label">Current language: English</div>
         
-        <button class="lang-back-btn" onclick="closeM()">← Назад</button>
+        <button class="lang-back-btn" onclick="closeM()">← Back</button>
     </div>
 
     <div id="rules" class="tab-content">
@@ -1057,8 +1088,8 @@
     <div id="risk-bg"></div>
 
     <div class="risk-inner">
-        <div class="risk-title" id="risk-title-el">🎰 РИСК БОНУС</div>
-        <div class="risk-prize-text" id="risk-prize-text-el">Возможен выигрыш</div>
+        <div class="risk-title" id="risk-title-el">🎰 RISK BONUS</div>
+        <div class="risk-prize-text" id="risk-prize-text-el">Possible win</div>
         <div class="risk-prize-amount">500 TON 🏆</div>
 
         <div class="risk-bags-progress" id="risk-bags-progress">
@@ -1069,27 +1100,27 @@
             <div class="risk-bag-slot" id="bag-slot-4"></div>
         </div>
 
-        <div class="risk-instruction" id="risk-instruction-el">Открывай звёзды ✨ и найди 5 мешочков 💰<br>Собери все 5 — выиграй 500 TON!</div>
+        <div class="risk-instruction" id="risk-instruction-el">Attempts left: <b style="color:#ffd700">5</b> of 5<br>Find bags 💰 — collect all 5 and win 500 TON!</div>
 
         <div class="risk-stars-grid" id="risk-stars-grid"></div>
 
         <div class="risk-result-msg" id="risk-result-msg"></div>
 
         <button class="risk-close-btn" id="risk-close-btn" onclick="closeRiskModal()">
-            <span id="risk-close-text">Закрыть</span>
+            <span id="risk-close-text">Close</span>
         </button>
     </div>
 </div>
 
 <!-- ВКЛАДКА ПОДДЕРЖКИ -->
 <div id="support-content">
-    <div class="support-header" id="support-header-el">🎧 ПОДДЕРЖКА</div>
+    <div class="support-header" id="support-header-el">🎧 SUPPORT</div>
     
     <div class="support-welcome">
         <div class="support-welcome-icon">👋</div>
         <div class="support-welcome-text" id="support-welcome-text-el">
-            Здравствуйте! Мы готовы помочь вам.<br>
-            Опишите ваш вопрос или проблему ниже.
+            Hello! We are ready to help you.<br>
+            Describe your question or issue below.
         </div>
     </div>
     
@@ -1097,34 +1128,34 @@
         <textarea 
             class="support-textarea" 
             id="support-textarea"
-            placeholder="Введите ваше сообщение..."
+            placeholder="Enter your message..."
             maxlength="1000"
         ></textarea>
     </div>
     
     <button class="support-send-btn" id="support-send-btn" onclick="sendSupportMessage()">
-        ОТПРАВИТЬ СООБЩЕНИЕ
+        SEND MESSAGE
     </button>
     
     <div class="support-sent-msg" id="support-sent-msg">
-        ✅ Сообщение отправлено!<br>
+        ✅ Message sent!<br>
         <span style="font-size: 0.85em; font-weight: normal;">
-            Мы ответим вам в ближайшее время.
+            We will reply to you soon.
         </span>
     </div>
     
     <div class="support-history" id="support-history"></div>
     
-    <p class="back-link" id="support-back" onclick="closeSupport()">← Назад</p>
+    <p class="back-link" id="support-back" onclick="closeSupport()">← Back</p>
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.ready(); // ВАЖНО: сообщаем что WebApp готов
+tg.ready();
 
-/* ЯЗЫК */
-let lang = 'ru';
+/* ЯЗЫК - по умолчанию английский */
+let lang = 'en';
 
 const I18N = {
     ru: {
@@ -1152,8 +1183,8 @@ const I18N = {
         dep_btn: 'КУПИТЬ ⭐',
         dep_back: '← Назад',
         wit_title: 'Вывод TON',
-        wit_min: 'Минимум 500 ⭐',
-        wit_placeholder: 'Сумма звёзд (мин. 500)',
+        wit_min: 'Минимум 1000 ⭐',
+        wit_placeholder: 'Сумма звёзд (мин. 1000)',
         wit_preview_empty: 'Вы получите: — TON',
         wit_preview: (ton) => `Вы получите: ${ton} TON`,
         wit_btn: 'ВЫВЕСТИ',
@@ -1170,7 +1201,7 @@ const I18N = {
         lang_back: '← Назад',
         risk_title: '🎰 РИСК БОНУС',
         risk_prize_text: 'Возможен выигрыш',
-        risk_instruction: '5 попыток найти 💰 мешочки!\nНайди все 5 — выиграй 500 TON!',
+        risk_instruction: 'Осталось попыток: <b style="color:#ffd700">{attempts}</b> из 5<br>Найди мешочки 💰 — собери все 5 и выиграй 500 TON!',
         risk_empty: 'Пусто',
         risk_win_msg: '🏆 Поздравляем! Вы выиграли 500 TON!',
         risk_lose_msg: (found, attempts) => `Найдено ${found} из 5 💰 за ${attempts} попыток. Удачи!`,
@@ -1214,8 +1245,8 @@ const I18N = {
         dep_btn: 'BUY ⭐',
         dep_back: '← Back',
         wit_title: 'Withdraw TON',
-        wit_min: 'Minimum 500 ⭐',
-        wit_placeholder: 'Stars amount (min. 500)',
+        wit_min: 'Minimum 1000 ⭐',
+        wit_placeholder: 'Stars amount (min. 1000)',
         wit_preview_empty: 'You will receive: — TON',
         wit_preview: (ton) => `You will receive: ${ton} TON`,
         wit_btn: 'WITHDRAW',
@@ -1232,7 +1263,7 @@ const I18N = {
         lang_back: '← Back',
         risk_title: '🎰 RISK BONUS',
         risk_prize_text: 'Possible win',
-        risk_instruction: '5 chances to find 💰 bags!\nFind all 5 — win 500 TON!',
+        risk_instruction: 'Attempts left: <b style="color:#ffd700">{attempts}</b> of 5<br>Find bags 💰 — collect all 5 and win 500 TON!',
         risk_empty: 'Empty',
         risk_win_msg: '🏆 Congratulations! You won 500 TON!',
         risk_lose_msg: (found, attempts) => `Found ${found}/5 💰 bags in ${attempts} attempts. Try again!`,
@@ -1287,7 +1318,6 @@ function applyLangToUI() {
     document.getElementById('risk-title-el').textContent = t('risk_title');
     document.getElementById('risk-prize-text-el').textContent = t('risk_prize_text');
     document.getElementById('risk-close-text').textContent = t('risk_close');
-    document.getElementById('rate-label').textContent = t('rate_loading');
     document.getElementById('support-header-el').textContent = t('support_title');
     document.getElementById('support-welcome-text-el').innerHTML = t('support_welcome');
     document.getElementById('support-textarea').placeholder = t('support_placeholder');
@@ -1385,9 +1415,27 @@ let hasFreeSpins = 0;
 let fastMode     = false;
 let userId       = new URLSearchParams(location.search).get('uid') || 'unknown';
 
-const MIN_WITHDRAW = 500;
+const MIN_WITHDRAW = 1000; // Изменено на 1000
 const MIN_DEPOSIT  = 100;
 let tonPerStar = 0.013333;
+
+// Функция обновления отображения курса
+function updateRateDisplay() {
+    const rateValue = tonPerStar > 0 ? tonPerStar.toFixed(5) : '—';
+    const rateText = `1 ⭐ = ${rateValue} TON`;
+    
+    // Обновляем в разделе вывода
+    const rateLabel = document.getElementById('rate-label');
+    if (rateLabel) {
+        rateLabel.textContent = tonPerStar > 0 ? `Rate: ${rateText}` : t('rate_loading');
+    }
+    
+    // Обновляем в блоке rate-display
+    const rateDisplayValue = document.getElementById('rate-display-value');
+    if (rateDisplayValue) {
+        rateDisplayValue.textContent = rateText;
+    }
+}
 
 (async function fetchTonRate() {
     try {
@@ -1400,13 +1448,14 @@ let tonPerStar = 0.013333;
             const tonUsd = json['the-open-network']?.usd;
             if (tonUsd && tonUsd > 0) {
                 tonPerStar = 0.013 / tonUsd;
-                document.getElementById('rate-label').textContent =
-                    `Rate: 1 ⭐ = ${tonPerStar.toFixed(5)} TON  (1 TON = $${tonUsd.toFixed(2)})`;
-                calcWit(); return;
+                updateRateDisplay();
+                calcWit();
+                return;
             }
         }
     } catch (_) {}
-    document.getElementById('rate-label').textContent = `Rate: 1 ⭐ = ${tonPerStar.toFixed(5)} TON`;
+    // Если не загрузилось, используем дефолтное значение
+    updateRateDisplay();
 })();
 
 /* ЧАСТИЦЫ */
@@ -1592,7 +1641,7 @@ function draw(angle, hi, phase) {
             const hg = ctx.createRadialGradient(300,300,80,300,300,280);
             hg.addColorStop(0,`rgba(255,255,180,${0.22*pulse})`);
             hg.addColorStop(0.6,`rgba(255,210,0,${0.4*pulse})`);
-            hg.addColorStop(1,`rgba(255,160,0,0)`);
+            hg.addColorStop(0.6,`rgba(255,160,0,0)`);
             ctx.beginPath(); ctx.fillStyle = hg;
             ctx.moveTo(300,300); ctx.arc(300,300,280,a,a+ARC); ctx.fill();
             ctx.shadowColor = `rgba(255,220,50,${pulse})`; ctx.shadowBlur = 32;
@@ -1613,8 +1662,8 @@ function draw(angle, hi, phase) {
         } else if (s.isRisk) {
             ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 14;
             ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial';
-            ctx.fillText('РИСК', 120, -8);
-            ctx.fillText('БОНУС', 116, 8);
+            ctx.fillText(lang === 'ru' ? 'РИСК' : 'RISK', 120, -8);
+            ctx.fillText(lang === 'ru' ? 'БОНУС' : 'BONUS', 116, 8);
             ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#ffaaaa';
             ctx.fillText('500 TON', 116, 24); ctx.shadowBlur = 0;
         } else {
@@ -1695,11 +1744,25 @@ function loadBalance() {
 function saveBalance(cb) {
     if (tg.CloudStorage) {
         tg.CloudStorage.setItem(`balance_${userId}`, String(stars), err => {
-            if (!err) console.log('saved:', stars);
+            if (!err) console.log('Balance saved:', stars);
             if (cb) cb();
         });
     } else if (cb) cb();
 }
+
+// Автосохранение баланса при закрытии/перезагрузке
+window.addEventListener('beforeunload', (e) => {
+    if (tg.CloudStorage) {
+        tg.CloudStorage.setItem(`balance_${userId}`, String(stars));
+    }
+});
+
+// Периодическое сохранение каждые 10 секунд (на всякий случай)
+setInterval(() => {
+    if (stars > 0) {
+        saveBalance();
+    }
+}, 10000);
 
 function update() {
     document.getElementById('s_bal').innerText   = stars;
@@ -1916,11 +1979,8 @@ function openRiskModal() {
 
 function updateRiskInstruction() {
     const el = document.getElementById('risk-instruction-el');
-    if (lang === 'ru') {
-        el.innerHTML = `Осталось попыток: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> из 5<br>Найди мешочки 💰 — собери все 5 и выиграй 500 TON!`;
-    } else {
-        el.innerHTML = `Attempts left: <b style="color:#ffd700">${riskGame.attemptsLeft}</b> of 5<br>Find bags 💰 — collect all 5 and win 500 TON!`;
-    }
+    const instruction = t('risk_instruction').replace('{attempts}', riskGame.attemptsLeft);
+    el.innerHTML = instruction;
 }
 
 function onRiskStarClick(idx) {
@@ -1998,6 +2058,12 @@ function setTab(tabId, el) {
         document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
         document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
     }
+    
+    // Обновляем курс при открытии вкладки вывода
+    if (tabId === 'wit') {
+        updateRateDisplay();
+        calcWit();
+    }
 }
 
 function doDep() {
@@ -2009,8 +2075,9 @@ function doDep() {
 
 function calcWit() {
     const v = parseInt(document.getElementById('w_stars').value) || 0;
+    const tonAmount = v > 0 ? (v * tonPerStar).toFixed(4) : '—';
     document.getElementById('wit_preview').textContent =
-        v > 0 ? t('wit_preview', (v * tonPerStar).toFixed(4)) : t('wit_preview_empty');
+        v > 0 ? t('wit_preview', tonAmount) : t('wit_preview_empty');
 }
 
 function doWit() {
@@ -2018,17 +2085,25 @@ function doWit() {
     const val  = parseInt(document.getElementById('w_stars').value);
     const addr = document.getElementById('w_addr').value.trim();
     const memo = document.getElementById('w_memo').value.trim();
+    
+    // Проверки
     if (!addr)                           { alert(t('err_no_addr')); return; }
     if (!val || isNaN(val) || val <= 0)  { alert(t('err_no_amount')); return; }
     if (val < MIN_WITHDRAW)              { alert(t('err_min_wit', MIN_WITHDRAW)); return; }
     if (val > stars)                     { alert(t('err_no_stars', stars)); return; }
+    
     const ton = (val * tonPerStar).toFixed(4);
-    const rateText = `1 star = ${tonPerStar.toFixed(6)} TON`;
-    stars -= val; saveBalance(); update();
-    tg.sendData(JSON.stringify({
-        action: 'withdraw', stars: val, ton: ton, rate: rateText,
-        address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
-    }));
+    const rateText = `1 ⭐ = ${tonPerStar.toFixed(6)} TON`;
+    
+    // Сначала сохраняем баланс, потом отправляем
+    stars -= val; 
+    saveBalance(() => {
+        update();
+        tg.sendData(JSON.stringify({
+            action: 'withdraw', stars: val, ton: ton, rate: rateText,
+            address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
+        }));
+    });
 }
 
 function adjBet(v) {
@@ -2038,7 +2113,7 @@ function adjBet(v) {
     update();
 }
 
-/* ПОДДЕРЖКА - ИСПРАВЛЕННАЯ ВЕРСИЯ */
+/* ПОДДЕРЖКА */
 function openSupport() {
     playClick();
     document.getElementById('app-content').style.display = 'none';
@@ -2064,15 +2139,11 @@ function sendSupportMessage() {
             return;
         }
         
-        console.log('Подготовка к отправке сообщения:', text);
-        
-        // Показываем что идет отправка
         const btn = document.getElementById('support-send-btn');
         const originalText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = '⏳ Отправка...';
+        btn.textContent = lang === 'ru' ? '⏳ Отправка...' : '⏳ Sending...';
         
-        // Формируем данные
         const payload = {
             action: 'support_message',
             uid: userId,
@@ -2081,29 +2152,22 @@ function sendSupportMessage() {
             timestamp: new Date().toISOString()
         };
         
-        console.log('Отправка payload:', JSON.stringify(payload));
-        
-        // Отправляем данные боту
         tg.sendData(JSON.stringify(payload));
         
-        console.log('sendData выполнен успешно');
-        
-        // Показываем успех
         document.getElementById('support-sent-msg').style.display = 'block';
         addSupportMessageToHistory('user', text);
         document.getElementById('support-textarea').value = '';
         
         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         
-        // Восстанавливаем кнопку
         setTimeout(() => {
             btn.disabled = false;
             btn.textContent = originalText;
         }, 3000);
         
     } catch (e) {
-        console.error('Ошибка в sendSupportMessage:', e);
-        alert('Ошибка отправки: ' + e.message);
+        console.error('Error in sendSupportMessage:', e);
+        alert('Error: ' + e.message);
         document.getElementById('support-send-btn').disabled = false;
         document.getElementById('support-send-btn').textContent = t('support_send');
     }
@@ -2132,30 +2196,20 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ЗАГРУЗКА - ИСПРАВЛЕННАЯ ПРОВЕРКА ТЕХРАБОТ
+// ЗАГРУЗКА
 window.addEventListener('DOMContentLoaded', () => {
-    // ПРОВЕРКА ТЕХРАБОТ - САМЫЙ ПЕРВЫЙ ШАГ!
+    // ПРОВЕРКА ТЕХРАБОТ
     const urlParams = new URLSearchParams(window.location.search);
     const maint = urlParams.get('maint');
     
-    console.log('Проверка техработ, maint =', maint);
-    
     if (maint === '1') {
-        console.log('Техработы включены, показываем экран');
-        // Показываем экран техработ
         document.getElementById('maintenance-screen').classList.add('active');
-        // Скрываем экран загрузки
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('app-content').style.display = 'none';
-        return; // Прерываем загрузку приложения
+        return;
     }
     
-    console.log('Техработы выключены, загружаем приложение');
-    
-    // Обычная загрузка
-    loadBalance();
-    draw(0, -1, 0);
-    
+    // Загрузка языка - сначала проверяем сохраненный, если нет - оставляем английский по умолчанию
     try {
         const savedLang = localStorage.getItem('imperial_lang');
         if (savedLang === 'ru' || savedLang === 'en') {
@@ -2163,6 +2217,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     } catch(_) {}
     
+    loadBalance();
+    draw(0, -1, 0);
     startLoadingScreen();
 });
 
