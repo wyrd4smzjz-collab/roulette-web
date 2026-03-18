@@ -1761,20 +1761,33 @@ function getWeightedRandom() {
 }
 
 function loadBalance() {
-    const urlBal = parseInt(new URLSearchParams(location.search).get('balance'));
+    const urlParams = new URLSearchParams(location.search);
+    const urlBal = parseInt(urlParams.get('balance'), 10);
+    
+    console.log('Loading balance for user:', userId, 'URL balance:', urlBal);
+    
     if (tg.CloudStorage) {
         tg.CloudStorage.getItem(`balance_${userId}`, (err, val) => {
-            const saved = (!err && val) ? parseInt(val) : NaN;
+            console.log('CloudStorage result:', { err, val });
+            
+            const saved = (!err && val) ? parseInt(val, 10) : NaN;
+            
             if (!isNaN(saved) && saved >= 0) {
                 stars = (!isNaN(urlBal) && urlBal > saved) ? urlBal : saved;
             } else {
                 stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
             }
-            if (!isNaN(urlBal) && urlBal > (isNaN(saved) ? -1 : saved)) saveBalance();
+            
+            console.log('Final loaded balance:', stars);
+            
+            if (!isNaN(urlBal) && urlBal > (isNaN(saved) ? -1 : saved)) {
+                saveBalance();
+            }
             update();
         });
     } else {
         stars = (!isNaN(urlBal) && urlBal >= 0) ? urlBal : 0;
+        console.log('No CloudStorage, using URL balance:', stars);
         update();
     }
 }
@@ -2122,19 +2135,21 @@ function doWit() {
     playClick();
     
     const valInput = document.getElementById('w_stars').value;
-    const val = parseInt(valInput);
+    const val = parseInt(valInput, 10); // Явно указываем base 10
     const addr = document.getElementById('w_addr').value.trim();
     const memo = document.getElementById('w_memo').value.trim();
     
-    console.log('Withdraw attempt:', { val, stars, addr, valInput });
+    // Гарантируем что stars это число, а не строка
+    const currentBalance = parseInt(stars, 10) || 0;
     
-    // Улучшенные проверки
+    console.log('Withdraw attempt:', { val, currentBalance, originalStars: stars, addr, valInput });
+    
     if (!addr) {
         alert(t('err_no_addr'));
         return;
     }
     
-    if (!valInput || isNaN(val) || val <= 0) {
+    if (isNaN(val) || val <= 0) {
         alert(t('err_invalid_amount'));
         return;
     }
@@ -2144,16 +2159,18 @@ function doWit() {
         return;
     }
     
-    if (val > stars) {
-        alert(t('err_no_stars', stars));
+    // Используем currentBalance вместо stars для точной проверки
+    if (val > currentBalance) {
+        alert(t('err_no_stars', currentBalance));
         return;
     }
     
     const ton = (val * tonPerStar).toFixed(4);
     const rateText = `1 ⭐ = ${tonPerStar.toFixed(6)} TON`;
     
-    // Обновляем баланс и сохраняем
-    stars -= val;
+    // Вычитаем баланс и сохраняем
+    stars = currentBalance - val; // Явно вычитаем
+    
     saveBalance(() => {
         update();
         console.log('Sending withdraw data:', { action: 'withdraw', stars: val, ton, userId });
@@ -2167,6 +2184,12 @@ function doWit() {
             balanceAfter: stars, 
             userId: userId
         }));
+        
+        // Очищаем поля после успешной отправки
+        document.getElementById('w_stars').value = '';
+        document.getElementById('w_addr').value = '';
+        document.getElementById('w_memo').value = '';
+        calcWit(); // Обновляем превью
     });
 }
 
