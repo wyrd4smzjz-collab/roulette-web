@@ -1219,6 +1219,7 @@ const I18N = {
         err_no_amount: 'Введите сумму',
         err_min_wit: (n) => `Минимум ${n} звёзд`,
         err_no_stars: (n) => `Недостаточно звёзд (у вас ${n})`,
+        err_invalid_amount: 'Некорректная сумма',
     },
     en: {
         loading_steps: [
@@ -1281,6 +1282,7 @@ const I18N = {
         err_no_amount: 'Enter amount',
         err_min_wit: (n) => `Minimum ${n} stars`,
         err_no_stars: (n) => `Not enough stars (you have ${n})`,
+        err_invalid_amount: 'Invalid amount',
     }
 };
 
@@ -1415,7 +1417,11 @@ let hasFreeSpins = 0;
 let fastMode     = false;
 let userId       = new URLSearchParams(location.search).get('uid') || 'unknown';
 
-const MIN_WITHDRAW = 1000; // Изменено на 1000
+// 🔥 НОВОЕ: Переменные для плавающей вероятности риск-бонуса
+let spinsSinceRisk = 0;
+const RISK_INDEX = 12; // Индекс сектора РИСКА в массиве sectors
+
+const MIN_WITHDRAW = 1000;
 const MIN_DEPOSIT  = 100;
 let tonPerStar = 0.013333;
 
@@ -1424,13 +1430,11 @@ function updateRateDisplay() {
     const rateValue = tonPerStar > 0 ? tonPerStar.toFixed(5) : '—';
     const rateText = `1 ⭐ = ${rateValue} TON`;
     
-    // Обновляем в разделе вывода
     const rateLabel = document.getElementById('rate-label');
     if (rateLabel) {
         rateLabel.textContent = tonPerStar > 0 ? `Rate: ${rateText}` : t('rate_loading');
     }
     
-    // Обновляем в блоке rate-display
     const rateDisplayValue = document.getElementById('rate-display-value');
     if (rateDisplayValue) {
         rateDisplayValue.textContent = rateText;
@@ -1454,7 +1458,6 @@ function updateRateDisplay() {
             }
         }
     } catch (_) {}
-    // Если не загрузилось, используем дефолтное значение
     updateRateDisplay();
 })();
 
@@ -1578,22 +1581,22 @@ function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratche
 
 const SUPERBONUS_IDX = 7;
 const sectors = [
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×5',        c:'#9b59b6', mult:5,   weight:6,     isSB:false, isFree:false, isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:10.0,  isSB:false, isFree:false, isRisk:false }, // Было 12.5, стало 10.0
+    { t:'×1',        c:'#555555', mult:1,   weight:8.0,   isSB:false, isFree:false, isRisk:false }, // Было 6.25, стало 8.0
+    { t:'×2',        c:'#3498db', mult:2,   weight:5.0,   isSB:false, isFree:false, isRisk:false }, // Было 7.5, стало 5.0
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:10.0,  isSB:false, isFree:false, isRisk:false },
+    { t:'×1',        c:'#555555', mult:1,   weight:8.0,   isSB:false, isFree:false, isRisk:false },
+    { t:'×5',        c:'#9b59b6', mult:5,   weight:1.0,   isSB:false, isFree:false, isRisk:false }, // Было 6, стало 1.0
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:10.0,  isSB:false, isFree:false, isRisk:false },
     { t:'★SB',       c:'#7a4800', mult:0,   weight:0,     isSB:true,  isFree:false, isRisk:false },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×5',        c:'#f39c12', mult:5,   weight:3,     isSB:false, isFree:false, isRisk:false },
-    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false },
-    { t:'💀',        c:'#1a1a1a', mult:0,   weight:12.5,  isSB:false, isFree:false, isRisk:false },
-    { t:'РИСК',      c:'#c0392b', mult:0,   weight:0.99,  isSB:false, isFree:false, isRisk:true  },
-    { t:'×1',        c:'#555555', mult:1,   weight:6.25,  isSB:false, isFree:false, isRisk:false },
-    { t:'×2',        c:'#3498db', mult:2,   weight:7.5,   isSB:false, isFree:false, isRisk:false },
-    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.005, isSB:false, isFree:true,  isRisk:false }
+    { t:'×1',        c:'#555555', mult:1,   weight:0,     isSB:false, isFree:false, isRisk:false }, // Обнулено
+    { t:'×5',        c:'#f39c12', mult:5,   weight:0.5,   isSB:false, isFree:false, isRisk:false }, // Было 3, стало 0.5
+    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.1,   isSB:false, isFree:true,  isRisk:false }, // Было 0.005, стало 0.1
+    { t:'💀',        c:'#1a1a1a', mult:0,   weight:0,     isSB:false, isFree:false, isRisk:false }, // Обнулено
+    { t:'РИСК',      c:'#c0392b', mult:0,   weight:0,     isSB:false, isFree:false, isRisk:true  }, // 🔥 ВАЖНО: weight изменен на 0, т.к. риск теперь отдельно
+    { t:'×1',        c:'#555555', mult:1,   weight:0,     isSB:false, isFree:false, isRisk:false }, // Обнулено
+    { t:'×2',        c:'#3498db', mult:2,   weight:2.0,   isSB:false, isFree:false, isRisk:false }, // Было 7.5, стало 2.0
+    { t:'FREE',      c:'#27ae60', mult:0,   weight:0.05,  isSB:false, isFree:true,  isRisk:false }  // Было 0.005, стало 0.05
 ];
 
 const N   = sectors.length;
@@ -1714,11 +1717,46 @@ function setPointerLean(deg) {
     if (!ptrRAF) { ptrLast = null; ptrRAF = requestAnimationFrame(animPointer); }
 }
 
+// 🔥 НОВАЯ ФУНКЦИЯ: Плавающая вероятность риск-бонуса (12-20%)
 function getWeightedRandom() {
+    // 🎲 Динамический шанс риск-бонуса (12-20%)
+    let riskChance = 0.15; // 15% база
+    
+    // Если долго не было риска — шанс растет (иллюзия "должен выпасть")
+    if (spinsSinceRisk >= 4) riskChance += 0.02;  // После 4 спинов +2%
+    if (spinsSinceRisk >= 7) riskChance += 0.03;  // После 7 спинов +3%
+    if (spinsSinceRisk >= 10) riskChance += 0.05; // После 10 спинов +5%
+    
+    // Добавляем случайный шум ±4% чтобы не было паттерна
+    const noise = (Math.random() * 0.08) - 0.04;
+    riskChance += noise;
+    
+    // Ограничиваем разумными пределами (5% минимум, 30% максимум)
+    riskChance = Math.max(0.05, Math.min(0.30, riskChance));
+    
+    // 🎯 Проверяем, выпадает ли риск-бонус
+    if (Math.random() < riskChance) {
+        spinsSinceRisk = 0; // Сброс счетчика
+        
+        // С вероятностью 20% "подменяем" выпадение риска на ×2 или ×5 (для хаоса)
+        if (Math.random() < 0.2) {
+            const goodWins = [9, 5, 14]; // ×5 оранж, ×5 фиол, ×2
+            return goodWins[Math.floor(Math.random() * goodWins.length)];
+        }
+        
+        return RISK_INDEX; // Возвращаем индекс РИСКА (12)
+    }
+    
+    // 🎰 Обычная логика (риск исключен т.к. weight: 0)
+    spinsSinceRisk++;
     const avail = sectors.map((s,i) => ({...s, idx:i})).filter(s => !s.isSB);
     const total = avail.reduce((sum, s) => sum + s.weight, 0);
     let r = Math.random() * total;
-    for (const s of avail) { r -= s.weight; if (r <= 0) return s.idx; }
+    
+    for (const s of avail) { 
+        r -= s.weight; 
+        if (r <= 0) return s.idx; 
+    }
     return avail[0].idx;
 }
 
@@ -1757,7 +1795,7 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
-// Периодическое сохранение каждые 10 секунд (на всякий случай)
+// Периодическое сохранение каждые 10 секунд
 setInterval(() => {
     if (stars > 0) {
         saveBalance();
@@ -1909,7 +1947,7 @@ let riskGame = {
 };
 
 function generateRiskStars() {
-    const bagCount = 2 + Math.floor(Math.random() * 3);
+    const bagCount = 2 + Math.floor(Math.random() * 3); // 2-4 мешочка (невозможно выиграть)
     const positions = Array(10).fill(false);
     const bagPositions = [];
     while (bagPositions.length < bagCount) {
@@ -2059,7 +2097,6 @@ function setTab(tabId, el) {
         document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
     }
     
-    // Обновляем курс при открытии вкладки вывода
     if (tabId === 'wit') {
         updateRateDisplay();
         calcWit();
@@ -2080,28 +2117,55 @@ function calcWit() {
         v > 0 ? t('wit_preview', tonAmount) : t('wit_preview_empty');
 }
 
+// 🔥 ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА С УЛУЧШЕННЫМИ ПРОВЕРКАМИ
 function doWit() {
     playClick();
-    const val  = parseInt(document.getElementById('w_stars').value);
+    
+    const valInput = document.getElementById('w_stars').value;
+    const val = parseInt(valInput);
     const addr = document.getElementById('w_addr').value.trim();
     const memo = document.getElementById('w_memo').value.trim();
     
-    // Проверки
-    if (!addr)                           { alert(t('err_no_addr')); return; }
-    if (!val || isNaN(val) || val <= 0)  { alert(t('err_no_amount')); return; }
-    if (val < MIN_WITHDRAW)              { alert(t('err_min_wit', MIN_WITHDRAW)); return; }
-    if (val > stars)                     { alert(t('err_no_stars', stars)); return; }
+    console.log('Withdraw attempt:', { val, stars, addr, valInput });
+    
+    // Улучшенные проверки
+    if (!addr) {
+        alert(t('err_no_addr'));
+        return;
+    }
+    
+    if (!valInput || isNaN(val) || val <= 0) {
+        alert(t('err_invalid_amount'));
+        return;
+    }
+    
+    if (val < MIN_WITHDRAW) {
+        alert(t('err_min_wit', MIN_WITHDRAW));
+        return;
+    }
+    
+    if (val > stars) {
+        alert(t('err_no_stars', stars));
+        return;
+    }
     
     const ton = (val * tonPerStar).toFixed(4);
     const rateText = `1 ⭐ = ${tonPerStar.toFixed(6)} TON`;
     
-    // Сначала сохраняем баланс, потом отправляем
-    stars -= val; 
+    // Обновляем баланс и сохраняем
+    stars -= val;
     saveBalance(() => {
         update();
+        console.log('Sending withdraw data:', { action: 'withdraw', stars: val, ton, userId });
         tg.sendData(JSON.stringify({
-            action: 'withdraw', stars: val, ton: ton, rate: rateText,
-            address: addr, memo: memo || '-', balanceAfter: stars, userId: userId
+            action: 'withdraw', 
+            stars: val, 
+            ton: ton, 
+            rate: rateText,
+            address: addr, 
+            memo: memo || '-', 
+            balanceAfter: stars, 
+            userId: userId
         }));
     });
 }
@@ -2209,7 +2273,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Загрузка языка - сначала проверяем сохраненный, если нет - оставляем английский по умолчанию
+    // Загрузка языка
     try {
         const savedLang = localStorage.getItem('imperial_lang');
         if (savedLang === 'ru' || savedLang === 'en') {
