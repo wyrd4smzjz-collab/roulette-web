@@ -6,6 +6,7 @@
     <title>Imperial Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* все стили остаются без изменений – они не трогаются */
         html, body {
             height: 100%; margin: 0; padding: 0; overflow: hidden;
             background: #050505; color: white;
@@ -1415,7 +1416,9 @@ let curBet       = 5;
 let isSpinning   = false;
 let hasFreeSpins = 0;
 let fastMode     = false;
-let pendingWithdrawal = null; // НОВОЕ: для блокировки повторных заявок
+
+// pendingWithdrawal теперь хранит объект с requestId и amount
+let pendingWithdrawal = null;
 
 // Получаем userId из Telegram API
 let userId = 'unknown';
@@ -2164,6 +2167,26 @@ function calcWit() {
         v > 0 ? t('wit_preview', tonAmount) : t('wit_preview_empty');
 }
 
+// Обработчик ответов от бота (подтверждение/отклонение вывода)
+function handleBotMessage(message) {
+    try {
+        const data = JSON.parse(message.data || message);
+        console.log('Bot message received:', data);
+        if (data.action === 'withdraw_confirmed') {
+            confirmWithdrawalSuccess(data.requestId, data.amount);
+        } else if (data.action === 'withdraw_rejected') {
+            rejectWithdrawal(data.requestId, data.reason);
+        }
+    } catch (e) {
+        console.error('Error parsing bot message:', e);
+    }
+}
+
+// Регистрируем обработчик событий от бота
+if (tg && typeof tg.onEvent === 'function') {
+    tg.onEvent('message', handleBotMessage);
+}
+
 // ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА - без списания баланса сразу
 function doWit() {
     playClick();
@@ -2234,9 +2257,13 @@ function doWit() {
     const ton = (val * tonPerStar).toFixed(6);
     const rateText = `1 ⭐ = ${tonPerStar.toFixed(6)} TON`;
     
+    // Генерация уникального номера заявки
+    const requestId = 'WD' + Date.now() + (userId ? userId.slice(-4) : '0000');
+    
     // Подготовка данных для админа (без списания баланса!)
     const withdrawData = {
         action: 'withdraw_request',
+        requestId: requestId,                  // номер заявки
         stars: val, 
         ton: ton, 
         rate: rateText,
@@ -2255,16 +2282,17 @@ function doWit() {
         // Отправляем данные боту
         tg.sendData(JSON.stringify(withdrawData));
         
-        // Помечаем что есть ожидающий вывод (блокируем повторные)
+        // Сохраняем информацию о pending заявке (с номером)
         pendingWithdrawal = {
+            requestId: requestId,
             amount: val,
             time: Date.now()
         };
         
-        // Показываем подтверждение пользователю
+        // Показываем подтверждение пользователю с номером заявки
         const confirmMsg = lang === 'ru' 
-            ? `✅ Заявка на вывод создана!\n\n💰 Сумма: ${val} ⭐ (${ton} TON)\n📍 Адрес: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Статус: Ожидает подтверждения администратора\n\nБаланс НЕ списан. После подтверждения админом средства будут отправлены вручную.`
-            : `✅ Withdrawal request created!\n\n💰 Amount: ${val} ⭐ (${ton} TON)\n📍 Address: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Status: Pending admin confirmation\n\nBalance is NOT deducted yet. Funds will be sent manually after admin approval.`;
+            ? `✅ Заявка на вывод #${requestId} создана!\n\n💰 Сумма: ${val} ⭐ (${ton} TON)\n📍 Адрес: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Статус: Ожидает подтверждения администратора\n\nБаланс НЕ списан. После подтверждения админом средства будут отправлены вручную.`
+            : `✅ Withdrawal request #${requestId} created!\n\n💰 Amount: ${val} ⭐ (${ton} TON)\n📍 Address: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Status: Pending admin confirmation\n\nBalance is NOT deducted yet. Funds will be sent manually after admin approval.`;
         
         alert(confirmMsg);
         
@@ -2285,8 +2313,12 @@ function doWit() {
     }
 }
 
-// Функции для подтверждения/отклонения вывода админом
-function confirmWithdrawalSuccess(amount) {
+// Функция подтверждения вывода (вызывается из ответа бота)
+function confirmWithdrawalSuccess(requestId, amount) {
+    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
+        console.warn('Received confirmation for unknown requestId:', requestId);
+        return;
+    }
     if (amount && amount > 0) {
         stars = Math.max(0, stars - amount);
         saveBalance();
@@ -2294,17 +2326,22 @@ function confirmWithdrawalSuccess(amount) {
         pendingWithdrawal = null;
         
         const msg = lang === 'ru'
-            ? `✅ Вывод ${amount} ⭐ подтвержден администратором!\nСредства отправлены на ваш кошелек.`
-            : `✅ Withdrawal of ${amount} ⭐ confirmed by admin!\nFunds sent to your wallet.`;
+            ? `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтвержден администратором!\nСредства отправлены на ваш кошелек.`
+            : `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed by admin!\nFunds sent to your wallet.`;
         alert(msg);
     }
 }
 
-function rejectWithdrawal(amount) {
+// Функция отклонения вывода (вызывается из ответа бота)
+function rejectWithdrawal(requestId, reason) {
+    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
+        console.warn('Received rejection for unknown requestId:', requestId);
+        return;
+    }
     pendingWithdrawal = null;
     const msg = lang === 'ru'
-        ? '❌ Заявка на вывод отклонена администратором.\nОбратитесь в поддержку для уточнения.'
-        : '❌ Withdrawal request rejected by admin.\nContact support for details.';
+        ? `❌ Заявка на вывод ${requestId} отклонена администратором.\nПричина: ${reason || 'не указана'}.\nОбратитесь в поддержку для уточнения.`
+        : `❌ Withdrawal request ${requestId} rejected by admin.\nReason: ${reason || 'not specified'}.\nContact support for details.`;
     alert(msg);
 }
 
