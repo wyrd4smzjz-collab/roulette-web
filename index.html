@@ -2187,7 +2187,7 @@ if (tg && typeof tg.onEvent === 'function') {
     tg.onEvent('message', handleBotMessage);
 }
 
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА - без списания баланса сразу
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА - баланс списывается сразу
 function doWit() {
     playClick();
     
@@ -2260,7 +2260,19 @@ function doWit() {
     // Генерация уникального номера заявки
     const requestId = 'WD' + Date.now() + (userId ? userId.slice(-4) : '0000');
     
-    // Подготовка данных для админа (без списания баланса!)
+    // !!! СПИСЫВАЕМ БАЛАНС СРАЗУ !!!
+    stars -= val;
+    saveBalance();
+    update();
+    
+    // Сохраняем информацию о pending заявке (с номером и суммой)
+    pendingWithdrawal = {
+        requestId: requestId,
+        amount: val,
+        time: Date.now()
+    };
+    
+    // Подготовка данных для админа (баланс уже списан!)
     const withdrawData = {
         action: 'withdraw_request',
         requestId: requestId,                  // номер заявки
@@ -2269,7 +2281,7 @@ function doWit() {
         rate: rateText,
         address: addr, 
         memo: memo || '-',
-        currentBalance: currentBalance,
+        currentBalance: stars,                 // новый баланс после списания
         requestedAt: new Date().toISOString(),
         userId: userId,
         username: tg.initDataUnsafe?.user?.username || 'unknown',
@@ -2282,17 +2294,10 @@ function doWit() {
         // Отправляем данные боту
         tg.sendData(JSON.stringify(withdrawData));
         
-        // Сохраняем информацию о pending заявке (с номером)
-        pendingWithdrawal = {
-            requestId: requestId,
-            amount: val,
-            time: Date.now()
-        };
-        
         // Показываем подтверждение пользователю с номером заявки
         const confirmMsg = lang === 'ru' 
-            ? `✅ Заявка на вывод #${requestId} создана!\n\n💰 Сумма: ${val} ⭐ (${ton} TON)\n📍 Адрес: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Статус: Ожидает подтверждения администратора\n\nБаланс НЕ списан. После подтверждения админом средства будут отправлены вручную.`
-            : `✅ Withdrawal request #${requestId} created!\n\n💰 Amount: ${val} ⭐ (${ton} TON)\n📍 Address: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Status: Pending admin confirmation\n\nBalance is NOT deducted yet. Funds will be sent manually after admin approval.`;
+            ? `✅ Заявка на вывод #${requestId} создана!\n\n💰 Сумма: ${val} ⭐ (${ton} TON)\n📍 Адрес: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Статус: Ожидает подтверждения администратора\n\nСредства зарезервированы и будут отправлены после подтверждения.`
+            : `✅ Withdrawal request #${requestId} created!\n\n💰 Amount: ${val} ⭐ (${ton} TON)\n📍 Address: ${addr.slice(0, 8)}...${addr.slice(-6)}\n⏳ Status: Pending admin confirmation\n\nFunds are reserved and will be sent after approval.`;
         
         alert(confirmMsg);
         
@@ -2307,41 +2312,46 @@ function doWit() {
         
     } catch (e) {
         console.error('Error sending data to bot:', e);
+        // В случае ошибки отправки – возвращаем баланс
+        stars += val;
+        saveBalance();
+        pendingWithdrawal = null;
         alert(lang === 'ru' 
-            ? '❌ Ошибка отправки данных. Попробуйте позже или обратитесь в поддержку.'
-            : '❌ Error sending data. Please try later or contact support.');
+            ? '❌ Ошибка отправки данных. Средства возвращены на баланс. Попробуйте позже или обратитесь в поддержку.'
+            : '❌ Error sending data. Funds returned to balance. Please try later or contact support.');
     }
 }
 
-// Функция подтверждения вывода (вызывается из ответа бота)
+// Функция подтверждения вывода (вызывается из ответа бота) – баланс уже списан, просто уведомляем
 function confirmWithdrawalSuccess(requestId, amount) {
     if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
         console.warn('Received confirmation for unknown requestId:', requestId);
         return;
     }
-    if (amount && amount > 0) {
-        stars = Math.max(0, stars - amount);
-        saveBalance();
-        update();
-        pendingWithdrawal = null;
-        
-        const msg = lang === 'ru'
-            ? `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтвержден администратором!\nСредства отправлены на ваш кошелек.`
-            : `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed by admin!\nFunds sent to your wallet.`;
-        alert(msg);
-    }
+    // Баланс уже был списан в doWit, ничего не делаем, просто очищаем pending
+    pendingWithdrawal = null;
+    
+    const msg = lang === 'ru'
+        ? `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтвержден администратором!\nСредства отправлены на ваш кошелек.`
+        : `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed by admin!\nFunds sent to your wallet.`;
+    alert(msg);
 }
 
-// Функция отклонения вывода (вызывается из ответа бота)
+// Функция отклонения вывода (вызывается из ответа бота) – возвращаем списанные средства
 function rejectWithdrawal(requestId, reason) {
     if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
         console.warn('Received rejection for unknown requestId:', requestId);
         return;
     }
+    // Возвращаем средства
+    stars += pendingWithdrawal.amount;
+    saveBalance();
+    update();
     pendingWithdrawal = null;
+    
     const msg = lang === 'ru'
-        ? `❌ Заявка на вывод ${requestId} отклонена администратором.\nПричина: ${reason || 'не указана'}.\nОбратитесь в поддержку для уточнения.`
-        : `❌ Withdrawal request ${requestId} rejected by admin.\nReason: ${reason || 'not specified'}.\nContact support for details.`;
+        ? `❌ Заявка на вывод ${requestId} отклонена администратором.\nПричина: ${reason || 'не указана'}.\nСредства возвращены на ваш баланс. Обратитесь в поддержку для уточнения.`
+        : `❌ Withdrawal request ${requestId} rejected by admin.\nReason: ${reason || 'not specified'}.\nFunds returned to your balance. Contact support for details.`;
     alert(msg);
 }
 
