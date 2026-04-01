@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -264,11 +265,11 @@
             transform: scale(1.1);
         }
 
-        /* НОВАЯ КНОПКА ПОДАРКА */
+        /* КНОПКА ПОДАРКА - СПРАВА ПОД КОШЕЛЬКОМ */
         .gift-btn {
             position: fixed;
-            left: 15px;
-            top: calc(env(safe-area-inset-top) + 120px);
+            right: 15px;
+            top: calc(env(safe-area-inset-top) + 65px);
             z-index: 200;
             width: 44px;
             height: 44px;
@@ -902,51 +903,42 @@
             font-weight: bold;
         }
 
-        /* === ДОБАВЛЕННЫЕ СТИЛИ ДЛЯ БЕГУЩЕЙ СТРОКИ === */
-        .ticker-container {
+        /* === БЕГУЩАЯ СТРОКА (без окантовки) === */
+        .ticker-wrapper {
             position: fixed;
-            top: calc(env(safe-area-inset-top) + 55px);
-            left: 80px;
-            right: 80px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 4px 12px;
-            border: 1px solid rgba(255,215,0,0.6);
-            overflow: hidden;
-            white-space: nowrap;
+            top: calc(env(safe-area-inset-top) + 35px);
+            left: 0;
+            right: 0;
+            text-align: center;
             z-index: 45;
             pointer-events: none;
-            box-shadow: 0 0 12px rgba(0,0,0,0.4);
-            font-size: 0.75rem;
+        }
+        .ticker-label {
+            font-size: 0.7rem;
             font-weight: bold;
+            color: #ffd700;
             text-shadow: 0 0 2px black;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+        .ticker-container {
+            background: transparent;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 0 10px;
         }
         .ticker-text {
             display: inline-block;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #ffd966;
             text-shadow: 0 0 4px #000;
-            animation: tickerMove 20s linear infinite;
+            animation: tickerMove 15s linear infinite;
             white-space: nowrap;
         }
         @keyframes tickerMove {
             0% { transform: translateX(0%); }
             100% { transform: translateX(-50%); }
-        }
-        .ticker-label {
-            position: absolute;
-            left: 4px;
-            top: -12px;
-            background: #ffd700;
-            color: black;
-            font-size: 0.6rem;
-            font-weight: bold;
-            padding: 0 6px;
-            border-radius: 12px;
-            pointer-events: none;
-            z-index: 46;
         }
 
         /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ === */
@@ -1084,15 +1076,16 @@
         </div>
     </div>
 
-    <!-- БЕГУЩАЯ СТРОКА (изменена) -->
-    <div class="ticker-container" id="tickerContainer">
-        <div class="ticker-label">🏆 BIG WINS 🏆</div>
-        <div class="ticker-text" id="tickerText">✨ ПРИМЕР: Игрок выиграл 25000 ⭐ ✨</div>
+    <!-- БЕГУЩАЯ СТРОКА (новая) -->
+    <div class="ticker-wrapper">
+        <div class="ticker-label">🏆 BIG WIN 🏆</div>
+        <div class="ticker-container" id="tickerContainer">
+            <div class="ticker-text" id="tickerText">✨ ПРИМЕР: Игрок выиграл 25000 ⭐ ✨</div>
+        </div>
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
     <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Wallet</button>
-    <!-- НОВАЯ КНОПКА ПОДАРКА -->
     <button class="gift-btn" id="gift-btn" onclick="openBonusTab()">🎁</button>
 
     <div class="top-bar"></div>
@@ -1475,7 +1468,7 @@ const I18N = {
         deposit_mission_btn: 'DEPOSIT',
         deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
         // big win ticker
-        big_win_prefix: '🏆 BIG WINS 🏆',
+        big_win_prefix: '🏆 BIG WIN 🏆',
         won: 'won',
     }
 };
