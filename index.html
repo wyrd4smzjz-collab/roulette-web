@@ -283,7 +283,6 @@
             cursor: pointer;
             transition: all 0.3s;
             backdrop-filter: blur(10px);
-            position: relative;
         }
         .gift-btn.has-notification::after {
             content: "!";
@@ -902,7 +901,7 @@
             font-weight: bold;
         }
 
-        /* === БЕГУЩАЯ СТРОКА (без окантовки) === */
+        /* === БЕГУЩАЯ СТРОКА (прозрачная, без обводки) === */
         .ticker-wrapper {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 35px);
@@ -912,27 +911,20 @@
             z-index: 45;
             pointer-events: none;
         }
-        .ticker-label {
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 2px black;
-            margin-bottom: 2px;
-            letter-spacing: 1px;
-        }
         .ticker-container {
             background: transparent;
+            border: none;
             overflow: hidden;
             white-space: nowrap;
             padding: 0 10px;
         }
         .ticker-text {
             display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             color: #ffd966;
-            text-shadow: 0 0 4px #000;
-            animation: tickerMove 15s linear infinite;
+            text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,1);
+            animation: tickerMove 18s linear infinite;
             white-space: nowrap;
         }
         @keyframes tickerMove {
@@ -940,7 +932,7 @@
             100% { transform: translateX(-50%); }
         }
 
-        /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ === */
+        /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ (на главной) === */
         .bonus-block {
             width: 100%;
             background: rgba(142,68,173,0.15);
@@ -1011,6 +1003,48 @@
             font-size: 0.8em;
             cursor: pointer;
         }
+
+        /* === МОДАЛЬНОЕ ОКНО БОНУСОВ (главная страница) === */
+        #bonus-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 400;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #bonus-modal.open { display: flex; }
+        .bonus-modal-header {
+            background: #1a1a1a;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .bonus-modal-title {
+            font-size: 1.2em;
+            font-weight: 900;
+            color: #ffd700;
+        }
+        .bonus-modal-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .bonus-modal-body {
+            padding: 24px 20px 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -1075,17 +1109,16 @@
         </div>
     </div>
 
-    <!-- БЕГУЩАЯ СТРОКА (новая) -->
+    <!-- БЕГУЩАЯ СТРОКА (прозрачная, без лейбла) -->
     <div class="ticker-wrapper">
-        <div class="ticker-label">🏆 BIG WIN 🏆</div>
         <div class="ticker-container" id="tickerContainer">
-            <div class="ticker-text" id="tickerText">✨ ПРИМЕР: Игрок выиграл 25000 ⭐ ✨</div>
+            <div class="ticker-text" id="tickerText">Maria 6500⭐️</div>
         </div>
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
     <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Wallet</button>
-    <button class="gift-btn" id="gift-btn" onclick="openBonusTab()">🎁</button>
+    <button class="gift-btn" id="gift-btn" onclick="openBonusModal()">🎁</button>
 
     <div class="top-bar"></div>
 
@@ -1119,7 +1152,6 @@
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">DEPOSIT</div>
         <div class="tab"        id="tab-wit" onclick="setTab('wit',this)" data-ru="ВЫВОД" data-en="WITHDRAW">WITHDRAW</div>
         <div class="tab"        id="tab-lang" onclick="setTab('lang',this)" data-ru="ЯЗЫК" data-en="LANGUAGE">LANGUAGE</div>
-        <div class="tab"        id="tab-bonus" onclick="setTab('bonus',this)" data-ru="БОНУСЫ" data-en="BONUSES">BONUSES</div>
         <div class="tab"        id="tab-rules" onclick="setTab('rules',this)" data-ru="ПРАВИЛА" data-en="RULES">RULES</div>
         <div class="tab"        id="tab-priv" onclick="setTab('priv',this)" data-ru="КОНФИДЕНЦИАЛЬНОСТЬ" data-en="PRIVACY">PRIVACY</div>
     </div>
@@ -1168,33 +1200,6 @@
         </div>
         <div class="lang-current" id="lang-current-label">Current language: English</div>
         <button class="lang-back-btn" onclick="closeM()">← Back</button>
-    </div>
-
-    <!-- НОВАЯ ВКЛАДКА БОНУСЫ -->
-    <div id="bonus" class="tab-content">
-        <h2 style="color:#ffd700;">🎁 BONUSES & GIFTS</h2>
-        
-        <!-- Первый подарок (100 ⭐ один раз) -->
-        <div class="bonus-block" id="first-bonus-block">
-            <div class="bonus-title" id="first-bonus-title">🎁 FIRST GIFT</div>
-            <div class="bonus-desc" id="first-bonus-desc">Get 100 ⭐ for the very first time!</div>
-            <button class="bonus-btn" id="claim-first-btn" onclick="claimFirstBonus()">CLAIM 100 ⭐</button>
-            <div class="bonus-reward" id="first-bonus-status"></div>
-        </div>
-
-        <!-- Ежедневный подарок -->
-        <div class="bonus-block" id="daily-bonus-block">
-            <div class="bonus-title" id="daily-bonus-title">📅 DAILY GIFT</div>
-            <div class="bonus-desc" id="daily-bonus-desc">Get 5-50 ⭐ every day</div>
-            <button class="bonus-btn" id="claim-daily-btn" onclick="claimDailyBonus()">CLAIM</button>
-            <div class="bonus-reward" id="daily-bonus-status"></div>
-        </div>
-
-        <!-- Бонусы за пополнение -->
-        <div class="bonus-block">
-            <div class="bonus-title" id="deposit-bonus-title">💰 DEPOSIT BONUSES</div>
-            <div id="deposit-missions-container"></div>
-        </div>
     </div>
 
     <div id="rules" class="tab-content">
@@ -1269,6 +1274,37 @@
             <p>For privacy-related requests, users may contact support through the official Telegram support channel.</p>
         </div>
         <p class="back-link" onclick="closeM()">← Back</p>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО БОНУСОВ (главная страница, кнопка 🎁) -->
+<div id="bonus-modal">
+    <div class="bonus-modal-header">
+        <div class="bonus-modal-title">🎁 BONUSES &amp; GIFTS</div>
+        <button class="bonus-modal-close" onclick="closeBonusModal()">✕</button>
+    </div>
+    <div class="bonus-modal-body">
+        <!-- Первый подарок (100 ⭐ один раз) -->
+        <div class="bonus-block" id="first-bonus-block">
+            <div class="bonus-title" id="first-bonus-title">🎁 FIRST GIFT</div>
+            <div class="bonus-desc" id="first-bonus-desc">Get 100 ⭐ for the very first time!</div>
+            <button class="bonus-btn" id="claim-first-btn" onclick="claimFirstBonus()">CLAIM 100 ⭐</button>
+            <div class="bonus-reward" id="first-bonus-status"></div>
+        </div>
+
+        <!-- Ежедневный подарок -->
+        <div class="bonus-block" id="daily-bonus-block">
+            <div class="bonus-title" id="daily-bonus-title">📅 DAILY GIFT</div>
+            <div class="bonus-desc" id="daily-bonus-desc">Get 5-50 ⭐ every day</div>
+            <button class="bonus-btn" id="claim-daily-btn" onclick="claimDailyBonus()">CLAIM</button>
+            <div class="bonus-reward" id="daily-bonus-status"></div>
+        </div>
+
+        <!-- Бонусы за пополнение -->
+        <div class="bonus-block">
+            <div class="bonus-title" id="deposit-bonus-title">💰 DEPOSIT BONUSES</div>
+            <div id="deposit-missions-container"></div>
+        </div>
     </div>
 </div>
 
@@ -1354,7 +1390,6 @@ const I18N = {
         tab_dep: 'ПОПОЛНИТЬ',
         tab_wit: 'ВЫВОД',
         tab_lang: 'ЯЗЫК',
-        tab_bonus: 'БОНУСЫ',
         tab_rules: 'ПРАВИЛА',
         tab_priv: 'КОНФИДЕНЦИАЛЬНОСТЬ',
         lang_title: '🌍 ВЫБОР ЯЗЫКА',
@@ -1394,9 +1429,7 @@ const I18N = {
         deposit_missions_complete: '✨ Все бонусы за пополнение получены! ✨',
         deposit_mission_btn: 'ПОПОЛНИТЬ',
         deposit_bonus_notify: (needed, bonus) => `Пополни на ${needed} ⭐ и получи +${bonus} ⭐`,
-        // big win ticker
-        big_win_prefix: '🏆 БОЛЬШОЙ ВЫИГРЫШ 🏆',
-        won: 'выиграл',
+        bonus_modal_title: '🎁 БОНУСЫ И ПОДАРКИ',
     },
     en: {
         loading_steps: ['Connecting to server…','Loading resources…','Initializing roulette…','Checking balance…','Synchronizing…','Almost ready…','Ready!'],
@@ -1426,7 +1459,6 @@ const I18N = {
         tab_dep: 'DEPOSIT',
         tab_wit: 'WITHDRAW',
         tab_lang: 'LANGUAGE',
-        tab_bonus: 'BONUSES',
         tab_rules: 'RULES',
         tab_priv: 'PRIVACY',
         lang_title: '🌍 LANGUAGE SELECTION',
@@ -1466,9 +1498,7 @@ const I18N = {
         deposit_missions_complete: '✨ All deposit bonuses claimed! ✨',
         deposit_mission_btn: 'DEPOSIT',
         deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
-        // big win ticker
-        big_win_prefix: '🏆 BIG WIN 🏆',
-        won: 'won',
+        bonus_modal_title: '🎁 BONUSES & GIFTS',
     }
 };
 
@@ -1484,7 +1514,7 @@ function t(key, ...args) {
 // ----- БОНУСНАЯ ЛОГИКА -----
 let firstBonusClaimed = false;
 let lastDailyBonusDate = null;
-let depositMissionStage = 0; // 0 - первый этап (100), 1 - второй (200), 2 - третий (500), 3 - все завершены
+let depositMissionStage = 0;
 
 function loadBonusData() {
     if (!userId || userId === 'unknown') return;
@@ -1560,6 +1590,9 @@ function updateBonusUI() {
 
     const depositBonusTitle = document.getElementById('deposit-bonus-title');
     if (depositBonusTitle) depositBonusTitle.textContent = t('deposit_bonus_title');
+
+    const bonusModalTitle = document.querySelector('.bonus-modal-title');
+    if (bonusModalTitle) bonusModalTitle.textContent = t('bonus_modal_title');
 }
 
 function updateGiftButtonNotification() {
@@ -1596,7 +1629,7 @@ function claimDailyBonus() {
         alert(t('daily_bonus_claimed'));
         return;
     }
-    const amount = Math.floor(Math.random() * 46) + 5; // 5-50
+    const amount = Math.floor(Math.random() * 46) + 5;
     stars += amount;
     saveBalance();
     update();
@@ -1639,7 +1672,6 @@ function depositForMission(needed, bonus, stage) {
     window.pendingDepositBonus = { needed, bonus, stage };
 }
 
-// Обработка ответов от бота (включая пополнения)
 function handleBotMessage(message) {
     try {
         const data = JSON.parse(message.data || message);
@@ -1673,46 +1705,55 @@ if (tg && typeof tg.onEvent === 'function') {
     tg.onEvent('message', handleBotMessage);
 }
 
-// ----- БЕГУЩАЯ СТРОКА (BIG WINS) -----
-const fakeNames = ["Alex","Max","Emma","Leo","Sofia","Ethan","Mia","Liam","Zoe","Lucas","Anna","David","Maria","John","Elena","Nik","Vika","Oleg","Ivan","Kate","Dmitry","Olga","Sergey","Natalia","Andrey","Elena","Pavel","Tatiana","Mikhail","Irina"];
-let lastTickerEntries = [];
+// ----- БЕГУЩАЯ СТРОКА (BIG WINS) — формат "Maria 6500⭐️", зациклена -----
+const fakeNames = ["Alex","Max","Emma","Leo","Sofia","Ethan","Mia","Liam","Zoe","Lucas","Anna","David","Maria","John","Elena","Nik","Vika","Oleg","Ivan","Kate","Dmitry","Olga","Sergey","Natalia","Andrey","Pavel","Tatiana","Mikhail","Irina","Sara","Tom","Nina","Boris","Alice","Roman","Julia"];
+let tickerEntries = [];
 
 function getRandomWinner() {
-    let name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-    let amount = Math.floor(Math.random() * (150000 - 1500 + 1)) + 1500; // от 1500 до 150000
+    const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+    const amount = Math.floor(Math.random() * 148501) + 1500;
     return { name, amount };
 }
 
+function buildTickerString() {
+    return tickerEntries.map(w => `${w.name} ${w.amount}⭐️`).join('   •   ');
+}
+
 function updateTicker() {
+    // Добавляем новый выигрыш, держим до 6 записей
     const winner = getRandomWinner();
-    if (lastTickerEntries.length > 0 && lastTickerEntries[0].name === winner.name && lastTickerEntries[0].amount === winner.amount) {
-        winner.name = fakeNames[(fakeNames.indexOf(winner.name) + 1) % fakeNames.length];
-        winner.amount = Math.floor(Math.random() * (150000 - 1500 + 1)) + 1500;
-    }
-    lastTickerEntries.unshift(winner);
-    if (lastTickerEntries.length > 3) lastTickerEntries.pop();
-    const prefix = t('big_win_prefix');
-    const wonText = t('won');
-    const text = lastTickerEntries.map(w => `✨ ${prefix} ${w.name} ${wonText} ${w.amount} ⭐ ✨`).join(' • ');
+    tickerEntries.push(winner);
+    if (tickerEntries.length > 6) tickerEntries.shift();
+
     const tickerEl = document.getElementById('tickerText');
-    if (tickerEl) tickerEl.innerText = text + ' • ' + text;
+    if (!tickerEl) return;
+
+    const str = buildTickerString();
+    // Дублируем для бесшовной прокрутки
+    tickerEl.textContent = str + '   •   ' + str;
 }
-setInterval(updateTicker, 8000);
+
+// Инициализируем 4 записи сразу
+for (let i = 0; i < 4; i++) {
+    tickerEntries.push(getRandomWinner());
+}
 updateTicker();
+setInterval(updateTicker, 5000);
 
-// ----- ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ВКЛАДКИ БОНУСОВ -----
-function openBonusTab() {
+// ----- ФУНКЦИИ ДЛЯ ОТКРЫТИЯ/ЗАКРЫТИЯ БОНУСНОГО МОДАЛА -----
+function openBonusModal() {
     playClick();
-    openM();
-    // Активируем вкладку бонусов
-    const bonusTab = document.getElementById('tab-bonus');
-    const bonusContent = document.getElementById('bonus');
-    document.querySelectorAll('.tab,.tab-content').forEach(e => e.classList.remove('active'));
-    if (bonusTab) bonusTab.classList.add('active');
-    if (bonusContent) bonusContent.classList.add('active');
+    updateBonusUI();
+    updateDepositMissions();
+    document.getElementById('bonus-modal').classList.add('open');
 }
 
-// Глобальные переменные (часть из первой части, но они уже должны быть определены)
+function closeBonusModal() {
+    playClick();
+    document.getElementById('bonus-modal').classList.remove('open');
+}
+
+// Глобальные переменные
 let stars        = 0;
 let curBet       = 5;
 let isSpinning   = false;
@@ -1892,7 +1933,7 @@ function startRatchet(ms) {
 }
 function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
 
-// Сектора рулетки (копия из первой части, но оставлено для целостности)
+// Сектора рулетки
 const sectors = [
     { t:'💀',        c:'#1a1a1a', mult:0,   weight:10.0,  isSB:false, isFree:false, isRisk:false },
     { t:'×1',        c:'#555555', mult:1,   weight:8.0,   isSB:false, isFree:false, isRisk:false },
@@ -2207,7 +2248,7 @@ function doSpin() {
     requestAnimationFrame(frame);
 }
 
-// Риск-бонус (сокращён для экономии места, но полный)
+// Риск-бонус
 let riskGame = { stars: [], revealed: [], bagsFound: 0, attemptsLeft: 5, attemptsUsed: 0, gameOver: false };
 function generateRiskStars() {
     const bagCount = 2 + Math.floor(Math.random() * 3);
@@ -2449,7 +2490,6 @@ function applyLangToUI() {
     document.getElementById('tab-dep').textContent = t('tab_dep');
     document.getElementById('tab-wit').textContent = t('tab_wit');
     document.getElementById('tab-lang').textContent = t('tab_lang');
-    document.getElementById('tab-bonus').textContent = t('tab_bonus');
     document.getElementById('tab-rules').textContent = t('tab_rules');
     document.getElementById('tab-priv').textContent = t('tab_priv');
     document.getElementById('dep-title').textContent = t('dep_title');
