@@ -238,7 +238,7 @@
             font-size: 0.8em; cursor: pointer;
         }
 
-        /* КНОПКА ПОДДЕРЖКИ - НИЖЕ БАННЕРА */
+        /* КНОПКА ПОДДЕРЖКИ */
         .support-btn {
             position: fixed;
             left: 15px;
@@ -342,6 +342,7 @@
         .sb-text   { display: flex; flex-direction: column; line-height: 1.2; }
         .sb-label  { font-size: 8px; font-weight: 900; letter-spacing: 2px; color: #ffd700; text-transform: uppercase; }
         .sb-amount { font-size: 14px; font-weight: 900; color: #fff; text-shadow: 0 0 8px #ffd700; }
+
         .wheel-container {
             position: relative; width: 80vw; max-width: 310px;
             aspect-ratio: 1/1; flex-shrink: 0; z-index: 2;
@@ -901,38 +902,37 @@
             font-weight: bold;
         }
 
-        /* === БЕГУЩАЯ СТРОКА (прозрачная, без обводки) === */
+        /* === БЕГУЩАЯ СТРОКА — компактная, между баннерами, без лагов === */
         .ticker-wrapper {
             position: fixed;
-            top: calc(env(safe-area-inset-top) + 35px);
-            left: 0;
-            right: 0;
-            text-align: center;
+            top: calc(env(safe-area-inset-top) + 10px);
+            /* отступы: слева — конец sb-banner (~130px), справа — начало wallet-btn (~70px) */
+            left: 140px;
+            right: 72px;
+            height: 28px;
             z-index: 45;
             pointer-events: none;
-        }
-        .ticker-container {
-            background: transparent;
-            border: none;
             overflow: hidden;
-            white-space: nowrap;
-            padding: 0 10px;
+            display: flex;
+            align-items: center;
         }
-        .ticker-text {
-            display: inline-block;
-            font-size: 0.72rem;
+        /* Внутренний контейнер, который анимируется через JS */
+        .ticker-inner {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            will-change: transform;
+        }
+        .ticker-item {
+            font-size: 0.68rem;
             font-weight: 700;
             color: #ffd966;
-            text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,1);
-            animation: tickerMove 18s linear infinite;
-            white-space: nowrap;
-        }
-        @keyframes tickerMove {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
+            text-shadow: 0 0 4px rgba(0,0,0,0.9);
+            padding: 0 18px;
+            flex-shrink: 0;
         }
 
-        /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ (на главной) === */
+        /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ === */
         .bonus-block {
             width: 100%;
             background: rgba(142,68,173,0.15);
@@ -1004,7 +1004,7 @@
             cursor: pointer;
         }
 
-        /* === МОДАЛЬНОЕ ОКНО БОНУСОВ (главная страница) === */
+        /* === МОДАЛЬНОЕ ОКНО БОНУСОВ === */
         #bonus-modal {
             display: none;
             position: fixed;
@@ -1109,11 +1109,9 @@
         </div>
     </div>
 
-    <!-- БЕГУЩАЯ СТРОКА (прозрачная, без лейбла) -->
-    <div class="ticker-wrapper">
-        <div class="ticker-container" id="tickerContainer">
-            <div class="ticker-text" id="tickerText">Maria 6500⭐️</div>
-        </div>
+    <!-- БЕГУЩАЯ СТРОКА — компактная между баннерами -->
+    <div class="ticker-wrapper" id="tickerWrapper">
+        <div class="ticker-inner" id="tickerInner"></div>
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
@@ -1277,14 +1275,13 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО БОНУСОВ (главная страница, кнопка 🎁) -->
+<!-- МОДАЛЬНОЕ ОКНО БОНУСОВ -->
 <div id="bonus-modal">
     <div class="bonus-modal-header">
         <div class="bonus-modal-title">🎁 BONUSES &amp; GIFTS</div>
         <button class="bonus-modal-close" onclick="closeBonusModal()">✕</button>
     </div>
     <div class="bonus-modal-body">
-        <!-- Первый подарок (100 ⭐ один раз) -->
         <div class="bonus-block" id="first-bonus-block">
             <div class="bonus-title" id="first-bonus-title">🎁 FIRST GIFT</div>
             <div class="bonus-desc" id="first-bonus-desc">Get 100 ⭐ for the very first time!</div>
@@ -1292,7 +1289,6 @@
             <div class="bonus-reward" id="first-bonus-status"></div>
         </div>
 
-        <!-- Ежедневный подарок -->
         <div class="bonus-block" id="daily-bonus-block">
             <div class="bonus-title" id="daily-bonus-title">📅 DAILY GIFT</div>
             <div class="bonus-desc" id="daily-bonus-desc">Get 5-50 ⭐ every day</div>
@@ -1300,7 +1296,6 @@
             <div class="bonus-reward" id="daily-bonus-status"></div>
         </div>
 
-        <!-- Бонусы за пополнение -->
         <div class="bonus-block">
             <div class="bonus-title" id="deposit-bonus-title">💰 DEPOSIT BONUSES</div>
             <div id="deposit-missions-container"></div>
@@ -1358,7 +1353,6 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
 
-/* ЯЗЫК - по умолчанию английский */
 let lang = 'en';
 
 const I18N = {
@@ -1416,7 +1410,6 @@ const I18N = {
         err_min_wit: (n) => `Минимум ${n} звёзд`,
         err_no_stars: (n) => `Недостаточно звёзд (у вас ${n})`,
         err_invalid_amount: 'Некорректная сумма',
-        // бонусы
         first_bonus_title: '🎁 ПЕРВЫЙ ПОДАРОК',
         first_bonus_desc: 'Получи 100 ⭐ в первый раз!',
         first_bonus_btn: 'ЗАБРАТЬ 100 ⭐',
@@ -1485,7 +1478,6 @@ const I18N = {
         err_min_wit: (n) => `Minimum ${n} stars`,
         err_no_stars: (n) => `Not enough stars (you have ${n})`,
         err_invalid_amount: 'Invalid amount',
-        // bonuses
         first_bonus_title: '🎁 FIRST GIFT',
         first_bonus_desc: 'Get 100 ⭐ for the very first time!',
         first_bonus_btn: 'CLAIM 100 ⭐',
@@ -1509,7 +1501,87 @@ function t(key, ...args) {
 }
 </script>
 <script>
-// ========== ПРОДОЛЖЕНИЕ СКРИПТА (оставшаяся логика) ==========
+// ========== ЛОГИКА ==========
+
+// ----- БЕГУЩАЯ СТРОКА — плавная, без лагов -----
+const fakeNames = ["Alex","Max","Emma","Leo","Sofia","Ethan","Mia","Liam","Zoe","Lucas","Anna","David","Maria","John","Elena","Nik","Vika","Oleg","Ivan","Kate","Dmitry","Olga","Sergey","Natalia","Andrey","Pavel","Tatiana","Mikhail","Irina","Sara","Tom","Nina","Boris","Alice","Roman","Julia"];
+
+// Генерация пула из 8 уникальных записей
+function generateTickerPool(count) {
+    const pool = [];
+    const usedNames = [];
+    while (pool.length < count) {
+        let name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+        if (usedNames.includes(name) && usedNames.length < fakeNames.length) continue;
+        usedNames.push(name);
+        const amount = Math.floor(Math.random() * 148501) + 1500;
+        pool.push(`${name} ${amount}⭐️`);
+    }
+    return pool;
+}
+
+let tickerPool = generateTickerPool(8);
+let tickerRAF = null;
+let tickerPos = 0;
+let tickerSpeed = 0.4; // px за кадр
+let tickerTotalWidth = 0;
+let tickerHalfWidth = 0;
+
+function initTicker() {
+    const inner = document.getElementById('tickerInner');
+    if (!inner) return;
+
+    // Строим строку: пул дублируем дважды для бесшовного цикла
+    const fullText = tickerPool.join('   •   ');
+    inner.innerHTML = '';
+
+    // Создаём два одинаковых span — второй подхватывает когда первый уходит
+    const span1 = document.createElement('span');
+    span1.className = 'ticker-item';
+    span1.textContent = fullText;
+    const span2 = document.createElement('span');
+    span2.className = 'ticker-item';
+    span2.textContent = fullText;
+    inner.appendChild(span1);
+    inner.appendChild(span2);
+
+    // Ждём рендера, чтобы измерить ширину
+    requestAnimationFrame(() => {
+        tickerHalfWidth = span1.offsetWidth;
+        tickerTotalWidth = tickerHalfWidth * 2;
+        tickerPos = 0;
+        if (tickerRAF) cancelAnimationFrame(tickerRAF);
+        tickerRAF = requestAnimationFrame(tickerStep);
+    });
+}
+
+function tickerStep() {
+    tickerPos -= tickerSpeed;
+    // Когда прокрутили ровно один экземпляр — сбрасываем без скачка
+    if (tickerHalfWidth > 0 && Math.abs(tickerPos) >= tickerHalfWidth) {
+        tickerPos += tickerHalfWidth;
+    }
+    const inner = document.getElementById('tickerInner');
+    if (inner) inner.style.transform = `translateX(${tickerPos}px)`;
+    tickerRAF = requestAnimationFrame(tickerStep);
+}
+
+// Обновление пула каждые 12 секунд — меняем данные без перезапуска анимации
+function refreshTickerData() {
+    tickerPool = generateTickerPool(8);
+    const inner = document.getElementById('tickerInner');
+    if (!inner) return;
+    const newText = tickerPool.join('   •   ');
+    // Плавно меняем текст — оба span обновляем одновременно
+    const spans = inner.querySelectorAll('.ticker-item');
+    spans.forEach(s => { s.textContent = newText; });
+    // Пересчитываем ширину после смены текста
+    requestAnimationFrame(() => {
+        if (spans[0]) tickerHalfWidth = spans[0].offsetWidth;
+    });
+}
+
+setInterval(refreshTickerData, 12000);
 
 // ----- БОНУСНАЯ ЛОГИКА -----
 let firstBonusClaimed = false;
@@ -1608,10 +1680,7 @@ function updateGiftButtonNotification() {
 }
 
 function claimFirstBonus() {
-    if (firstBonusClaimed) {
-        alert(t('first_bonus_claimed'));
-        return;
-    }
+    if (firstBonusClaimed) { alert(t('first_bonus_claimed')); return; }
     stars += 100;
     saveBalance();
     update();
@@ -1625,10 +1694,7 @@ function claimFirstBonus() {
 
 function claimDailyBonus() {
     const today = new Date().toDateString();
-    if (lastDailyBonusDate === today) {
-        alert(t('daily_bonus_claimed'));
-        return;
-    }
+    if (lastDailyBonusDate === today) { alert(t('daily_bonus_claimed')); return; }
     const amount = Math.floor(Math.random() * 46) + 5;
     stars += amount;
     saveBalance();
@@ -1650,7 +1716,7 @@ function updateDepositMissions() {
         { needed: 200, bonus: 100, stage: 1 },
         { needed: 500, bonus: 200, stage: 2 }
     ];
-    let currentMission = missions.find(m => m.stage === depositMissionStage);
+    const currentMission = missions.find(m => m.stage === depositMissionStage);
     if (!currentMission && depositMissionStage >= 3) {
         container.innerHTML = `<div class="bonus-desc" style="color:#2ecc71;">${t('deposit_missions_complete')}</div>`;
         return;
@@ -1661,7 +1727,7 @@ function updateDepositMissions() {
         div.innerHTML = `
             <div class="mission-amount">⭐ ${currentMission.needed} ⭐</div>
             <div class="mission-bonus">🎁 +${currentMission.bonus} ⭐ bonus</div>
-            <button class="mission-btn" data-amount="${currentMission.needed}" onclick="depositForMission(${currentMission.needed}, ${currentMission.bonus}, ${currentMission.stage})">${t('deposit_mission_btn')}</button>
+            <button class="mission-btn" onclick="depositForMission(${currentMission.needed}, ${currentMission.bonus}, ${currentMission.stage})">${t('deposit_mission_btn')}</button>
         `;
         container.appendChild(div);
     }
@@ -1675,7 +1741,6 @@ function depositForMission(needed, bonus, stage) {
 function handleBotMessage(message) {
     try {
         const data = JSON.parse(message.data || message);
-        console.log('Bot message received:', data);
         if (data.action === 'withdraw_confirmed') {
             confirmWithdrawalSuccess(data.requestId, data.amount);
         } else if (data.action === 'withdraw_rejected') {
@@ -1705,55 +1770,19 @@ if (tg && typeof tg.onEvent === 'function') {
     tg.onEvent('message', handleBotMessage);
 }
 
-// ----- БЕГУЩАЯ СТРОКА (BIG WINS) — формат "Maria 6500⭐️", зациклена -----
-const fakeNames = ["Alex","Max","Emma","Leo","Sofia","Ethan","Mia","Liam","Zoe","Lucas","Anna","David","Maria","John","Elena","Nik","Vika","Oleg","Ivan","Kate","Dmitry","Olga","Sergey","Natalia","Andrey","Pavel","Tatiana","Mikhail","Irina","Sara","Tom","Nina","Boris","Alice","Roman","Julia"];
-let tickerEntries = [];
-
-function getRandomWinner() {
-    const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-    const amount = Math.floor(Math.random() * 148501) + 1500;
-    return { name, amount };
-}
-
-function buildTickerString() {
-    return tickerEntries.map(w => `${w.name} ${w.amount}⭐️`).join('   •   ');
-}
-
-function updateTicker() {
-    // Добавляем новый выигрыш, держим до 6 записей
-    const winner = getRandomWinner();
-    tickerEntries.push(winner);
-    if (tickerEntries.length > 6) tickerEntries.shift();
-
-    const tickerEl = document.getElementById('tickerText');
-    if (!tickerEl) return;
-
-    const str = buildTickerString();
-    // Дублируем для бесшовной прокрутки
-    tickerEl.textContent = str + '   •   ' + str;
-}
-
-// Инициализируем 4 записи сразу
-for (let i = 0; i < 4; i++) {
-    tickerEntries.push(getRandomWinner());
-}
-updateTicker();
-setInterval(updateTicker, 5000);
-
-// ----- ФУНКЦИИ ДЛЯ ОТКРЫТИЯ/ЗАКРЫТИЯ БОНУСНОГО МОДАЛА -----
+// ----- МОДАЛ БОНУСОВ -----
 function openBonusModal() {
     playClick();
     updateBonusUI();
     updateDepositMissions();
     document.getElementById('bonus-modal').classList.add('open');
 }
-
 function closeBonusModal() {
     playClick();
     document.getElementById('bonus-modal').classList.remove('open');
 }
 
-// Глобальные переменные
+// ----- ОСНОВНЫЕ ПЕРЕМЕННЫЕ -----
 let stars        = 0;
 let curBet       = 5;
 let isSpinning   = false;
@@ -1765,13 +1794,10 @@ let userId = 'unknown';
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
         userId = String(tg.initDataUnsafe.user.id);
-        console.log('UserId from Telegram API:', userId);
     } else {
         userId = new URLSearchParams(location.search).get('uid') || 'unknown';
-        console.warn('Using URL fallback for userId:', userId);
     }
 } catch (e) {
-    console.error('Error getting userId:', e);
     userId = new URLSearchParams(location.search).get('uid') || 'unknown';
 }
 
@@ -1785,36 +1811,23 @@ function updateRateDisplay() {
     const rateValue = tonPerStar > 0 ? tonPerStar.toFixed(5) : '—';
     const rateText = `1 ⭐ = ${rateValue} TON`;
     const rateLabel = document.getElementById('rate-label');
-    if (rateLabel) {
-        rateLabel.textContent = tonPerStar > 0 ? `Rate: ${rateText}` : t('rate_loading');
-    }
+    if (rateLabel) rateLabel.textContent = tonPerStar > 0 ? `Rate: ${rateText}` : t('rate_loading');
     const rateDisplayValue = document.getElementById('rate-display-value');
-    if (rateDisplayValue) {
-        rateDisplayValue.textContent = rateText;
-    }
+    if (rateDisplayValue) rateDisplayValue.textContent = rateText;
 }
 
 (async function fetchTonRate() {
     try {
-        const res = await fetch(
-            'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
-            { cache: 'no-cache' }
-        );
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', { cache: 'no-cache' });
         if (res.ok) {
-            const json   = await res.json();
+            const json = await res.json();
             const tonUsd = json['the-open-network']?.usd;
-            if (tonUsd && tonUsd > 0) {
-                tonPerStar = 0.013 / tonUsd;
-                updateRateDisplay();
-                calcWit();
-                return;
-            }
+            if (tonUsd && tonUsd > 0) { tonPerStar = 0.013 / tonUsd; updateRateDisplay(); calcWit(); return; }
         }
     } catch (_) {}
     updateRateDisplay();
 })();
 
-// Частицы
 (function spawnParticles() {
     const container = document.getElementById('particles');
     const items = ['⭐','💫','✨','🌟','⭐','💎','⭐','✨'];
@@ -1933,7 +1946,6 @@ function startRatchet(ms) {
 }
 function stopRatchet() { if (ratchetTimer) { clearInterval(ratchetTimer); ratchetTimer = null; } }
 
-// Сектора рулетки
 const sectors = [
     { t:'💀',        c:'#1a1a1a', mult:0,   weight:10.0,  isSB:false, isFree:false, isRisk:false },
     { t:'×1',        c:'#555555', mult:1,   weight:8.0,   isSB:false, isFree:false, isRisk:false },
@@ -2092,7 +2104,6 @@ function getWeightedRandom() {
     return avail[0].idx;
 }
 
-// Баланс
 function loadBalance() {
     if (userId === 'unknown') {
         try {
@@ -2248,7 +2259,6 @@ function doSpin() {
     requestAnimationFrame(frame);
 }
 
-// Риск-бонус
 let riskGame = { stars: [], revealed: [], bagsFound: 0, attemptsLeft: 5, attemptsUsed: 0, gameOver: false };
 function generateRiskStars() {
     const bagCount = 2 + Math.floor(Math.random() * 3);
@@ -2265,16 +2275,11 @@ function spawnMoneyParticles() {
     const bg = document.getElementById('risk-bg');
     bg.querySelectorAll('.money-particle').forEach(e => e.remove());
     const coins = ['💰','🪙','💵','💴','💶','🌟','⭐','💎'];
-    const count = 20;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < 20; i++) {
         const el = document.createElement('div');
         el.className = 'money-particle';
         el.textContent = coins[Math.floor(Math.random() * coins.length)];
-        const left = Math.random() * 100;
-        const dur = 2.5 + Math.random() * 3;
-        const delay = Math.random() * 4;
-        const size = 18 + Math.random() * 16;
-        el.style.cssText = `left:${left}%;font-size:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;`;
+        el.style.cssText = `left:${Math.random()*100}%;font-size:${18+Math.random()*16}px;animation-duration:${2.5+Math.random()*3}s;animation-delay:${Math.random()*4}s;`;
         bg.appendChild(el);
     }
 }
@@ -2313,13 +2318,10 @@ function openRiskModal() {
 }
 function updateRiskInstruction() {
     const el = document.getElementById('risk-instruction-el');
-    const instruction = t('risk_instruction').replace('{attempts}', riskGame.attemptsLeft);
-    el.innerHTML = instruction;
+    el.innerHTML = t('risk_instruction').replace('{attempts}', riskGame.attemptsLeft);
 }
 function onRiskStarClick(idx) {
-    if (riskGame.gameOver) return;
-    if (riskGame.revealed[idx]) return;
-    if (riskGame.attemptsLeft <= 0) return;
+    if (riskGame.gameOver || riskGame.revealed[idx] || riskGame.attemptsLeft <= 0) return;
     const btn = document.getElementById('risk-stars-grid').children[idx];
     riskGame.revealed[idx] = true;
     riskGame.attemptsLeft--;
@@ -2351,13 +2353,8 @@ function onRiskStarClick(idx) {
     updateRiskInstruction();
     if (riskGame.attemptsLeft <= 0) {
         riskGame.gameOver = true;
-        const grid = document.getElementById('risk-stars-grid');
-        Array.from(grid.children).forEach(b => {
-            if (!b.classList.contains('revealed')) {
-                b.disabled = true;
-                b.style.opacity = '0.3';
-                b.style.cursor = 'not-allowed';
-            }
+        Array.from(document.getElementById('risk-stars-grid').children).forEach(b => {
+            if (!b.classList.contains('revealed')) { b.disabled = true; b.style.opacity = '0.3'; b.style.cursor = 'not-allowed'; }
         });
         const msg = document.getElementById('risk-result-msg');
         msg.textContent = t('risk_lose_msg', riskGame.bagsFound, riskGame.attemptsUsed);
@@ -2381,10 +2378,7 @@ function setTab(tabId, el) {
         document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
         document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
     }
-    if (tabId === 'wit') {
-        updateRateDisplay();
-        calcWit();
-    }
+    if (tabId === 'wit') { updateRateDisplay(); calcWit(); }
 }
 function doDep() {
     playClick();
@@ -2429,8 +2423,7 @@ function doWit() {
     saveBalance();
     update();
     pendingWithdrawal = { requestId, amount: val };
-    const withdrawData = { action: 'withdraw_request', requestId, stars: val, ton, address: addr, memo: memo || '-', userId, username: tg.initDataUnsafe?.user?.username || 'unknown' };
-    tg.sendData(JSON.stringify(withdrawData));
+    tg.sendData(JSON.stringify({ action: 'withdraw_request', requestId, stars: val, ton, address: addr, memo: memo || '-', userId, username: tg.initDataUnsafe?.user?.username || 'unknown' }));
     alert(lang === 'ru' ? `✅ Заявка #${requestId} создана!` : `✅ Request #${requestId} created!`);
     document.getElementById('w_stars').value = '';
     document.getElementById('w_addr').value = '';
@@ -2462,8 +2455,7 @@ function sendSupportMessage() {
     if (!text) { alert(t('support_empty')); return; }
     const btn = document.getElementById('support-send-btn');
     btn.disabled = true;
-    const payload = { action: 'support_message', uid: userId, lang: lang, message: text, timestamp: new Date().toISOString() };
-    tg.sendData(JSON.stringify(payload));
+    tg.sendData(JSON.stringify({ action: 'support_message', uid: userId, lang: lang, message: text, timestamp: new Date().toISOString() }));
     document.getElementById('support-sent-msg').style.display = 'block';
     addSupportMessageToHistory('user', text);
     document.getElementById('support-textarea').value = '';
@@ -2555,6 +2547,8 @@ function startLoadingScreen() {
             setTimeout(() => {
                 document.getElementById('app-content').classList.add('ready');
                 applyLangToUI();
+                // Запускаем тикер после появления интерфейса
+                setTimeout(() => initTicker(), 100);
                 setTimeout(() => { if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); showWelcomeToast(); }, 400);
                 ls.classList.add('hide');
                 setTimeout(() => { ls.style.display = 'none'; }, 800);
@@ -2568,10 +2562,7 @@ function startLoadingScreen() {
             val = Math.min(val + 1, target);
             fill.style.width = val + '%';
             pct.textContent  = val + '%';
-            if (val >= target) {
-                clearInterval(interval);
-                setTimeout(nextStep, 350 + Math.random() * 200);
-            }
+            if (val >= target) { clearInterval(interval); setTimeout(nextStep, 350 + Math.random() * 200); }
         }, 18);
     }
     setTimeout(nextStep, 400);
