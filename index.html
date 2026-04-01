@@ -264,7 +264,7 @@
             transform: scale(1.1);
         }
 
-        /* КНОПКА ПОДАРКА - СПРАВА ПОД КОШЕЛЬКОМ */
+        /* КНОПКА ПОДАРКА - СПРАВА НИЖЕ КОШЕЛЬКА */
         .gift-btn {
             position: fixed;
             right: 15px;
@@ -902,7 +902,7 @@
             font-weight: bold;
         }
 
-        /* === БЕГУЩАЯ СТРОКА (обновлённая) === */
+        /* === БЕГУЩАЯ СТРОКА (прозрачная) === */
         .ticker-wrapper {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 35px);
@@ -913,14 +913,10 @@
             pointer-events: none;
         }
         .ticker-container {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            border-radius: 20px;
+            background: transparent;
             overflow: hidden;
             white-space: nowrap;
-            padding: 6px 12px;
-            margin: 0 10px;
-            border: 1px solid rgba(255,215,0,0.4);
+            padding: 0 10px;
         }
         .ticker-text {
             display: inline-block;
@@ -936,7 +932,38 @@
             100% { transform: translateX(-50%); }
         }
 
-        /* === СТИЛИ ДЛЯ БОНУСНОЙ ВКЛАДКИ === */
+        /* === СТИЛИ ДЛЯ ОКНА БОНУСОВ === */
+        #bonus-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 400;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        #bonus-modal.open {
+            display: flex;
+        }
+        .bonus-modal-content {
+            width: 100%;
+            max-width: 380px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid #ffd700;
+            box-shadow: 0 0 30px rgba(255,215,0,0.3);
+        }
+        .bonus-modal-header {
+            font-size: 1.4em;
+            font-weight: bold;
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
         .bonus-block {
             width: 100%;
             background: rgba(142,68,173,0.15);
@@ -1007,6 +1034,17 @@
             font-size: 0.8em;
             cursor: pointer;
         }
+        .bonus-close-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(142,68,173,0.3);
+            border: 1px solid #8e44ad;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1071,16 +1109,16 @@
         </div>
     </div>
 
-    <!-- БЕГУЩАЯ СТРОКА (новая) -->
+    <!-- БЕГУЩАЯ СТРОКА (прозрачная) -->
     <div class="ticker-wrapper">
         <div class="ticker-container" id="tickerContainer">
-            <div class="ticker-text" id="tickerText">✨ Maria_win-12045⭐️ ✨</div>
+            <div class="ticker-text" id="tickerText">Maria 6500⭐️</div>
         </div>
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
     <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Wallet</button>
-    <button class="gift-btn" id="gift-btn" onclick="openBonusTab()">🎁</button>
+    <button class="gift-btn" id="gift-btn" onclick="openBonusModal()">🎁</button>
 
     <div class="top-bar"></div>
 
@@ -1108,7 +1146,7 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО КОШЕЛЬКА -->
+<!-- МОДАЛЬНОЕ ОКНО КОШЕЛЬКА (вкладка BONUSES теперь пуста) -->
 <div id="modal">
     <div class="tabs">
         <div class="tab active" id="tab-dep" onclick="setTab('dep',this)" data-ru="ПОПОЛНИТЬ" data-en="DEPOSIT">DEPOSIT</div>
@@ -1165,31 +1203,10 @@
         <button class="lang-back-btn" onclick="closeM()">← Back</button>
     </div>
 
-    <!-- НОВАЯ ВКЛАДКА БОНУСЫ -->
+    <!-- Вкладка BONUSES теперь пуста -->
     <div id="bonus" class="tab-content">
         <h2 style="color:#ffd700;">🎁 BONUSES & GIFTS</h2>
-        
-        <!-- Первый подарок (100 ⭐ один раз) -->
-        <div class="bonus-block" id="first-bonus-block">
-            <div class="bonus-title" id="first-bonus-title">🎁 FIRST GIFT</div>
-            <div class="bonus-desc" id="first-bonus-desc">Get 100 ⭐ for the very first time!</div>
-            <button class="bonus-btn" id="claim-first-btn" onclick="claimFirstBonus()">CLAIM 100 ⭐</button>
-            <div class="bonus-reward" id="first-bonus-status"></div>
-        </div>
-
-        <!-- Ежедневный подарок -->
-        <div class="bonus-block" id="daily-bonus-block">
-            <div class="bonus-title" id="daily-bonus-title">📅 DAILY GIFT</div>
-            <div class="bonus-desc" id="daily-bonus-desc">Get 5-50 ⭐ every day</div>
-            <button class="bonus-btn" id="claim-daily-btn" onclick="claimDailyBonus()">CLAIM</button>
-            <div class="bonus-reward" id="daily-bonus-status"></div>
-        </div>
-
-        <!-- Бонусы за пополнение -->
-        <div class="bonus-block">
-            <div class="bonus-title" id="deposit-bonus-title">💰 DEPOSIT BONUSES</div>
-            <div id="deposit-missions-container"></div>
-        </div>
+        <div class="bonus-desc" style="text-align:center; padding:40px 20px;">✨ All bonuses are available via the gift button on the main screen ✨</div>
     </div>
 
     <div id="rules" class="tab-content">
@@ -1264,6 +1281,37 @@
             <p>For privacy-related requests, users may contact support through the official Telegram support channel.</p>
         </div>
         <p class="back-link" onclick="closeM()">← Back</p>
+    </div>
+</div>
+
+<!-- ОКНО БОНУСОВ (отдельное модальное окно) -->
+<div id="bonus-modal">
+    <div class="bonus-modal-content">
+        <div class="bonus-modal-header">🎁 BONUSES & GIFTS</div>
+        
+        <!-- Первый подарок (100 ⭐ один раз) -->
+        <div class="bonus-block" id="first-bonus-block-modal">
+            <div class="bonus-title" id="first-bonus-title-modal">🎁 FIRST GIFT</div>
+            <div class="bonus-desc" id="first-bonus-desc-modal">Get 100 ⭐ for the very first time!</div>
+            <button class="bonus-btn" id="claim-first-btn-modal" onclick="claimFirstBonus()">CLAIM 100 ⭐</button>
+            <div class="bonus-reward" id="first-bonus-status-modal"></div>
+        </div>
+
+        <!-- Ежедневный подарок -->
+        <div class="bonus-block" id="daily-bonus-block-modal">
+            <div class="bonus-title" id="daily-bonus-title-modal">📅 DAILY GIFT</div>
+            <div class="bonus-desc" id="daily-bonus-desc-modal">Get 5-50 ⭐ every day</div>
+            <button class="bonus-btn" id="claim-daily-btn-modal" onclick="claimDailyBonus()">CLAIM</button>
+            <div class="bonus-reward" id="daily-bonus-status-modal"></div>
+        </div>
+
+        <!-- Бонусы за пополнение -->
+        <div class="bonus-block">
+            <div class="bonus-title" id="deposit-bonus-title-modal">💰 DEPOSIT BONUSES</div>
+            <div id="deposit-missions-container-modal"></div>
+        </div>
+        
+        <button class="bonus-close-btn" onclick="closeBonusModal()">Close</button>
     </div>
 </div>
 
@@ -1388,7 +1436,6 @@ const I18N = {
         deposit_bonus_title: '💰 БОНУСЫ ЗА ПОПОЛНЕНИЕ',
         deposit_missions_complete: '✨ Все бонусы за пополнение получены! ✨',
         deposit_mission_btn: 'ПОПОЛНИТЬ',
-        deposit_bonus_notify: (needed, bonus) => `Пополни на ${needed} ⭐ и получи +${bonus} ⭐`,
     },
     en: {
         loading_steps: ['Connecting to server…','Loading resources…','Initializing roulette…','Checking balance…','Synchronizing…','Almost ready…','Ready!'],
@@ -1457,7 +1504,6 @@ const I18N = {
         deposit_bonus_title: '💰 DEPOSIT BONUSES',
         deposit_missions_complete: '✨ All deposit bonuses claimed! ✨',
         deposit_mission_btn: 'DEPOSIT',
-        deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
     }
 };
 
