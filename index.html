@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -903,7 +902,7 @@
             font-weight: bold;
         }
 
-        /* === БЕГУЩАЯ СТРОКА (без окантовки) === */
+        /* === БЕГУЩАЯ СТРОКА (обновлённая) === */
         .ticker-wrapper {
             position: fixed;
             top: calc(env(safe-area-inset-top) + 35px);
@@ -913,27 +912,23 @@
             z-index: 45;
             pointer-events: none;
         }
-        .ticker-label {
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 2px black;
-            margin-bottom: 2px;
-            letter-spacing: 1px;
-        }
         .ticker-container {
-            background: transparent;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
             overflow: hidden;
             white-space: nowrap;
-            padding: 0 10px;
+            padding: 6px 12px;
+            margin: 0 10px;
+            border: 1px solid rgba(255,215,0,0.4);
         }
         .ticker-text {
             display: inline-block;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #ffd966;
-            text-shadow: 0 0 4px #000;
-            animation: tickerMove 15s linear infinite;
+            text-shadow: 0 0 2px #000;
+            animation: tickerMove 20s linear infinite;
             white-space: nowrap;
         }
         @keyframes tickerMove {
@@ -1078,9 +1073,8 @@
 
     <!-- БЕГУЩАЯ СТРОКА (новая) -->
     <div class="ticker-wrapper">
-        <div class="ticker-label">🏆 BIG WIN 🏆</div>
         <div class="ticker-container" id="tickerContainer">
-            <div class="ticker-text" id="tickerText">✨ ПРИМЕР: Игрок выиграл 25000 ⭐ ✨</div>
+            <div class="ticker-text" id="tickerText">✨ Maria_win-12045⭐️ ✨</div>
         </div>
     </div>
 
@@ -1395,9 +1389,6 @@ const I18N = {
         deposit_missions_complete: '✨ Все бонусы за пополнение получены! ✨',
         deposit_mission_btn: 'ПОПОЛНИТЬ',
         deposit_bonus_notify: (needed, bonus) => `Пополни на ${needed} ⭐ и получи +${bonus} ⭐`,
-        // big win ticker
-        big_win_prefix: '🏆 БОЛЬШОЙ ВЫИГРЫШ 🏆',
-        won: 'выиграл',
     },
     en: {
         loading_steps: ['Connecting to server…','Loading resources…','Initializing roulette…','Checking balance…','Synchronizing…','Almost ready…','Ready!'],
@@ -1467,9 +1458,6 @@ const I18N = {
         deposit_missions_complete: '✨ All deposit bonuses claimed! ✨',
         deposit_mission_btn: 'DEPOSIT',
         deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
-        // big win ticker
-        big_win_prefix: '🏆 BIG WIN 🏆',
-        won: 'won',
     }
 };
 
