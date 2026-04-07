@@ -264,6 +264,32 @@
             transform: scale(1.1);
         }
 
+        /* КНОПКА ЯЗЫКА — под кнопкой поддержки */
+        .lang-main-btn {
+            position: fixed;
+            left: 15px;
+            top: calc(env(safe-area-inset-top) + 118px);
+            z-index: 200;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(142,68,173,0.3);
+            border: 1px solid #8e44ad;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        .lang-main-btn:hover, .lang-main-btn:active {
+            background: rgba(142,68,173,0.5);
+            box-shadow: 0 0 15px #8e44ad;
+            transform: scale(1.1);
+        }
+
         /* КНОПКА ПОДАРКА - СПРАВА ПОД КОШЕЛЬКОМ */
         .gift-btn {
             position: fixed;
@@ -1115,6 +1141,7 @@
     </div>
 
     <button class="support-btn" id="support-btn-el" onclick="openSupport()">🎧</button>
+    <button class="lang-main-btn" id="lang-main-btn-el" onclick="openLangScreen()">🌍</button>
     <button class="wallet-btn" id="wallet-btn-el" onclick="openM()">Wallet</button>
     <button class="gift-btn" id="gift-btn" onclick="openBonusModal()">🎁</button>
 
@@ -1348,6 +1375,23 @@
     <p class="back-link" id="support-back" onclick="closeSupport()">← Back</p>
 </div>
 
+<!-- ЭКРАН ВЫБОРА ЯЗЫКА (главная) -->
+<div id="lang-content">
+    <div class="lang-header" id="lang-screen-title">🌍 LANGUAGE</div>
+    <div class="lang-options">
+        <button class="lang-option-btn" id="lang-screen-btn-ru" onclick="selectLangFromScreen('ru')">
+            <span class="lang-flag-big">🇷🇺</span>
+            <span>Русский</span>
+        </button>
+        <button class="lang-option-btn" id="lang-screen-btn-en" onclick="selectLangFromScreen('en')">
+            <span class="lang-flag-big">🇬🇧</span>
+            <span>English</span>
+        </button>
+    </div>
+    <div class="lang-current" id="lang-screen-current">Current language: English</div>
+    <button class="lang-back-btn" onclick="closeLangScreen()">← Back</button>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -1423,6 +1467,10 @@ const I18N = {
         deposit_mission_btn: 'ПОПОЛНИТЬ',
         deposit_bonus_notify: (needed, bonus) => `Пополни на ${needed} ⭐ и получи +${bonus} ⭐`,
         bonus_modal_title: '🎁 БОНУСЫ И ПОДАРКИ',
+        wit_confirmed: (amount, requestId) => `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтверждён! Средства будут отправлены на ваш кошелёк.`,
+        wit_rejected: (requestId) => `❌ Заявка ${requestId} отклонена. Средства возвращены на баланс.`,
+        lang_screen_title: '🌍 ЯЗЫК',
+        lang_screen_current: 'Текущий язык: Русский',
     },
     en: {
         loading_steps: ['Connecting to server…','Loading resources…','Initializing roulette…','Checking balance…','Synchronizing…','Almost ready…','Ready!'],
@@ -1491,6 +1539,10 @@ const I18N = {
         deposit_mission_btn: 'DEPOSIT',
         deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
         bonus_modal_title: '🎁 BONUSES & GIFTS',
+        wit_confirmed: (amount, requestId) => `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed! Funds will be sent to your wallet.`,
+        wit_rejected: (requestId) => `❌ Request ${requestId} rejected. Funds have been returned to your balance.`,
+        lang_screen_title: '🌍 LANGUAGE',
+        lang_screen_current: 'Current language: English',
     }
 };
 
@@ -1738,9 +1790,19 @@ function depositForMission(needed, bonus, stage) {
     window.pendingDepositBonus = { needed, bonus, stage };
 }
 
-function handleBotMessage(message) {
+function handleBotMessage(rawData) {
     try {
-        const data = JSON.parse(message.data || message);
+        let data;
+        if (typeof rawData === 'string') {
+            data = JSON.parse(rawData);
+        } else if (rawData && typeof rawData === 'object') {
+            if (rawData.data) {
+                data = typeof rawData.data === 'string' ? JSON.parse(rawData.data) : rawData.data;
+            } else {
+                data = rawData;
+            }
+        }
+        if (!data || !data.action) return;
         if (data.action === 'withdraw_confirmed') {
             confirmWithdrawalSuccess(data.requestId, data.amount);
         } else if (data.action === 'withdraw_rejected') {
@@ -1762,13 +1824,19 @@ function handleBotMessage(message) {
             }
         }
     } catch (e) {
-        console.error('Error parsing bot message:', e);
+        // не JSON — игнорируем
     }
 }
 
+// Слушаем сообщения от бота через оба канала
 if (tg && typeof tg.onEvent === 'function') {
     tg.onEvent('message', handleBotMessage);
 }
+window.addEventListener('message', function(event) {
+    if (event.data && typeof event.data === 'string') {
+        handleBotMessage(event.data);
+    }
+});
 
 // ----- МОДАЛ БОНУСОВ -----
 function openBonusModal() {
@@ -1780,6 +1848,36 @@ function openBonusModal() {
 function closeBonusModal() {
     playClick();
     document.getElementById('bonus-modal').classList.remove('open');
+}
+
+// ----- ЭКРАН ЯЗЫКА С ГЛАВНОЙ -----
+function openLangScreen() {
+    playClick();
+    document.getElementById('app-content').style.display = 'none';
+    const screen = document.getElementById('lang-content');
+    screen.classList.add('active');
+    document.getElementById('lang-screen-btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('lang-screen-btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('lang-screen-title').textContent = t('lang_screen_title');
+    document.getElementById('lang-screen-current').textContent = t('lang_screen_current');
+}
+function closeLangScreen() {
+    playClick();
+    document.getElementById('lang-content').classList.remove('active');
+    document.getElementById('app-content').style.display = 'flex';
+}
+function selectLangFromScreen(selectedLang) {
+    lang = selectedLang;
+    try { localStorage.setItem('imperial_lang', lang); } catch(_) {}
+    applyLangToUI();
+    document.getElementById('lang-screen-btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('lang-screen-btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('lang-screen-current').textContent = t('lang_screen_current');
+    // Также синхронизируем кнопки в модальной вкладке
+    const btnRu = document.getElementById('lang-btn-ru');
+    const btnEn = document.getElementById('lang-btn-en');
+    if (btnRu) btnRu.classList.toggle('active', lang === 'ru');
+    if (btnEn) btnEn.classList.toggle('active', lang === 'en');
 }
 
 // ----- ОСНОВНЫЕ ПЕРЕМЕННЫЕ -----
@@ -2394,7 +2492,7 @@ function calcWit() {
 function confirmWithdrawalSuccess(requestId, amount) {
     if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) return;
     pendingWithdrawal = null;
-    alert(lang === 'ru' ? `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтвержден!` : `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed!`);
+    alert(t('wit_confirmed', amount, requestId));
 }
 function rejectWithdrawal(requestId, reason) {
     if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) return;
@@ -2402,7 +2500,7 @@ function rejectWithdrawal(requestId, reason) {
     saveBalance();
     update();
     pendingWithdrawal = null;
-    alert(lang === 'ru' ? `❌ Заявка ${requestId} отклонена. Средства возвращены.` : `❌ Request ${requestId} rejected. Funds returned.`);
+    alert(t('wit_rejected', requestId));
 }
 function doWit() {
     playClick();
@@ -2520,6 +2618,11 @@ function selectLangFromTab(selectedLang) {
     document.getElementById('lang-btn-ru').classList.toggle('active', lang === 'ru');
     document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
     document.getElementById('lang-current-label').textContent = t('lang_current');
+    // Синхронизируем экран языка на главной
+    const scrBtnRu = document.getElementById('lang-screen-btn-ru');
+    const scrBtnEn = document.getElementById('lang-screen-btn-en');
+    if (scrBtnRu) scrBtnRu.classList.toggle('active', lang === 'ru');
+    if (scrBtnEn) scrBtnEn.classList.toggle('active', lang === 'en');
 }
 function startLoadingScreen() {
     const ls = document.getElementById('loading-screen');
