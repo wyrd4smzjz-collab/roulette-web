@@ -1471,8 +1471,8 @@ const I18N = {
         deposit_mission_btn: 'ПОПОЛНИТЬ',
         deposit_bonus_notify: (needed, bonus) => `Пополни на ${needed} ⭐ и получи +${bonus} ⭐`,
         bonus_modal_title: '🎁 БОНУСЫ И ПОДАРКИ',
-        wit_confirmed: (amount, requestId) => `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтверждён! Средства будут отправлены на ваш кошелёк.`,
-        wit_rejected: (requestId) => `❌ Заявка ${requestId} отклонена. Средства возвращены на баланс.`,
+        wit_confirmed: (amount, requestId) => `✅ Вывод ${amount} ⭐ (заявка ${requestId}) подтверждён! Средства отправлены на ваш кошелёк.`,
+        wit_rejected: (requestId, reason) => `❌ Заявка ${requestId} отклонена. ${reason ? 'Причина: ' + reason : ''} Средства возвращены на баланс.`,
         lang_screen_title: '🌍 ЯЗЫК',
         lang_screen_current: 'Текущий язык: Русский',
     },
@@ -1543,8 +1543,8 @@ const I18N = {
         deposit_mission_btn: 'DEPOSIT',
         deposit_bonus_notify: (needed, bonus) => `Deposit ${needed} ⭐ and get +${bonus} ⭐`,
         bonus_modal_title: '🎁 BONUSES & GIFTS',
-        wit_confirmed: (amount, requestId) => `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed! Funds will be sent to your wallet.`,
-        wit_rejected: (requestId) => `❌ Request ${requestId} rejected. Funds have been returned to your balance.`,
+        wit_confirmed: (amount, requestId) => `✅ Withdrawal of ${amount} ⭐ (request ${requestId}) confirmed! Funds have been sent to your wallet.`,
+        wit_rejected: (requestId, reason) => `❌ Request ${requestId} rejected. ${reason ? 'Reason: ' + reason : ''} Funds have been returned to your balance.`,
         lang_screen_title: '🌍 LANGUAGE',
         lang_screen_current: 'Current language: English',
     }
@@ -2494,17 +2494,25 @@ function calcWit() {
     document.getElementById('wit_preview').textContent = v > 0 ? t('wit_preview', tonAmount) : t('wit_preview_empty');
 }
 function confirmWithdrawalSuccess(requestId, amount) {
-    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) return;
+    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
+        // Если заявка не найдена — просто показываем уведомление
+        alert(t('wit_confirmed', amount, requestId));
+        return;
+    }
     pendingWithdrawal = null;
     alert(t('wit_confirmed', amount, requestId));
 }
 function rejectWithdrawal(requestId, reason) {
-    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) return;
+    if (!pendingWithdrawal || pendingWithdrawal.requestId !== requestId) {
+        // Если заявка не найдена, но пришёл reject — возможно повторный, игнорируем или просто уведомляем
+        alert(t('wit_rejected', requestId, reason || ''));
+        return;
+    }
     stars += pendingWithdrawal.amount;
     saveBalance();
     update();
     pendingWithdrawal = null;
-    alert(t('wit_rejected', requestId));
+    alert(t('wit_rejected', requestId, reason || ''));
 }
 function doWit() {
     playClick();
@@ -2526,7 +2534,7 @@ function doWit() {
     update();
     pendingWithdrawal = { requestId, amount: val };
     tg.sendData(JSON.stringify({ action: 'withdraw_request', requestId, stars: val, ton, address: addr, memo: memo || '-', userId, username: tg.initDataUnsafe?.user?.username || 'unknown' }));
-    alert(lang === 'ru' ? `✅ Заявка #${requestId} создана!` : `✅ Request #${requestId} created!`);
+    alert(lang === 'ru' ? `✅ Заявка #${requestId} создана! Ожидайте подтверждения администратора.` : `✅ Request #${requestId} created! Waiting for admin confirmation.`);
     document.getElementById('w_stars').value = '';
     document.getElementById('w_addr').value = '';
     document.getElementById('w_memo').value = '';
