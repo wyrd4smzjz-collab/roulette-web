@@ -1737,15 +1737,6 @@ function updateGiftButtonNotification() {
 
 function claimFirstBonus() {
     if (firstBonusClaimed) { alert(t('first_bonus_claimed')); return; }
-    
-    // === НОВОЕ: Отправляем боту запрос на зачисление бонуса ===
-    tg.sendData(JSON.stringify({ 
-        action: 'claim_bonus', 
-        userId: userId, 
-        bonusType: 'first',
-        amount: 100 
-    }));
-    
     stars += 100;
     saveBalance();
     update();
@@ -1761,17 +1752,7 @@ function claimFirstBonus() {
 function claimDailyBonus() {
     const today = new Date().toDateString();
     if (lastDailyBonusDate === today) { alert(t('daily_bonus_claimed')); return; }
-    
     const amount = Math.floor(Math.random() * 46) + 5;
-    
-    // === НОВОЕ: Отправляем боту запрос на зачисление бонуса ===
-    tg.sendData(JSON.stringify({ 
-        action: 'claim_bonus', 
-        userId: userId, 
-        bonusType: 'daily',
-        amount: amount 
-    }));
-    
     stars += amount;
     saveBalance();
     update();
@@ -1782,6 +1763,7 @@ function claimDailyBonus() {
     alert(lang === 'ru' ? `🎁 Вы получили ${amount} звёзд!` : `🎁 You received ${amount} stars!`);
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
+
 
 function updateDepositMissions() {
     const container = document.getElementById('deposit-missions-container');
@@ -1827,17 +1809,6 @@ function handleBotMessage(rawData) {
             }
         }
         if (!data || !data.action) return;
-        
-        // === НОВОЕ: Обновление баланса от бота ===
-        if (data.action === 'balance_update') {
-            const newBalance = parseInt(data.balance, 10);
-            if (!isNaN(newBalance) && newBalance >= 0) {
-                stars = newBalance;
-                saveBalance();
-                update();
-            }
-            return;
-        }
         
         if (data.action === 'withdraw_confirmed') {
             confirmWithdrawalSuccess(data.requestId, data.amount);
@@ -2239,11 +2210,6 @@ function getWeightedRandom() {
 }
 
 function loadBalance() {
-    // === НОВОЕ: Запрашиваем актуальный баланс у бота ===
-    if (userId && userId !== 'unknown') {
-        tg.sendData(JSON.stringify({ action: 'get_balance', userId: userId }));
-    }
-    
     if (userId === 'unknown') {
         try {
             if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
